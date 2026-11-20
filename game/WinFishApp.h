@@ -219,6 +219,7 @@ namespace Sexy
 		TankScreen*						mTankScreen;
 		HighScoreScreen*				mHighScoreScreen;
 		HelpScreen*						mHelpScreen;
+		bool							mTitleMusicPending;
 		bool							mScreenSaverEnabled;
 		bool							mScreenSaverSound;
 		bool							mScreenSaverRotateBackdrops;

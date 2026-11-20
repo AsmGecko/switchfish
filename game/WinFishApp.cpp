@@ -212,6 +212,7 @@ WinFishApp::WinFishApp()
 	mPrestoMenuData = NULL;
 	mGameSelector = NULL;
 	mTitleScreen = NULL;
+	mTitleMusicPending = false;
 	mPetsScreen = NULL;
 	mStoreScreen = NULL;
 	mHatchScreen = NULL;
@@ -485,7 +486,8 @@ void Sexy::WinFishApp::Init()
 					mMusicInterface->LoadMusic(4, rsc1.string());
 					mMusicInterface->LoadMusic(1, rsc2.string());
 					mMusicInterface->LoadMusic(3, rsc3.string());
-					PlayMusic(2, 45);
+					// switchfish: started in UpdateFrames once the title screen is on screen
+					mTitleMusicPending = true;
 				}
 				SetCursorImage(CURSOR_POINTER, IMAGE_CURSOR_POINTER);
 				SetCursorImage(CURSOR_HAND, IMAGE_CURSOR_HAND);
@@ -2275,6 +2277,13 @@ void Sexy::WinFishApp::LogScreenSaverError(const std::string& theError)
 
 void Sexy::WinFishApp::UpdateFrames()
 {
+	// switchfish: the first frame uploads every texture, so don't let the music run over a black screen
+	if (mTitleMusicPending && mDrawCount > 0)
+	{
+		mTitleMusicPending = false;
+		PlayMusic(2, 45);
+	}
+
 	if (!gUnkBool01)
 	{
 		if (gDoHundredUpdates)

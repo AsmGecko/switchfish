@@ -8,63 +8,113 @@ NRO=build/switch/switchfish.nro
 RYUBING_VERSION=1.3.354
 RYUBING=tools/ryubing/Ryujinx.app/Contents/MacOS/Ryujinx
 EMU_SD=tools/ryubing/portable/sdcard/switch/switchfish
+BREW_DEPS="cmake ninja pkgconf sdl2 sdl2_ttf libopenmpt jpeg-turbo libpng libvorbis mpg123"
 
 usage() {
 	cat <<EOF
 Usage: ./sf.sh <command>
 
-  setup           build the Docker image with the Switch toolchain
-  build [host]    build for this Mac/Linux box (build/host/switchfish)
+  setup           once after cloning: Docker image, Homebrew packages, Ryubing
+  build [host]    build for this Mac (build/host/switchfish)
   build switch    build the NRO in Docker ($NRO)
-  run [args]      build and run the host build (needs gameData/ or --data)
-  emu             build the NRO and start it in Ryubing (installs it in tools/ on first use)
-  send <ip>       send the NRO to a Switch running hbmenu's netloader (Y)
+  run [args]      build and run on the Mac with the files in gameData/ (or --data <dir>)
+  emu [--gui]     build the NRO and play it in Ryubing; click = touch.
+                  --gui opens Ryubing's own window, which needs prod.keys from your Switch
+  send <ip>       build the NRO and send it to hbmenu's netloader (press Y on the Switch)
   upstream        clone or update the reference repos in upstream/
   clean           remove build/
+
+BUILD_TYPE=Debug ./sf.sh build ... picks the CMake build type.
 EOF
+}
+
+need_docker() {
+	if docker info >/dev/null 2>&1; then
+		return
+	fi
+	if [ "$(uname)" = Darwin ] && [ -d /Applications/Docker.app ]; then
+		echo "Starting Docker Desktop..."
+		open -a Docker
+		for _ in $(seq 60); do
+			docker info >/dev/null 2>&1 && return
+			sleep 2
+		done
+	fi
+	echo "Docker isn't running; start it and try again."
+	exit 1
+}
+
+need_image() {
+	need_docker
+	docker image inspect "$IMAGE" >/dev/null 2>&1 || docker build -t "$IMAGE" docker
 }
 
 build_host() {
 	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 	cmake --build build/host
+	ln -sf build/host/compile_commands.json compile_commands.json
 }
 
 build_switch() {
-	docker image inspect "$IMAGE" >/dev/null 2>&1 || setup
-	docker run --rm -v "$PWD":/src -w /src "$IMAGE" bash -c '
-		cmake -S . -B build/switch -G Ninja \
-			-DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake \
-			-DCMAKE_BUILD_TYPE='"${BUILD_TYPE:-Release}"' &&
+	need_image
+	docker run --rm -v "$PWD":/src -w /src -e BUILD_TYPE="${BUILD_TYPE:-Release}" "$IMAGE" bash -c '
+		cmake -S . -B build/switch -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake \
+			-DCMAKE_BUILD_TYPE=$BUILD_TYPE &&
 		cmake --build build/switch'
 	ls -la "$NRO"
-}
-
-setup() {
-	docker build -t "$IMAGE" docker
 }
 
 install_ryubing() {
 	[ -x "$RYUBING" ] && return
 	echo "Installing Ryubing $RYUBING_VERSION in tools/ryubing/"
+	# portable/ next to the app keeps its config and SD card in here instead of ~/Library
 	mkdir -p tools/ryubing/portable
 	curl -fsSL "https://git.ryujinx.app/Ryubing/Canary/releases/download/$RYUBING_VERSION/ryujinx-canary-$RYUBING_VERSION-macos_universal.app.tar.gz" |
 		tar xz -C tools/ryubing
 }
 
+setup() {
+	need_docker
+	docker build -t "$IMAGE" docker
+	if [ "$(uname)" = Darwin ]; then
+		brew install $BREW_DEPS
+		install_ryubing
+	fi
+}
+
 # The emulator's SD card is tools/ryubing/portable/sdcard; the game looks in sdmc:/switch/switchfish.
 emu() {
+	local gui=false
+	if [ "${1:-}" = --gui ]; then
+		gui=true
+		shift
+	fi
 	install_ryubing
 	build_switch
 	mkdir -p "$EMU_SD"
 	if [ -f gameData/properties/resources.xml ]; then
 		rsync -a gameData/ "$EMU_SD/"
 	else
-		echo "No game files in gameData/ yet: the NRO will start and log that it found no data."
+		echo "No game files in gameData/: the game will say where to put them."
 	fi
 	cp "$NRO" "$EMU_SD/"
 	rm -f "$EMU_SD/log.txt"
-	"$RYUBING" "$PWD/$EMU_SD/switchfish.nro" "$@" || true
-	[ -f "$EMU_SD/log.txt" ] && { echo "--- $EMU_SD/log.txt"; cat "$EMU_SD/log.txt"; }
+	# Without --no-gui Ryubing won't load anything until it has prod.keys; homebrew doesn't need them.
+	if $gui; then
+		"$RYUBING" "$@" "$PWD/$EMU_SD/switchfish.nro" || true
+	else
+		"$RYUBING" --no-gui "$@" "$PWD/$EMU_SD/switchfish.nro" || true
+	fi
+	if [ -f "$EMU_SD/log.txt" ]; then
+		echo "--- $EMU_SD/log.txt"
+		cat "$EMU_SD/log.txt"
+	fi
+}
+
+send() {
+	[ -n "${1:-}" ] || { echo "Usage: ./sf.sh send <switch-ip>"; exit 1; }
+	build_switch
+	docker run --rm -v "$PWD":/src -w /src -e SWITCH_IP="$1" "$IMAGE" bash -c '$DEVKITPRO/tools/bin/nxlink -a "$SWITCH_IP" '"$NRO"
 }
 
 upstream() {
@@ -89,10 +139,8 @@ case "${1:-}" in
 			*) usage; exit 1 ;;
 		esac ;;
 	run) shift; build_host; ./build/host/switchfish "$@" ;;
-	send)
-		[ -n "${2:-}" ] || { echo "Usage: ./sf.sh send <switch-ip>"; exit 1; }
-		docker run --rm -v "$PWD":/src -w /src "$IMAGE" bash -c "\$DEVKITPRO/tools/bin/nxlink -a $2 $NRO" ;;
 	emu) shift; emu "$@" ;;
+	send) shift; send "$@" ;;
 	upstream) upstream ;;
 	clean) rm -rf build ;;
 	*) usage ;;

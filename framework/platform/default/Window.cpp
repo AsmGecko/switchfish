@@ -67,7 +67,7 @@ void SexyAppBase::MakeWindow()
 		mWindow = (void*)SDL_CreateWindow(
 			mTitle.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-			mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+			mWidescreenAware ? 1280 : 960, 720, winFlags);
         
         if (mWindow == NULL)
             SDL_Log("SDL_CreateWindow", SDL_GetError());
@@ -103,7 +103,7 @@ void SexyAppBase::MakeWindow()
 			mWindow = (void*)SDL_CreateWindow(
 				mTitle.c_str(),
 				SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-				mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+				mWidescreenAware ? 1280 : 960, 720, winFlags);
             
             if (mWindow == NULL)
                 SDL_Log("SDL_CreateWindow:%s", SDL_GetError());

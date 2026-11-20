@@ -2,6 +2,7 @@
 
 #include "Grubber.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Fish.h"
 #include "Missle.h"
@@ -67,7 +68,7 @@ void Sexy::Grubber::Update()
 
 	mEatFoodDelayTimer++;
 	mSpeedChangeTimer++;
-	if (mSpeedChangeTimer > 20 || mXD <= 10.0 || mXD >= 540.0)
+	if (mSpeedChangeTimer > 20 || mXD <= TankLeft() + 10.0 || mXD >= TankRight() - 100.0)
 	{
 		mSpeedChangeTimer = 0;
 		if (mApp->mSeed->Next() % 10 == 0)
@@ -76,10 +77,10 @@ void Sexy::Grubber::Update()
 
 	if (!mApp->mBoard->AliensInTank())
 		CoinDrop();
-	if (mXD > 560.0)
-		mXD = 560.0;
-	if (mXD < 10.0)
-		mXD = 10.0;
+	if (mXD > TankRight() - 80.0)
+		mXD = TankRight() - 80.0;
+	if (mXD < TankLeft() + 10.0)
+		mXD = TankLeft() + 10.0;
 	if (mYD > 355.0)
     {
         mYD = 355.0;
@@ -100,9 +101,9 @@ void Sexy::Grubber::Update()
 			mYD = 95.0;
 	}
 
-	if (mXD > 535.0 && mVX > 0.1)
+	if (mXD > TankRight() - 105.0 && mVX > 0.1)
 		mVX -= 0.1;
-	if (mXD < 15.0 && mVX < -0.1)
+	if (mXD < TankLeft() + 15.0 && mVX < -0.1)
 		mVX += 0.1;
 	if (mYD < 355.0)
 		mVY += 0.4;

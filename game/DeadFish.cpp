@@ -2,6 +2,7 @@
 
 #include "DeadFish.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Shadow.h"
 #include "Res.h"
@@ -158,10 +159,10 @@ void Sexy::DeadFish::Update()
 
 	mXD += mVX / mSpeedMod;
 	mYD += mVY / mSpeedMod;
-	if (mXD > 540.0)
-		mXD = 540.0;
-	if (mXD < 10.0)
-		mXD = 10.0;
+	if (mXD > TankRight() - 100.0)
+		mXD = TankRight() - 100.0;
+	if (mXD < TankLeft() + 10.0)
+		mXD = TankLeft() + 10.0;
 
 	if (mObjType == TYPE_PENTA || mObjType == TYPE_GRUBBER)
 	{

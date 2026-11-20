@@ -10,6 +10,26 @@
 
 using namespace Sexy;
 
+int Sexy::gTankLeft = 0;
+int Sexy::gTankRight = 640;
+
+void Sexy::SetWideTank(bool wide)
+{
+	int margin = wide ? 107 : 0;
+	gTankLeft = -margin;
+	gTankRight = 640 + margin;
+}
+
+// Saves keep the bounds they were made with. Every left bound is >= 0 in the classic tank and < 0 in
+// the wide one, so that tells us which tank wrote it.
+void Sexy::FixLoadedXBounds(int& theMin, int& theMax)
+{
+	int aSavedMargin = theMin < 0 ? 107 : 0;
+	int aDelta = -gTankLeft - aSavedMargin;
+	theMin -= aDelta;
+	theMax += aDelta;
+}
+
 DialogButton* Sexy::MakeDialogButton(int theId, ButtonListener* theListener, SexyString theText, Font* theFont)
 {
 	DialogButton* aDiaBtn = new DialogButton(IMAGE_DIALOGBUTTON, theId, theListener);

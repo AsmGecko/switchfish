@@ -3,6 +3,7 @@
 #include "Food.h"
 #include "Board.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Res.h"
 
 using namespace Sexy;
@@ -138,10 +139,10 @@ void Sexy::Food::Update()
 			mXD += mVX;
 		}
 
-		if (mXD > 550.0)
-			mXD = 550.0;
-		else if (mXD < 20.0)
-			mXD = 20.0;
+		if (mXD > TankRight() - 90.0)
+			mXD = TankRight() - 90.0;
+		else if (mXD < TankLeft() + 20.0)
+			mXD = TankLeft() + 20.0;
 	}
 
 	if (mYD > 410.0 || (mFoodType == 3 && mYD > 400.0))

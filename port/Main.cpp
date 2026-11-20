@@ -1,5 +1,7 @@
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Notice.h"
+#include "TestPlan.h"
 #include <SDL2/SDL.h>
 #include <cstdlib>
 #include <cstring>
@@ -112,6 +114,16 @@ int main(int argc, char* argv[])
 #endif
     StartLog();
     std::string path = GameDataPath(argc, argv);
+    // before ChDir moves us into the game folder
+    std::string planPath, outPath = ".";
+    if (const char* plan = Arg(argc, argv, "--plan"))
+    {
+        planPath = std::filesystem::absolute(plan).string();
+    }
+    if (const char* out = Arg(argc, argv, "--out"))
+    {
+        outPath = std::filesystem::absolute(out).string();
+    }
 
     // --notice album|nodata shows a screen without its condition, to check how it looks
     const char* preview = Arg(argc, argv, "--notice");
@@ -145,6 +157,13 @@ int main(int argc, char* argv[])
 
     Sexy::WinFishApp app;
     app.Init();
+    // before Start() launches the loading thread, which builds the wide tank art
+    Sexy::SetWideTank(app.mWidescreenAware && app.mWideTank);
+    if (!planPath.empty())
+    {
+        const char* timeout = Arg(argc, argv, "--timeout");
+        LoadTestPlan(&app, planPath.c_str(), outPath.c_str(), timeout ? atoi(timeout) : 60);
+    }
     app.Start();
     app.Shutdown();
     return 0;

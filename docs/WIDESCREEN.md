@@ -11,6 +11,23 @@ Hard rule for every visual change: **it must not look worse than the original.**
 pixel art, no upscaled blurry sprites, no visible seams or mirror images. Every widened component in
 section 3 says how it is built and whether we are sure, or have to prototype and compare screenshots first.
 
+## Status (2026-11-20)
+
+Built:
+- Canvas 854x480 with the 640x480 design space centred (`mScreenBounds`), drawn into a persistent FBO and
+  put on screen with a sharp-bilinear shader (`GLInterface::Present`). Screens that don't paint the whole
+  canvas get blurred, darkened sides. Settings `Widescreen` and `WideTank` (registry), both on by default.
+- Wide tank: `TankLeft()/TankRight()` through every bound, spawn range and food zone (0..640 in the classic
+  tank, -107..747 wide), save fix-up on load (`FixLoadedXBounds`), Board draws and takes clicks across the
+  canvas, waves and light bands continue, tank mask widened.
+- Backdrops: instead of quilting, an image model (Codex) fills the sides of each backdrop
+  (`./sf.sh widen`, `scripts/widescreen/`). The game keeps the original middle pixel exact and only uses the
+  new parts, feathered over 12 px. The pack lives in `gameData/widescreen/` and is never committed (it is
+  derived from PopCap's art). Without a pack the sides are a blurred mirror of the edge.
+
+Not yet: HUD wings (the bar stays 640 and floats over the water), native wide backgrounds for menu screens,
+PetDialog/FoodDialog and the starfield cheat at canvas width, an options toggle, a 4:3 determinism check.
+
 ## 0. Key finding: the framework already knows how to do this
 
 PopCap's later SexyAppFramework had a "widescreen aware" mode, and our framework still carries the hooks:

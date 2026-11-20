@@ -1,8 +1,10 @@
+#include <algorithm>
 #include "widget/WidgetManager.h"
 #include "graphics/Font.h"
 
 #include "Coin.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Fish.h"
 #include "Oscar.h"
@@ -674,6 +676,8 @@ void Sexy::Coin::Sync(DataSync* theSync)
 {
 	GameObject::Sync(theSync);
 	theSync->SyncDouble(mXD);
+	if (theSync->mReader)
+		mXD = std::clamp(mXD, (double)TankLeft(), (double)(TankRight() - mWidth));
 	theSync->SyncDouble(mYD);
 	theSync->SyncBool(m0x168);
 	theSync->SyncLong(mAnimationTimer);

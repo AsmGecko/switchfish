@@ -17,6 +17,9 @@ the way they are and `docs/ROADMAP.md` for what's next.
   on case-insensitive file names, the framework goes through `fcaseopen`.
 - Emulator: `./sf.sh emu` runs the NRO in Ryubing (portable, `tools/ryubing/`). Smoke tests only, real
   validation is on hardware.
+- The widescreen pack (`gameData/widescreen/`) is generated from the player's own backdrops and is derived
+  from PopCap's art: never commit it, never bundle it. Only the scripts and prompt in `scripts/widescreen/`.
+- Test runs: plans in `tests/plans/`, always short with `--timeout`; kill the game if it stalls.
 - No PopCap art in anything we ship (icon, splash). "PopCap" may not appear in the product name.
 - Keep the PopCap acknowledgment in README and in any release notes.
 

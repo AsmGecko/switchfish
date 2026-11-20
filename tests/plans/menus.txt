@@ -1,0 +1,13 @@
+# title, main menu, then into tank 1-1
+100 shot title
+150 click 315 428
++50 click 315 428
++50 click 315 428
++50 click 315 428
++50 click 315 428
++50 click 315 428
++120 shot menu
++10 click 463 82
++250 shot tank
++150 shot tank-later
++10 quit

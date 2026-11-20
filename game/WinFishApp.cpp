@@ -1,3 +1,4 @@
+#include "WideTank.h"
 #include "SEHCatcher.h"
 #include "SexyAppBase.h"
 #include "widget/WidgetManager.h"
@@ -577,6 +578,9 @@ void Sexy::WinFishApp::LoadingThreadProc()
 		aImgId++;
 		aImgCounter = aImgId - IMAGE_TANKMASK1_ID;
 	}
+
+	// switchfish: wide tank art (the tank width is set before this thread starts)
+	BuildWideBackdrops(this);
 
 	aImgId = IMAGE_SCL_STINKY_ID;
 	aImgCounter = 0;

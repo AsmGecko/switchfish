@@ -47,7 +47,7 @@ Each milestone has an exit criterion; don't start the next one until it holds.
 
 **Exit:** harness plans for all modes pass on host and Switch.
 
-## M5: Widescreen
+## M5: Widescreen (in progress, see docs/WIDESCREEN.md "Status")
 - [ ] Framework: configurable logical canvas (640x480 or 854x480), viewport and input remapping
 - [ ] Widescreen presentation: extended backdrops generated from the user's own files, HUD centered,
       menus 4:3 centered

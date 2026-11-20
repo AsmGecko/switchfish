@@ -2,6 +2,7 @@
 
 #include "Penta.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Shadow.h"
 #include "Missle.h"
@@ -69,17 +70,17 @@ void Sexy::Penta::Update()
 
 	mEatFoodDelayTimer++;
 	mSpeedChangeTimer++;
-	if (mSpeedChangeTimer > 20 || mXD <= 10.0 || mXD >= 540.0)
+	if (mSpeedChangeTimer > 20 || mXD <= TankLeft() + 10.0 || mXD >= TankRight() - 100.0)
 	{
 		mSpeedChangeTimer = 0;
 		if (mApp->mSeed->Next() % 10 == 0)
 			mSpeedState = mApp->mSeed->Next() % 9;
 	}
 
-	if (mXD > 550.0)
-		mXD = 550.0;
-	if (mXD < 10.0)
-		mXD = 10.0;
+	if (mXD > TankRight() - 90.0)
+		mXD = TankRight() - 90.0;
+	if (mXD < TankLeft() + 10.0)
+		mXD = TankLeft() + 10.0;
 	if (mYD > 359.0)
 	{
 		mYD = 359.0;
@@ -100,9 +101,9 @@ void Sexy::Penta::Update()
 		mBoughtTimer--;
 	}
 
-	if (mXD > 535.0 && mVX > 0.1)
+	if (mXD > TankRight() - 105.0 && mVX > 0.1)
 		mVX -= 0.1;
-	if (mXD < 15.0 && mVX < -0.1)
+	if (mXD < TankLeft() + 15.0 && mVX < -0.1)
 		mVX += 0.1;
 	if (mYD < 359.0)
 		mVY += 0.4;

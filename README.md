@@ -17,12 +17,22 @@ Status: the NRO and a macOS build compile; nothing has run on hardware yet. See 
 ./sf.sh build          # host build in build/host/
 ./sf.sh run            # host build with the game files in gameData/ (or --data <dir>)
 ./sf.sh emu            # NRO in the Ryubing emulator (installed in tools/ on first use)
+./sf.sh widen          # widescreen tank pack from your backdrops via Codex (stays out of the repo)
 ./sf.sh send <ip>      # send the NRO to hbmenu's netloader (press Y on the Switch)
 ./sf.sh upstream       # clone/update the reference repos in upstream/
 ```
 
 Host builds need `brew install cmake ninja sdl2 sdl2_ttf libopenmpt jpeg-turbo libpng libvorbis mpg123`.
 Switch builds only need Docker.
+
+## Test plans
+
+`tests/plans/*.txt` drive the game hands-free: clicks, keys and screenshots at fixed logic ticks, in the
+game's 640x480 design coordinates (see `port/TestPlan.h`). A run always quits by itself:
+
+```bash
+./build/host/switchfish --plan tests/plans/widetank.txt --out /tmp/shots --timeout 45
+```
 
 ## On the Switch
 

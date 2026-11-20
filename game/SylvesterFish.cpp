@@ -2,6 +2,7 @@
 
 #include "SylvesterFish.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Missle.h"
 #include "Shadow.h"
@@ -494,9 +495,9 @@ void Sexy::SylvesterFish::GrowSylvester(int theNewSize)
 		mXD += 40.0;
 		mYMin = 105;
 		mYMax = 360;
-		mXMin = 10;
+		mXMin = TankLeft() + 10;
 		mYD += 40.0;
-		mXMax = 540;
+		mXMax = TankRight() - 100;
 		if (mShadowPtr)
 			mShadowPtr->mShadowSize = 0;
 	}
@@ -507,9 +508,9 @@ void Sexy::SylvesterFish::GrowSylvester(int theNewSize)
 		mXD -= 40.0;
 		mYMax = 310;
 		mYMin = 75;
-		mXMin = 0;
+		mXMin = TankLeft();
 		mYD -= 40.0;
-		mXMax = 480;
+		mXMax = TankRight() - 160;
 		if (mShadowPtr)
 			mShadowPtr->mShadowSize = 2;
 	}

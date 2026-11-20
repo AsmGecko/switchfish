@@ -401,6 +401,16 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
             mFingerEvents = true;
         }
         
+		if (mScriptedInput && (
+			(event.type >= SDL_KEYDOWN && event.type <= SDL_MOUSEWHEEL) ||
+			(event.type >= SDL_FINGERDOWN && event.type <= SDL_FINGERMOTION) ||
+			(event.type == SDL_WINDOWEVENT && (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST ||
+				event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED || event.window.event == SDL_WINDOWEVENT_ENTER ||
+				event.window.event == SDL_WINDOWEVENT_LEAVE))))
+		{
+			return SDL_HasEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
+		}
+
 		//SDL_Log("EVENT:%04X", event.type);
         HandleEvent(&event);
 		switch(event.type)

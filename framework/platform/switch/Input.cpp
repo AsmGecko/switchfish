@@ -97,8 +97,8 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	// Scan the gamepad. This should be done once for each frame
 	padUpdate(&pad);
 
-	u64 kDown = padGetButtonsDown(&pad);
-	u64 kUp = padGetButtonsUp(&pad);
+	u64 kDown = mScriptedInput ? 0 : padGetButtonsDown(&pad);
+	u64 kUp = mScriptedInput ? 0 : padGetButtonsUp(&pad);
 
 	if (kDown)
 	{
@@ -168,7 +168,8 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	}
 
 	HidTouchScreenState state = {0};
-	hidGetTouchScreenStates(&state, 1);
+	if (!mScriptedInput)
+		hidGetTouchScreenStates(&state, 1);
 	static int x=0, y=0;
 	if (state.count)
 	{

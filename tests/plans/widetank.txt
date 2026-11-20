@@ -1,0 +1,11 @@
+# fresh tank 1-1: wait until the fish are hungry, feed far left in the wide part, watch them follow
+200 click 315 428
++150 click 463 82
++200 click 397 189
++40 click 242 257
++150 click 320 431
++750 click -70 200
++50 shot follow1
++60 shot follow2
++60 shot follow3
++10 quit

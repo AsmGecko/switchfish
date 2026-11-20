@@ -114,10 +114,10 @@ void Sexy::Missle::Update()
     
     if (mMissleType == MISSLE_CLASSIC || (mMissleType == MISSLE_ENERGYBALL && !m0x190))
     {
-        if (mXD > 550.0)
-            mXD = 550.0;
-        if (mXD < 10.0)
-            mXD = 10.0;
+        if (mXD > TankRight() - 90.0)
+            mXD = TankRight() - 90.0;
+        if (mXD < TankLeft() + 10.0)
+            mXD = TankLeft() + 10.0;
         if (mYD > 370.0)
             mYD = 370.0;
         if (mYD < 95.0)
@@ -127,7 +127,7 @@ void Sexy::Missle::Update()
     {
         if ((mMissleType == MISSLE_ENERGYBALL && m0x190) || (mMissleType == MISSLE_BALL || IsTargetless()))
         {
-            if (mXD > 580.0 || mXD < -20.0 || mYD > 380.0 || mYD < 45.0)
+            if (mXD > TankRight() - 60.0 || mXD < TankLeft() - 20.0 || mYD > 380.0 || mYD < 45.0)
             {
                 Remove();
                 return;

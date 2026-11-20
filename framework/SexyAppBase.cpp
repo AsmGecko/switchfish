@@ -305,7 +305,7 @@ SexyAppBase::SexyAppBase()
 	mMinVidMemory3D = 6;
 	mRecommendedVidMemory3D = 14;
 	mRelaxUpdateBacklogCount = 0;
-	mWidescreenAware = false;
+	mWidescreenAware = true;
 	mEnableWindowAspect = false;
 	mWindowAspect.Set(4, 3);
 	mIsWideWindow = false;
@@ -983,6 +983,8 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("SfxVolume", static_cast<int>(mSfxVolume * 100));
 	RegistryWriteInteger("Muted", (mMuteCount - mAutoMuteCount > 0) ? 1 : 0);
 	RegistryWriteInteger("ScreenMode", mIsWindowed ? 0 : 1);
+	RegistryWriteInteger("Widescreen", mWidescreenAware ? 1 : 0);
+	RegistryWriteInteger("WideTank", mWideTank ? 1 : 0);
 	RegistryWriteInteger("PreferredX", mPreferredX);
 	RegistryWriteInteger("PreferredY", mPreferredY);
 	RegistryWriteInteger("CustomCursors", mCustomCursorsEnabled ? 1 : 0);		
@@ -1225,6 +1227,12 @@ void SexyAppBase::ReadFromRegistry()
 #if !defined(__IPHONEOS__) && (!defined(__ANDROID__) || defined(__TERMUX__)) && !defined(__SWITCH__) && !defined(__3DS__) && !defined(__EMSCRIPTEN__)
 	if (RegistryReadInteger("ScreenMode", &anInt))
 		mIsWindowed = anInt == 0;
+
+	if (RegistryReadInteger("Widescreen", &anInt))
+		mWidescreenAware = anInt != 0;
+
+	if (RegistryReadInteger("WideTank", &anInt))
+		mWideTank = anInt != 0;
 #endif
 
 	RegistryReadInteger("PreferredX", &mPreferredX);
@@ -1530,6 +1538,8 @@ void SexyAppBase::DoExit(int theCode)
 
 void SexyAppBase::UpdateFrames()
 {
+	if (mTickHook)
+		mTickHook();
 	mUpdateCount++;	
 
 	if (!mMinimized)

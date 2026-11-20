@@ -87,6 +87,8 @@ static GLenum gVertexMode;
 static GLuint gProgram;
 static GLuint gVbo;
 static GLint gUfViewProjMtx, gUfTexture, gUfUseTexture, gUfUvBounds;
+static GLuint gPresentProgram;
+static GLint gPfViewProjMtx, gPfTexture, gPfTexSize, gPfScale;
 
 static void GfxBegin(GLenum vertexMode)
 {
@@ -197,6 +199,40 @@ V2F vec2 v_uv;
 			FRAG_OUT = TEX2D(u_texture, clamp(v_uv, u_uvBounds.xy, u_uvBounds.zw)) * v_color;
 		else
 			FRAG_OUT = v_color;
+	}
+#endif
+)DELIMITER";
+
+// Puts the canvas on screen. Sharp-bilinear: nearest within a texel, a one pixel blend at texel edges, so
+// non-integer scales keep every pixel the same size without going soft. u_scale <= 1 is plain bilinear.
+static constexpr const char *PRESENT_SHADER_CODE = R"DELIMITER(
+#if defined(GL_ES) && (!defined(FRAGMENT) || defined(GL_FRAGMENT_PRECISION_HIGH))
+precision highp float;
+#endif
+V2F vec4 v_color;
+V2F vec2 v_uv;
+
+#ifdef VERTEX
+	uniform mat4 u_viewProj;
+	VERT_IN vec3 a_position;
+	VERT_IN vec4 a_color;
+	VERT_IN vec2 a_uv;
+	void main() {
+		v_color = a_color;
+		v_uv = a_uv;
+		gl_Position = u_viewProj * vec4(a_position, 1.0);
+	}
+#endif
+#ifdef FRAGMENT
+	uniform sampler2D u_texture;
+	uniform vec2 u_texSize;
+	uniform vec2 u_scale;
+	void main() {
+		vec2 texel = v_uv * u_texSize;
+		vec2 region = max(vec2(0.0), 0.5 - 0.5 / u_scale);
+		vec2 c = fract(texel) - 0.5;
+		vec2 f = (c - clamp(c, -region, region)) * max(u_scale, vec2(1.0)) + 0.5;
+		FRAG_OUT = TEX2D(u_texture, (floor(texel) + f) / u_texSize) * v_color;
 	}
 #endif
 )DELIMITER";
@@ -1056,8 +1092,9 @@ void TextureData::BltTriangles(const TriVertex theVertices[][3], int theNumTrian
 GLInterface::GLInterface(SexyAppBase* theApp)
 {
 	mApp = theApp;
-	mWidth  = mApp->mWidth;
 	mHeight = mApp->mHeight;
+	// 16:9 at the design height, even so the design area sits on whole pixels (854 for 480)
+	mWidth = mApp->mWidescreenAware ? (mHeight * 16 / 9 + 1) & ~1 : mApp->mWidth;
 	mDisplayWidth  = mWidth;
 	mDisplayHeight = mHeight;
 	mPresentationRect = Rect(0, 0, mWidth, mHeight);
@@ -1132,19 +1169,20 @@ void GLInterface::UpdateViewport()
 
 	vw = width; vh = height;
 
-	// Letterbox to 4:3
-	if (width * 3 > height * 4)
+	// letterbox to the canvas aspect
+	if (width * mHeight > height * mWidth)
 	{
-		vw = height * 4 / 3;
+		vw = height * mWidth / mHeight;
 		vx = (width - vw) / 2;
 	}
-	else if (width * 3 < height * 4)
+	else if (width * mHeight < height * mWidth)
 	{
-		vh = width * 3 / 4;
+		vh = width * mHeight / mWidth;
 		vy = (height - vh) / 2;
 	}
 
-	glViewport(vx, vy, vw, vh);
+	mDisplayWidth = width;
+	mDisplayHeight = height;
 	mPresentationRect = Rect(vx, vy, vw, vh);
 }
 
@@ -1185,6 +1223,14 @@ int GLInterface::Init(bool IsWindowed)
 		gUfUseTexture  = glGetUniformLocation(gProgram, "u_useTexture");
 		gUfUvBounds    = glGetUniformLocation(gProgram, "u_uvBounds");
 
+		gPresentProgram = shaderLoad(PRESENT_SHADER_CODE);
+		if (gPresentProgram == 0)
+			return 0;
+		gPfViewProjMtx = glGetUniformLocation(gPresentProgram, "u_viewProj");
+		gPfTexture     = glGetUniformLocation(gPresentProgram, "u_texture");
+		gPfTexSize     = glGetUniformLocation(gPresentProgram, "u_texSize");
+		gPfScale       = glGetUniformLocation(gPresentProgram, "u_scale");
+
 		glGenBuffers(1, &gVbo);
 		glBindBuffer(GL_ARRAY_BUFFER, gVbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(GLVertex) * MAX_VERTICES, nullptr, GL_DYNAMIC_DRAW);
@@ -1194,8 +1240,36 @@ int GLInterface::Init(bool IsWindowed)
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &aMaxSize);
 	MAX_TEXTURE_SIZE = aMaxSize;
 
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (mCanvasFbo == 0)
+	{
+		auto makeTarget = [](GLuint& fbo, GLuint& tex, int w, int h)
+		{
+			glGenTextures(1, &tex);
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glGenFramebuffers(1, &fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+			glClearColor(0, 0, 0, 1);
+			glClear(GL_COLOR_BUFFER_BIT);
+			return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+		};
+		if (!makeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight))
+		{
+			gSexyAppBase->Popup("Failed to create the drawing canvas");
+			return 0;
+		}
+		// halving steps of the design area, for the blurred sides
+		for (int i = 0; i < 4; i++)
+		{
+			makeTarget(mBlurFbo[i], mBlurTex[i], mApp->mWidth >> (i + 1), mHeight >> (i + 1));
+		}
+	}
+	BindCanvas();
 
 	gTextureSizeMustBePow2 = false;
 	gMinTextureWidth  = 8;
@@ -1256,18 +1330,121 @@ bool GLInterface::PreDraw()
 	return true;
 }
 
+void GLInterface::BindCanvas()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, mCanvasFbo);
+	glViewport(0, 0, mWidth, mHeight);
+}
+
+void GLInterface::ReadCanvas(MemoryImage* theImage)
+{
+	std::vector<uint32_t> buf(mWidth * mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mCanvasFbo);
+	glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
+	theImage->Create(mWidth, mHeight);
+	uint32_t* bits = theImage->GetBits();
+	for (int y = 0; y < mHeight; y++)
+	{
+		const uint32_t* src = &buf[(mHeight - 1 - y) * mWidth];
+		for (int x = 0; x < mWidth; x++)
+		{
+			bits[y * mWidth + x] = RgbaToArgb(src[x]) | 0xFF000000u;
+		}
+	}
+	theImage->BitsChanged();
+}
+
+// Draws srcRect of a render target (top-left origin, in its pixels) into dstRect of the bound target.
+static void DrawTarget(GLuint tex, int texW, int texH, float sx, float sy, float sw, float sh,
+	float dx, float dy, float dw, float dh, int targetW, int targetH, uint32_t color, bool sharp = true)
+{
+	float ortho[16];
+	MakeOrthoMatrix(0, (float)targetW, (float)targetH, 0, -10, 10, ortho);
+	glUniformMatrix4fv(gPfViewProjMtx, 1, GL_FALSE, ortho);
+	glUniform2f(gPfTexSize, (float)texW, (float)texH);
+	glUniform2f(gPfScale, sharp ? dw / sw : 1.0f, sharp ? dh / sh : 1.0f);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	// render targets are stored bottom-up
+	float u1 = sx / texW, u2 = (sx + sw) / texW;
+	float vTop = 1.0f - sy / texH, vBottom = 1.0f - (sy + sh) / texH;
+	GLVertex quad[4] = {
+		{dx,      dy,      0, color, u1, vTop},
+		{dx + dw, dy,      0, color, u2, vTop},
+		{dx + dw, dy + dh, 0, color, u2, vBottom},
+		{dx,      dy + dh, 0, color, u1, vBottom},
+	};
+	GfxBegin(GL_TRIANGLE_FAN);
+	GfxAddVertices(quad, 4);
+	GfxEnd();
+}
+
+void GLInterface::Present()
+{
+	GfxEnd();
+	glUseProgram(gPresentProgram);
+	glUniform1i(gPfTexture, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_BLEND);
+
+	const int designW = mApp->mWidth;
+	const float marginX = (mWidth - designW) / 2.0f;
+	const bool blurredSides = marginX > 0 && !mFullCanvas;
+	const uint32_t white = 0xFFFFFFFFu;
+
+	if (blurredSides)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, mBlurFbo[0]);
+		glViewport(0, 0, designW >> 1, mHeight >> 1);
+		DrawTarget(mCanvasTex, mWidth, mHeight, marginX, 0, (float)designW, (float)mHeight,
+			0, 0, (float)(designW >> 1), (float)(mHeight >> 1), designW >> 1, mHeight >> 1, white);
+		for (int i = 1; i < 4; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, mBlurFbo[i]);
+			glViewport(0, 0, designW >> (i + 1), mHeight >> (i + 1));
+			DrawTarget(mBlurTex[i - 1], designW >> i, mHeight >> i, 0, 0, (float)(designW >> i), (float)(mHeight >> i),
+				0, 0, (float)(designW >> (i + 1)), (float)(mHeight >> (i + 1)), designW >> (i + 1), mHeight >> (i + 1), white);
+		}
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, mDisplayWidth, mDisplayHeight);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	const Rect& r = mPresentationRect;
+	if (blurredSides)
+	{
+		// the blurred middle stretched across the whole canvas and darkened, the sharp middle on top
+		const int bw = designW >> 4, bh = mHeight >> 4;
+		DrawTarget(mBlurTex[3], bw, bh, 0, 0, (float)bw, (float)bh, (float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight,
+			mDisplayWidth, mDisplayHeight, 0xFF6F6F6Fu, false);
+		float scale = (float)r.mWidth / mWidth;
+		DrawTarget(mCanvasTex, mWidth, mHeight, marginX, 0, (float)designW, (float)mHeight,
+			r.mX + marginX * scale, (float)r.mY, designW * scale, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
+	}
+	else
+	{
+		DrawTarget(mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
+			(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
+	}
+
+	glUseProgram(gProgram);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void GLInterface::Flush()
 {
 	gNumVertices = 0;
+	Present();
 #ifdef __SWITCH__
 	eglSwapBuffers(mApp->mWindow, mApp->mSurface);
 #else
 	SDL_GL_SwapWindow((SDL_Window*)mApp->mWindow);
 #endif
-#ifndef __EMSCRIPTEN__
-	// Clear back buffer after swap (content undefined)
-	glClear(GL_COLOR_BUFFER_BIT);
-#endif // Emscripten: browser composites after rAF, no clear needed
+	// the canvas keeps its contents between frames, the game only redraws what changed
+	BindCanvas();
 }
 
 bool GLInterface::CreateImageTexture(MemoryImage *theImage)
@@ -1317,7 +1494,7 @@ bool GLInterface::RecoverBits(MemoryImage* theImage)
 
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			{
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, mCanvasFbo);
 				glDeleteFramebuffers(1, &fbo);
 				return false;
 			}
@@ -1325,7 +1502,7 @@ bool GLInterface::RecoverBits(MemoryImage* theImage)
 			std::vector<uint32_t> buf(w * h);
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
 
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, mCanvasFbo);
 			glDeleteFramebuffers(1, &fbo);
 
 			uint32_t* dst = theImage->GetBits() + offy * theImage->GetWidth() + offx;

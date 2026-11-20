@@ -20,6 +20,8 @@ Usage: ./sf.sh <command>
   run [args]      build and run on the Mac with the files in gameData/ (or --data <dir>)
   emu [--gui]     build the NRO and play it in Ryubing; click = touch.
                   --gui opens Ryubing's own window, which needs prod.keys from your Switch
+  widen           make the widescreen tank pack in gameData/widescreen/ from your backdrops with
+                  Codex (an image model; costs API credit). The pack stays out of the repo.
   send <ip>       build the NRO and send it to hbmenu's netloader (press Y on the Switch)
   upstream        clone or update the reference repos in upstream/
   clean           remove build/
@@ -117,6 +119,31 @@ send() {
 	docker run --rm -v "$PWD":/src -w /src -e SWITCH_IP="$1" "$IMAGE" bash -c '$DEVKITPRO/tools/bin/nxlink -a "$SWITCH_IP" '"$NRO"
 }
 
+# Each backdrop goes to Codex with its sides transparent; the game keeps the original middle pixel exact
+# and only uses the new parts. Generated from the player's own files, so never committed or shipped.
+widen() {
+	[ -f gameData/properties/resources.xml ] || { echo "Put your game files in gameData/ first."; exit 1; }
+	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
+	local work py=tools/pyenv/bin/python
+	work=$(mktemp -d)
+	mkdir -p gameData/widescreen
+	for i in 1 2 3 4 5 6; do
+		src=$(find gameData/images -maxdepth 1 -iname "aquarium$i.jpg" | head -1)
+		"$py" -I scripts/widescreen/canvas.py "$src" "$work/canvas$i.png"
+		~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" > "$work/codex$i.txt" &
+	done
+	wait
+	for i in 1 2 3 4 5 6; do
+		src=$(find gameData/images -maxdepth 1 -iname "aquarium$i.jpg" | head -1)
+		draft=$(grep -oE '/[^` )]+/generated_images/[^` )]+\.png' "$work/codex$i.txt" | head -1)
+		if [ -z "$draft" ]; then
+			echo "aquarium$i: no image from Codex, see $work/codex$i.txt"
+			continue
+		fi
+		"$py" -I scripts/widescreen/fit.py "$draft" "$src" "gameData/widescreen/aquarium$i.png"
+	done
+}
+
 upstream() {
 	mkdir -p upstream
 	while read -r dir url branch; do
@@ -140,6 +167,7 @@ case "${1:-}" in
 		esac ;;
 	run) shift; build_host; ./build/host/switchfish "$@" ;;
 	emu) shift; emu "$@" ;;
+	widen) widen ;;
 	send) shift; send "$@" ;;
 	upstream) upstream ;;
 	clean) rm -rf build ;;

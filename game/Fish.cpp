@@ -2,6 +2,7 @@
 
 #include "Fish.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "ProfileMgr.h"
 #include "FishTypePet.h"
@@ -514,7 +515,7 @@ void Fish::Update()
 
     if (mXD > mXMax - 5 && mVX > 0.1)
         mVX -= 0.1;
-    if (mXD < 15 && mVX < -0.1)
+    if (mXD < TankLeft() + 15 && mVX < -0.1)
         mVX += 0.1;
 
     FishUpdateAnimation();
@@ -595,7 +596,7 @@ void Sexy::Fish::MouseDown(int x, int y, int theClickCount)
     {
         double absX = x + mXD;
         double absY = y + mYD;
-        if (absX < 587.0 && absX > 30.0 && absY < 400.0 && absY > 60.0)
+        if (absX < TankRight() - 53.0 && absX > TankLeft() + 30.0 && absY < 400.0 && absY > 60.0)
         {
             bool unk = aBoard->Unk11(mX + x, mY + y);
             if (!unk && aBoard->Buy(aBoard->m0x4ac, true))
@@ -913,6 +914,8 @@ void Sexy::Fish::Sync(DataSync* theSync)
     theSync->SyncLong(mXMin);
     theSync->SyncLong(mYMin);
     theSync->SyncLong(mXMax);
+    if (theSync->mReader)
+        FixLoadedXBounds(mXMin, mXMax);
     theSync->SyncLong(mSize);
     theSync->SyncLong(mFoodAte);
     theSync->SyncLong(mFoodNeededToGrow);
@@ -1518,8 +1521,8 @@ void Fish::Init(int theX, int theY)
     m0x17c = 0;
     mYMax = 370;
     mYMin = 95;
-    mXMin = 10;
-    mXMax = 540;
+    mXMin = TankLeft() + 10;
+    mXMax = TankRight() - 100;
     int r = Rand();
     if (r % 3 == 0)
     {

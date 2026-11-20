@@ -4,6 +4,7 @@
 #include "OtherTypePet.h"
 #include "BilaterusHead.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Shadow.h"
 #include "Missle.h"
@@ -210,7 +211,7 @@ void Sexy::OtherTypePet::Update()
 	mMovementStateChangeTimer++;
 	mChaseEntityTimer++;
 
-	if ((mMovementStateChangeTimer > 20 || (mXD <= 10.0 && mTargetVX <= 0.0)) || (mXD >= 540.0 && mYD >= 0.0))
+	if ((mMovementStateChangeTimer > 20 || (mXD <= TankLeft() + 10.0 && mTargetVX <= 0.0)) || (mXD >= TankRight() - 100.0 && mYD >= 0.0))
 	{
 		mMovementStateChangeTimer = 0;
 		if (mApp->mSeed->Next() % 10 == 0)
@@ -229,16 +230,16 @@ void Sexy::OtherTypePet::Update()
 	 
 	UpdatePetSpecialAnimations();
 	
-	double aXCap = 540;
+	double aXCap = TankRight() - 100;
 	if (mOtherTypePetType == PET_STINKY || mOtherTypePetType == PET_CLYDE)
-		aXCap = 550;
+		aXCap = TankRight() - 90;
 	else if(mOtherTypePetType == PET_RUFUS)
-		aXCap = 560;
+		aXCap = TankRight() - 80;
 
 	if (mXD > aXCap)
 		mXD = aXCap;
-	if (mXD < 10.0)
-		mXD = 10;
+	if (mXD < TankLeft() + 10.0)
+		mXD = TankLeft() + 10;
 
 	if (mYD > 350 && mOtherTypePetType == PET_NIKO)
 	{
@@ -264,9 +265,9 @@ void Sexy::OtherTypePet::Update()
 	if (mYD < 95)
 		mYD = 95;
 
-	if (mXD > 535 && mVX > 0.1)
+	if (mXD > TankRight() - 105 && mVX > 0.1)
 		mMovementState = 1;
-	if (mXD < 15 && mVX < -0.1)
+	if (mXD < TankLeft() + 15 && mVX < -0.1)
 		mMovementState = 2;
 	UpdatePetAnimations();
 	double aYChange = 0.0;

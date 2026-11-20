@@ -1,3 +1,5 @@
+#include "WideTank.h"
+#include "graphics/GLInterface.h"
 #include "widget/ButtonWidget.h"
 #include "widget/WidgetManager.h"
 #include "misc/SexyMatrix.h"
@@ -143,7 +145,7 @@ Board::Board(WinFishApp* theApp)
 	mBoardOverlay2 = new BoardOverlay(this, 1);
 
 	mBubbleMgr = new BubbleMgr();
-	mBubbleMgr->mBubbleBounds = Rect(0, 82, 640, 398);
+	mBubbleMgr->mBubbleBounds = Rect(TankLeft(), 82, TankWidth(), 398);
 	mBubbleMgr->SetBubbleConfig(0, 0);
 	gZombieMode = mApp->mCurrentProfile->mCheatCodeFlags >> 4 & 1;
 	mCyraxPtr = nullptr;
@@ -488,7 +490,7 @@ void Sexy::Board::SpawnDeadAlien(int theX, int theY, int theAnimationIndex, int 
 void Sexy::Board::SpawnGameObject(GameObject* theObject, bool randomPosition)
 {
 	if (randomPosition)
-		theObject->SetPosition(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+		theObject->SetPosition((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	AddGameObject(theObject);
 	mWidgetManager->AddWidget(theObject);
 	MakeShadowForGameObject(theObject);
@@ -540,7 +542,7 @@ GameObject* Sexy::Board::SpawnGuppyAsFood()
 GameObject* Sexy::Board::SpawnStarAsFood()
 {
 	PlaySample(SOUND_GROW_ID, 3, 1.0);
-	Coin* aCoin = new Coin(mApp->mSeed->Next() % 520 + 20, Rand() % 50 + 105, 3, nullptr, -1.0);
+	Coin* aCoin = new Coin((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, Rand() % 50 + 105, 3, nullptr, -1.0);
 	aCoin->mMouseVisible = false;
 	AddGameObject(aCoin);
 	mWidgetManager->AddWidget(aCoin);
@@ -551,7 +553,7 @@ GameObject* Sexy::Board::SpawnStarAsFood()
 GameObject* Sexy::Board::SpawnLarvaAsFood()
 {
 	PlaySample(SOUND_GROW_ID, 3, 1.0);
-	Larva* aLarva = new Larva(mApp->mSeed->Next() % 520 + 20,360 - Rand() % 50);
+	Larva* aLarva = new Larva((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20,360 - Rand() % 50);
 	aLarva->m0x175 = true;
 	AddGameObject(aLarva);
 	mWidgetManager->AddWidget(aLarva);
@@ -576,7 +578,7 @@ GameObject* Sexy::Board::SpawnUltraAsFood()
 GameObject* Sexy::Board::SpawnExoticFood(int theType)
 {
 	PlaySample(SOUND_GROW_ID, 3, 1.0);
-	Food* aFood = new Food(mApp->mSeed->Next() % 450 + 50, 115, 0, 0, theType);
+	Food* aFood = new Food((int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 50, 115, 0, 0, theType);
 	AddGameObject(aFood);
 	mWidgetManager->AddWidget(aFood);
 	SortGameObjects();
@@ -595,6 +597,13 @@ void Sexy::Board::CyraxSpawnMiniAlien(int theX, int theY)
 void Sexy::Board::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the wide tank draws and takes clicks beyond the 640 wide design area
+	if (TankWidth() > 640)
+	{
+		mClip = false;
+		mMouseInsets = Insets(TankLeft(), 0, 640 - TankRight(), 0);
+		mApp->mGLInterface->mFullCanvas = true;
+	}
 	theWidgetManager->AddWidget(mBoardOverlay1);
 	theWidgetManager->AddWidget(mBoardOverlay2);
 }
@@ -602,6 +611,7 @@ void Sexy::Board::AddedToManager(WidgetManager* theWidgetManager)
 void Board::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	mApp->mGLInterface->mFullCanvas = false;
 	theWidgetManager->RemoveWidget(mBoardOverlay1);
 	theWidgetManager->RemoveWidget(mBoardOverlay2);
 	RemoveWidgetHelper(mMenuButton);
@@ -1034,9 +1044,9 @@ void Board::Update()
 					DetermineAlienSpawnCoordsVT();
 				else
 				{
-					mCrosshair1X = mApp->mSeed->Next() % 450 + 20;
+					mCrosshair1X = (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20;
 					mCrosshair1Y = mApp->mSeed->Next() % 195 + 105;
-					mCrosshair2X = mApp->mSeed->Next() % 450 + 20;
+					mCrosshair2X = (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20;
 					mCrosshair2Y = mApp->mSeed->Next() % 195 + 105;
 				}
 			}
@@ -1062,9 +1072,9 @@ void Board::Update()
 
 					for (int i = 0; i < aVal; i++)
 					{
-						mCrosshair1X = mApp->mSeed->Next() % 450 + 20;
+						mCrosshair1X = (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20;
 						mCrosshair1Y = mApp->mSeed->Next() % 195 + 105;
-						mCrosshair2X = mApp->mSeed->Next() % 450 + 20;
+						mCrosshair2X = (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20;
 						mCrosshair2Y = mApp->mSeed->Next() % 195 + 105;
 						SpawnAlien(mAlienExpect, mCrosshair1X, mCrosshair1Y, false);
 					}
@@ -1634,7 +1644,7 @@ void Board::MouseDown(int x, int y, int theClickCount)
 		{
 			if (mAlienList->at(0)->mAlienType == ALIEN_GUS && mCyraxPtr == nullptr)
 			{
-				if (x >= 31 && x <= 586 && y >= 61 && y <= 379)
+				if (x >= TankLeft() + 31 && x <= TankRight() - 54 && y >= 61 && y <= 379)
 				{
 					int aEatDelay = 0;
 					if (mAlienList->at(0)->FoodDroppedAtAlien(x, y))
@@ -1685,7 +1695,7 @@ void Board::MouseDown(int x, int y, int theClickCount)
 		}
 		else
 		{
-			if (x > 30 && x < 587 && y > 60 && y < 400 && 
+			if (x > TankLeft() + 30 && x < TankRight() - 53 && y > 60 && y < 400 && 
 				mDropFoodDelay <= 0 && (mTank != 5 || mApp->mGameMode == GAMEMODE_VIRTUAL_TANK) &&
 				mBilaterusList->empty() && mCyraxPtr == nullptr && mMissleList1->empty())
 			{
@@ -2292,7 +2302,7 @@ void Sexy::Board::StartGame()
 	{
 		if (mTank == 4)
 		{
-			SpawnBreeder(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+			SpawnBreeder((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 			if (!mBreederList->empty())
 				mBreederList->at(0)->m0x1a4 = 2;
 		}
@@ -2307,7 +2317,7 @@ void Sexy::Board::StartGame()
 		else
 		{
 			for (int i = 0; i < 2; i++)
-				SpawnGuppy(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+				SpawnGuppy((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 
 			mFishList->at(0)->mFoodAte = 2;
 			mFishList->at(1)->mFoodAte = 2;
@@ -2322,7 +2332,7 @@ void Sexy::Board::StartGame()
 	else
 	{
 		for (int i = 0; i < 2; i++)
-			SpawnGuppy(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+			SpawnGuppy((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	}
 
 	if (mApp->mGameMode == GAMEMODE_TIME_TRIAL)
@@ -3288,7 +3298,7 @@ void Sexy::Board::DetermineAlienSpawnCoordsVT()
 	if (mAlienExpect == 8)
 		mCrosshair1X = aX + 1;
 
-	mCrosshair2X = mApp->mSeed->Next() % 450 + 20;
+	mCrosshair2X = (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20;
 	mCrosshair2Y = mApp->mSeed->Next() % 195 + 105;
 }
 
@@ -3535,7 +3545,7 @@ void Sexy::Board::BonusRoundDropShell()
 		default: aCoinType = 1; break;
 		}
 
-		int aX = (mApp->mSeed->Next() % 520) + 20;
+		int aX = (int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20;
 		int aY = mApp->mSeed->Next() % 10 + 50;
 
 		double aVY = (double)(Rand() % 10) / 10.0 * 3.0 + 1.0;
@@ -5335,7 +5345,7 @@ Fish* Sexy::Board::SpawnGuppy(int theX, int theY)
 
 GameObject* Sexy::Board::SpawnGuppyBought()
 {
-	Fish* aFish = new Fish(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Fish* aFish = new Fish((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	aFish->mVY = mApp->mSeed->Next() % 5 + 18;
 	aFish->mYD = 30;
 	aFish->mY = 30;
@@ -5351,7 +5361,7 @@ GameObject* Sexy::Board::SpawnGuppyBought()
 
 GameObject* Sexy::Board::SpawnStarGuppyBought()
 {
-	Fish* aFish = new Fish(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Fish* aFish = new Fish((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	aFish->mVY = mApp->mSeed->Next() % 5 + 18;
 	aFish->mYD = 30;
 	aFish->mY = 30;
@@ -5378,7 +5388,7 @@ GameObject* Sexy::Board::SpawnBreeder(int theX, int theY)
 
 GameObject* Sexy::Board::SpawnBreederBought()
 {
-	Breeder* aBreeder = new Breeder(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Breeder* aBreeder = new Breeder((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	aBreeder->mVY = mApp->mSeed->Next() % 5 + 18;
 	aBreeder->mYD = 30;
 	aBreeder->mY = 30;
@@ -5392,7 +5402,7 @@ GameObject* Sexy::Board::SpawnBreederBought()
 
 GameObject* Sexy::Board::SpawnOscarBought()
 {
-	Oscar* anOscar = new Oscar(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Oscar* anOscar = new Oscar((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	anOscar->mVY = mApp->mSeed->Next() % 5 + 23;
 	anOscar->mYD = 40;
 	anOscar->mY = 40;
@@ -5408,7 +5418,7 @@ GameObject* Sexy::Board::SpawnOscarBought()
 
 GameObject* Sexy::Board::SpawnUltraBought()
 {
-	Ultra* anUltra = new Ultra(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Ultra* anUltra = new Ultra((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	anUltra->mVY = mApp->mSeed->Next() % 5 + 25;
 	anUltra->mYD = 40;
 	anUltra->mY = 40;
@@ -5424,7 +5434,7 @@ GameObject* Sexy::Board::SpawnUltraBought()
 
 GameObject* Sexy::Board::SpawnGekkoBought()
 {
-	Gekko* aGekko = new Gekko(mApp->mSeed->Next() % 520 + 20, mApp->mSeed->Next() % 265 + 105);
+	Gekko* aGekko = new Gekko((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20, mApp->mSeed->Next() % 265 + 105);
 	aGekko->mVY = mApp->mSeed->Next() % 5 + 23;
 	aGekko->mYD = 40;
 	aGekko->mY = 40;
@@ -5438,7 +5448,7 @@ GameObject* Sexy::Board::SpawnGekkoBought()
 
 GameObject* Sexy::Board::SpawnPentaBought()
 {
-	Penta* aPenta = new Penta(mApp->mSeed->Next() % 520 + 20);
+	Penta* aPenta = new Penta((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20);
 	aPenta->mYD = 65;
 	aPenta->mY = 65;
 	AddGameObject(aPenta);
@@ -5452,7 +5462,7 @@ GameObject* Sexy::Board::SpawnPentaBought()
 
 GameObject* Sexy::Board::SpawnGrubberBought()
 {
-	Grubber* aGrubber = new Grubber(mApp->mSeed->Next() % 520 + 20);
+	Grubber* aGrubber = new Grubber((int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20);
 	aGrubber->mYD = 65;
 	aGrubber->mY = 65;
 	AddGameObject(aGrubber);
@@ -5468,7 +5478,7 @@ GameObject* Sexy::Board::SpawnPet(int thePetType, int theX, int theY, bool flag1
 		flag1 = true;
 	if (theX == -1)
 	{
-		theX = mApp->mSeed->Next() % 520 + 20;
+		theX = (int)(mApp->mSeed->Next() % (TankWidth() - 120)) + TankLeft() + 20;
         theY = mApp->mSeed->Next() % 265 + 105;
 	}
 	GameObject* aPet = nullptr;
@@ -5509,7 +5519,7 @@ GameObject* Sexy::Board::SpawnLarva(int theX, int theY)
 
 void Sexy::Board::SpawnAlien(int theType, bool unk)
 {
-	SpawnAlien(theType, mApp->mSeed->Next() % 450 + 20, mApp->mSeed->Next() % 195 + 105, unk);
+	SpawnAlien(theType, (int)(mApp->mSeed->Next() % (TankWidth() - 190)) + TankLeft() + 20, mApp->mSeed->Next() % 195 + 105, unk);
 }
 
 void Sexy::Board::SpawnAlien(int theType, int theX, int theY, bool unk)
@@ -5773,7 +5783,7 @@ void Sexy::Board::DrawTankBackground(Graphics* g)
 	if (aCurProf->mCheatCodeFlags >> 2 & 1)
 	{
 		g->SetColor(Color(0xffffff));
-		g->FillRect(0, 0, 640, 480);
+		g->FillRect(TankLeft(), 0, TankWidth(), 480);
 		return;
 	}
 	if (aCurProf->mCheatCodeFlags >> 3 & 1)
@@ -5788,11 +5798,14 @@ void Sexy::Board::DrawTankBackground(Graphics* g)
 		aRandTransX = rand() % 5 - 2;
 		aRandTransY = rand() % 5 - 2;
 		g->SetColor(Color::Black);
-		g->FillRect(0, 0, 640, 480);
+		g->FillRect(TankLeft(), 0, TankWidth(), 480);
 		g->Translate(aRandTransX, aRandTransY);
 	}
 	Image* anAquariumImg = GetImageById(mCurrentBackgroundId + IMAGE_AQUARIUM1_ID - 1);
-	g->DrawImage(anAquariumImg, 0, 0);
+	if (Image* aWideImg = WideBackdrop(mCurrentBackgroundId))
+		g->DrawImage(aWideImg, TankLeft(), 0);
+	else
+		g->DrawImage(anAquariumImg, 0, 0);
 	bool isAccel = mApp->Is3DAccelerated();
 	if (aCurProf->mCheatCodeFlags & 1)
 	{
@@ -5814,18 +5827,36 @@ void Sexy::Board::DrawTankBackground(Graphics* g)
 		g->SetColor(Color(255, 255, 255, 40));
 		g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[0], 365);
 		g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[0] - 640.0, 365);
+		if (TankRight() > 640)
+		{
+			g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[0] + 640.0, 365);
+			g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[0] - 1280.0, 365);
+		}
 
 		g->SetColor(Color(255, 255, 255, 100));
 		g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[1], 365);
 		g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[1] - 640.0, 365);
+		if (TankRight() > 640)
+		{
+			g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[1] + 640.0, 365);
+			g->DrawImage(IMAGE_TANKLIGHTING, mTankLightingSpeeds[1] - 1280.0, 365);
+		}
 
 		g->SetColor(Color(255, 255, 255, 70));
 		g->DrawImageMirror(IMAGE_TANKLIGHTING, mTankLightingSpeeds[2], 365, true);
 		g->DrawImageMirror(IMAGE_TANKLIGHTING, mTankLightingSpeeds[2] - 640.0, 365, true);
+		if (TankRight() > 640)
+		{
+			g->DrawImageMirror(IMAGE_TANKLIGHTING, mTankLightingSpeeds[2] + 640.0, 365, true);
+			g->DrawImageMirror(IMAGE_TANKLIGHTING, mTankLightingSpeeds[2] - 1280.0, 365, true);
+		}
 		g->SetColorizeImages(false);
 		g->SetDrawMode(Graphics::DRAWMODE_NORMAL);
 
-		g->DrawImage(GetImageById(mCurrentBackgroundId - 1 + IMAGE_TANKMASK1_ID), 0, 365);
+		if (Image* aWideMask = WideTankMask(mCurrentBackgroundId))
+			g->DrawImage(aWideMask, TankLeft(), 365);
+		else
+			g->DrawImage(GetImageById(mCurrentBackgroundId - 1 + IMAGE_TANKMASK1_ID), 0, 365);
 	}
 	g->Translate(-aRandTransX, -aRandTransY);
 }
@@ -5835,10 +5866,15 @@ void Sexy::Board::DrawTankWaves(Graphics* g, int theY)
 	g->SetDrawMode(Graphics::DRAWMODE_ADDITIVE);
 	int aCel = IMAGE_WAVE->GetAnimCel(mGameUpdateCnt);
 	Rect aRect = IMAGE_WAVE->GetCelRect(aCel);
-	g->DrawImageMirror(IMAGE_WAVESIDE, 0, theY, aRect, false);
-	g->DrawImageCel(IMAGE_WAVE, 160, theY, aCel);
-	g->DrawImageCel(IMAGE_WAVE, 320, theY, aCel);
-	g->DrawImageMirror(IMAGE_WAVESIDE, 480, theY, aRect, true);
+	g->DrawImageMirror(IMAGE_WAVESIDE, TankLeft(), theY, aRect, false);
+	{
+		// the wave cel tiles with itself; clip the last one where the right cap starts (additive blend)
+		Graphics aMiddle(*g);
+		aMiddle.ClipRect(TankLeft() + 160, theY, TankWidth() - 320, IMAGE_WAVE->GetCelHeight());
+		for (int x = TankLeft() + 160; x < TankRight() - 160; x += 160)
+			aMiddle.DrawImageCel(IMAGE_WAVE, x, theY, aCel);
+	}
+	g->DrawImageMirror(IMAGE_WAVESIDE, TankRight() - 160, theY, aRect, true);
 	g->SetDrawMode(Graphics::DRAWMODE_NORMAL);
 }
 

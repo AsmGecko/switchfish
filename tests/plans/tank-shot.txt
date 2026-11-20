@@ -1,0 +1,8 @@
+# fresh tank 1-1, one screenshot of the tank
+200 click 315 428
++150 click 463 82
++200 click 397 189
++40 click 242 257
++150 click 320 431
++300 shot tank
++10 quit

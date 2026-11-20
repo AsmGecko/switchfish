@@ -82,10 +82,10 @@ void Sexy::DeadAlien::Update()
 
 	if (mVY < 2.0)
 		mVY += 0.05;
-	if (mXD > 490.0)
-		mXD = 490.0;
-	if (mXD < -10.0)
-		mXD = -10.0;
+	if (mXD > TankRight() - 150.0)
+		mXD = TankRight() - 150.0;
+	if (mXD < TankLeft() - 10.0)
+		mXD = TankLeft() - 10.0;
 
 	if ((mAlienType == ALIEN_DESTRUCTOR || mAlienType == ALIEN_ULYSEES) && mYD > 280.0)
 		mYD = 280.0;

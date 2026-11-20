@@ -38,6 +38,7 @@
 #include "graphics/SharedImage.h"
 #include "misc/Ratio.h"
 #include <atomic>
+#include <functional>
 
 namespace ImageLib
 {
@@ -246,6 +247,9 @@ public:
 	int						mSleepCount;
 	int						mDrawCount;
 	int						mUpdateCount;
+	std::function<void()>	mTickHook;			// runs before every logic update (test plans)
+	bool					mScriptedInput = false;	// a test plan drives input: ignore the real mouse, keys and focus
+	void					ForceFocus() { mActive = true; RehupFocus(); }
 	int						mUpdateAppState;
 	int						mUpdateAppDepth;
 	double					mUpdateMultiplier;		
@@ -339,6 +343,7 @@ public:
 	uint32_t				mRecommendedVidMemory3D;
 
 	bool					mWidescreenAware;
+	bool					mWideTank = true;	// with widescreen: gameplay uses the whole canvas
 	Rect					mScreenBounds;
 	bool					mEnableWindowAspect;
 	Ratio					mWindowAspect;

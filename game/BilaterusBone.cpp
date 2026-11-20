@@ -2,6 +2,7 @@
 #include "Bilaterus.h"
 #include "BilaterusHead.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Fish.h"
 #include "Res.h"
@@ -28,8 +29,8 @@ Sexy::BilaterusBone::BilaterusBone(Bilaterus* theBilaterus, int theX, int theY, 
 	m0x180 = 0;
 	m0x1a8 = 95;
 	m0x188 = 0;
-	m0x1a4 = 10;
-	m0x1ac = 540;
+	m0x1a4 = TankLeft() + 10;
+	m0x1ac = TankRight() - 100;
 	m0x190 = 0.8;
 	m0x1c0 = 100;
 	m0x1b0 = 0;
@@ -103,6 +104,8 @@ void Sexy::BilaterusBone::Sync(DataSync* theSync)
 	theSync->SyncLong(m0x1b4);
 	theSync->SyncLong(m0x1b8);
 	theSync->SyncLong(m0x1bc);
+	if (theSync->mReader)
+		FixLoadedXBounds(m0x1a4, m0x1ac);
 	theSync->SyncLong(m0x1c0);
 	theSync->SyncDouble(m0x1c8);
 	theSync->SyncDouble(m0x1d0);

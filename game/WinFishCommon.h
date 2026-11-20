@@ -12,6 +12,17 @@
 
 namespace Sexy
 {
+	// switchfish: the tank's edges in design coordinates. 0..640 as in the original unless the wide tank is
+	// on, then -107..747 (the whole 854 wide canvas). Every bound in the sim is written so it gives the
+	// original number at 0..640.
+	extern int			gTankLeft;
+	extern int			gTankRight;
+	inline int			TankLeft() { return gTankLeft; }
+	inline int			TankRight() { return gTankRight; }
+	inline int			TankWidth() { return gTankRight - gTankLeft; }
+	void				SetWideTank(bool wide);
+	void				FixLoadedXBounds(int& theMin, int& theMax);
+
 	DialogButton*		MakeDialogButton(int theId, ButtonListener* theListener, SexyString theText, Font* theFont);
 	DialogButton*		MakeDialogButton2(int theId, ButtonListener* theListener, SexyString theText, Image* theComponentImage);
 	void				DefaultDialogSettings(Dialog* theDialog);

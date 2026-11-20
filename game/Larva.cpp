@@ -2,6 +2,7 @@
 
 #include "Larva.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "Res.h"
 
@@ -47,8 +48,8 @@ void Sexy::Larva::Update()
 			Remove();
 			return;
 		}
-		if (mXD > 530.0)
-			mXD = 530.0;
+		if (mXD > TankRight() - 110.0)
+			mXD = TankRight() - 110.0;
 	}
 	else
 	{

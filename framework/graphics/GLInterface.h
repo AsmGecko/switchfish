@@ -191,6 +191,15 @@ public:
 
 	GLImage*				mScreenImage;
 
+	// The game draws into this persistent canvas (like PopCap's DirectDraw back buffer), which is then
+	// scaled to the screen. mWidth/mHeight are its size; wider than the app's 640 in widescreen.
+	GLuint					mCanvasFbo = 0;
+	GLuint					mCanvasTex = 0;
+	GLuint					mBlurFbo[4] = {};
+	GLuint					mBlurTex[4] = {};
+	// set by screens that paint the whole canvas; otherwise the sides get a blurred copy of the middle
+	bool					mFullCanvas = false;
+
 	int						mNextCursorX;
 	int						mNextCursorY;
 	int						mCursorX;
@@ -228,6 +237,9 @@ public:
 
 	bool					PreDraw();
 	void					Flush();
+	void					BindCanvas();
+	void					ReadCanvas(MemoryImage* theImage);
+	void					Present();
 
 	bool					CreateImageTexture(MemoryImage* theImage);
 	bool					RecoverBits(MemoryImage* theImage);

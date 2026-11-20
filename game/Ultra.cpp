@@ -2,6 +2,7 @@
 
 #include "Ultra.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "FishSongMgr.h"
 #include "Oscar.h"
@@ -490,8 +491,8 @@ void Sexy::Ultra::Init()
 	mIsGuppy = false;
 	mYMax = 310;
 	mYMin = 75;
-	mXMin = 0;
-	mXMax = 480;
+	mXMin = TankLeft();
+	mXMax = TankRight() - 160;
 	mHunger = mApp->mSeed->Next() % 200 + 600;
 	mMouseVisible = gUnkBool06;
 	mCoinDropT = DetermineCoinDropT(mApp->mSeed->Next() % 250 + 200);

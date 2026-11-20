@@ -1,0 +1,6 @@
+Use your image generation / image editing tool on the attached PNG (854x480). It is a painted aquarium backdrop from a 2004 game with its left and right parts TRANSPARENT. Fill ONLY the transparent areas, so the result is one seamless 16:9 aquarium backdrop:
+- Keep every opaque pixel exactly as it is (same positions, same size, same colours). Do not redraw, move, rescale or restyle the existing painting.
+- Continue the scene naturally into the transparent areas: water with the same gradient and light rays at the top, the same sand/gravel floor at the same height, and objects that are cut off at the edge of the opaque area (coral, rocks, plants) continue or end naturally. Add only small, plain filler details (rocks, small plants) in the same style, no new large objects, and no mirrored or duplicated copies of existing objects.
+- The tank's glass side walls go at the far left and far right edges of the new image: a thin translucent vertical band, like the original tank glass.
+- Same hand-painted style, palette and lighting. No text, no fish, no UI, no frame.
+Output a single 854x480-proportioned (16:9) image. Tell me the absolute file path of the generated image in your final message.

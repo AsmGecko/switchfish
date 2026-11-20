@@ -2,6 +2,7 @@
 
 #include "FishTypePet.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "BilaterusHead.h"
 #include "Shadow.h"
@@ -113,7 +114,7 @@ Sexy::FishTypePet::FishTypePet(int theX, int theY, int thePetType, bool flag)
 		mCoinDropT = 3000;
 		mWidth = 160;
 		mHeight = 80;
-		mXMax = 460;
+		mXMax = TankRight() - 180;
 		mCoinDropTimer = 300;
 		mMouseInsets.mTop = 0;
 		mMouseInsets.mBottom = 25;
@@ -416,7 +417,7 @@ void Sexy::FishTypePet::Update()
 
 	if (mXMax - 5 < mXD && mVX > 0.1)
 		mVX -= 0.1;
-	if (mXD < 15.0 && mVX < -0.1)
+	if (mXD < TankLeft() + 15.0 && mVX < -0.1)
 		mVX += 0.1;
 
 	FishUpdateAnimation();

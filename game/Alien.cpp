@@ -2,6 +2,7 @@
 
 #include "Alien.h"
 #include "WinFishApp.h"
+#include "WinFishCommon.h"
 #include "Board.h"
 #include "ProfileMgr.h"
 #include "Missle.h"
@@ -250,10 +251,10 @@ void Sexy::Alien::Update()
 
 	if (mAlienType == ALIEN_MINI_SYLV)
 	{
-		if (mXD > 540.0)
-			mXD = 540.0;
-		if (mXD < 10.0)
-			mXD = 10.0;
+		if (mXD > TankRight() - 100.0)
+			mXD = TankRight() - 100.0;
+		if (mXD < TankLeft() + 10.0)
+			mXD = TankLeft() + 10.0;
 		if (mYD > 370.0)
 			mYD = 370.0;
 		if (mYD < 95.0)
@@ -261,10 +262,10 @@ void Sexy::Alien::Update()
 	}
 	else
 	{
-		if (mXD > 490.0)
-			mXD = 490.0;
-		if (mXD < -10.0)
-			mXD = -10.0;
+		if (mXD > TankRight() - 150.0)
+			mXD = TankRight() - 150.0;
+		if (mXD < TankLeft() - 10.0)
+			mXD = TankLeft() - 10.0;
 		if (mYD > 290.0)
 			mYD = 290.0;
 		if (mYD < 85.0)

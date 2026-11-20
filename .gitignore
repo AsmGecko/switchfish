@@ -1,0 +1,7 @@
+/build/
+/upstream/
+/gameData/
+.DS_Store
+compile_commands.json
+.cache/
+/tools/

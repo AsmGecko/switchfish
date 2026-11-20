@@ -1948,6 +1948,22 @@ void SexyAppBase::HandleNotifyGameMessage(int theType)
 	// Notify game message handling not implemented
 }
 
+// Like switching to fullscreen: the canvas changes right away, the design space stays 640x480.
+void SexyAppBase::SetWidescreen(bool on)
+{
+	if (on == mWidescreenAware)
+		return;
+	mWidescreenAware = on;
+	if (mGLInterface == nullptr)
+		return;
+	mGLInterface->SetCanvasWidth(on ? WideCanvasWidth() : mWidth);
+	mScreenBounds.mX = (mWidth - mGLInterface->mWidth) / 2;
+	mScreenBounds.mWidth = mGLInterface->mWidth;
+	mWidgetManager->mImage = mGLInterface->GetScreenImage();
+	mWidgetManager->Resize(mScreenBounds, mGLInterface->mPresentationRect);
+	mWidgetManager->MarkAllDirty();
+}
+
 void SexyAppBase::RehupFocus()
 {
 	bool wantHasFocus = mActive && !mMinimized;

@@ -2035,6 +2035,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	if (!aDia)
 		return;
 	SwitchScreenMode(!aDia->mFullscreenCB->IsChecked(), aDia->m3DCB->IsChecked());
+	SetWidescreen(aDia->mWidescreenCB->IsChecked());
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
 	ClearUpdateBacklog(true);
@@ -2175,6 +2176,13 @@ void Sexy::WinFishApp::CreateBoard()
 {
 	RemoveBoard();
 	m0x884 = false;
+	// switchfish: a changed widescreen setting reaches the tank when a new one is made
+	bool aWide = mWidescreenAware && mWideTank;
+	if (aWide != (TankWidth() > 640))
+	{
+		SetWideTank(aWide);
+		BuildWideBackdrops(this);
+	}
 	mBoard = new Board(this);
 	mBoard->Resize(0, 0, mWidth, mHeight);
 	mWidgetManager->AddWidget(mBoard);

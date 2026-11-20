@@ -1094,7 +1094,7 @@ GLInterface::GLInterface(SexyAppBase* theApp)
 	mApp = theApp;
 	mHeight = mApp->mHeight;
 	// 16:9 at the design height, even so the design area sits on whole pixels (854 for 480)
-	mWidth = mApp->mWidescreenAware ? (mHeight * 16 / 9 + 1) & ~1 : mApp->mWidth;
+	mWidth = mApp->mWidescreenAware ? mApp->WideCanvasWidth() : mApp->mWidth;
 	mDisplayWidth  = mWidth;
 	mDisplayHeight = mHeight;
 	mPresentationRect = Rect(0, 0, mWidth, mHeight);
@@ -1240,34 +1240,10 @@ int GLInterface::Init(bool IsWindowed)
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &aMaxSize);
 	MAX_TEXTURE_SIZE = aMaxSize;
 
-	if (mCanvasFbo == 0)
+	if (mCanvasFbo == 0 && !CreateCanvas())
 	{
-		auto makeTarget = [](GLuint& fbo, GLuint& tex, int w, int h)
-		{
-			glGenTextures(1, &tex);
-			glBindTexture(GL_TEXTURE_2D, tex);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glGenFramebuffers(1, &fbo);
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
-			return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-		};
-		if (!makeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight))
-		{
-			gSexyAppBase->Popup("Failed to create the drawing canvas");
-			return 0;
-		}
-		// halving steps of the design area, for the blurred sides
-		for (int i = 0; i < 4; i++)
-		{
-			makeTarget(mBlurFbo[i], mBlurTex[i], mApp->mWidth >> (i + 1), mHeight >> (i + 1));
-		}
+		gSexyAppBase->Popup("Failed to create the drawing canvas");
+		return 0;
 	}
 	BindCanvas();
 
@@ -1328,6 +1304,59 @@ bool GLInterface::PreDraw()
 {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	return true;
+}
+
+static bool MakeTarget(GLuint& fbo, GLuint& tex, int w, int h)
+{
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+}
+
+bool GLInterface::CreateCanvas()
+{
+	if (!MakeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight))
+	{
+		return false;
+	}
+	// halving steps of the design area, for the blurred sides
+	for (int i = 0; i < 4; i++)
+	{
+		MakeTarget(mBlurFbo[i], mBlurTex[i], mApp->mWidth >> (i + 1), mHeight >> (i + 1));
+	}
+	return true;
+}
+
+void GLInterface::SetCanvasWidth(int theWidth)
+{
+	if (theWidth == mWidth)
+	{
+		return;
+	}
+	glDeleteFramebuffers(1, &mCanvasFbo);
+	glDeleteTextures(1, &mCanvasTex);
+	glDeleteFramebuffers(4, mBlurFbo);
+	glDeleteTextures(4, mBlurTex);
+	mWidth = theWidth;
+	CreateCanvas();
+	BindCanvas();
+
+	float ortho[16];
+	MakeOrthoMatrix(0, (float)mWidth, (float)mHeight, 0, -10, 10, ortho);
+	glUseProgram(gProgram);
+	glUniformMatrix4fv(gUfViewProjMtx, 1, GL_FALSE, ortho);
+	SetVideoOnlyDraw(false);
+	UpdateViewport();
 }
 
 void GLInterface::BindCanvas()

@@ -118,6 +118,69 @@ MemoryImage* Extend(SexyAppBase* app, MemoryImage* src)
     return out;
 }
 
+// The original is shaded darker towards its old glass walls (corners especially) than the new parts.
+// Per row, take the colour difference across each seam and carry it into the new part, fading out over
+// `reach` pixels, so the shading ends softly instead of at a straight line.
+void MatchSeams(const uint32_t* src, int w, uint32_t* dst, int wide, int h, int seamL, int seamR, int srcL, int srcR,
+    int feather)
+{
+    const int strip = 12, reach = 90, smooth = 15;
+    auto channel = [](uint32_t c, int i) { return (int)((c >> (16 - 8 * i)) & 0xFF); };
+    for (int side = 0; side < 2; side++)
+    {
+        // difference original - pack per row and channel, just inside the seam
+        std::vector<float> diff(h * 3);
+        for (int y = 0; y < h; y++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                float sum = 0;
+                for (int k = 0; k < strip; k++)
+                {
+                    int sx = side == 0 ? srcL + k : srcR - 1 - k;
+                    int dx = side == 0 ? seamL + k : seamR - 1 - k;
+                    sum += channel(src[y * w + sx], i) - channel(dst[y * wide + dx], i);
+                }
+                diff[y * 3 + i] = sum / strip;
+            }
+        }
+        std::vector<float> smoothed(h * 3);
+        for (int y = 0; y < h; y++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                float sum = 0;
+                int n = 0;
+                for (int k = std::max(0, y - smooth); k <= std::min(h - 1, y + smooth); k++, n++)
+                {
+                    sum += diff[k * 3 + i];
+                }
+                smoothed[y * 3 + i] = sum / n;
+            }
+        }
+        // full strength inside the feather (it gets blended with the original), fading outwards from there
+        for (int y = 0; y < h; y++)
+        {
+            for (int d = -feather; d < reach; d++)
+            {
+                int x = side == 0 ? seamL - 1 - d : seamR + d;
+                if (x < 0 || x >= wide)
+                {
+                    break;
+                }
+                float weight = d < 0 ? 1.0f : 1.0f - (float)d / reach;
+                uint32_t& c = dst[y * wide + x];
+                int out[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    out[i] = std::clamp((int)(channel(c, i) + smoothed[y * 3 + i] * weight), 0, 255);
+                }
+                c = (c & 0xFF000000u) | (out[0] << 16) | (out[1] << 8) | out[2];
+            }
+        }
+    }
+}
+
 // A pack image (the player's own, e.g. made with an image model from their backdrop) supplies everything
 // except the original's inner area, which stays pixel exact. The seam is feathered over a few pixels.
 MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
@@ -139,6 +202,7 @@ MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
     const int inner0 = 40, inner1 = w - 40, feather = 12;
     uint32_t* bits = src->GetBits();
     uint32_t* dst = pack->GetBits();
+    MatchSeams(bits, w, dst, wide, h, margin + inner0, margin + inner1, inner0, inner1, feather);
     for (int y = 0; y < h; y++)
     {
         for (int x = inner0; x < inner1; x++)

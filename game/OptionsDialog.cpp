@@ -39,6 +39,7 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 	mFullscreenCB = MakeCheckbox(7, this, !mApp->mIsWindowed);
 	mCustomCursorsCB = MakeCheckbox(8, this, mApp->mCustomCursorsEnabled);
 	m3DCB = MakeCheckbox(9, this, mApp->Is3DAccelerated());
+	mWidescreenCB = MakeCheckbox(11, this, mApp->mWidescreenAware);
     mCheatsButton = MakeDialogButton(10, this, "Cheats", NULL);
 
 	if (theFlag)
@@ -70,6 +71,8 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mCustomCursorsCB;
 	if (m3DCB)
 		delete m3DCB;
+	if (mWidescreenCB)
+		delete mWidescreenCB;
 	if (mHelpButton)
 		delete mHelpButton;
 	if (mBackButton)
@@ -89,6 +92,7 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mCustomCursorsCB);
 	theWidgetManager->AddWidget(m3DCB);
 	theWidgetManager->AddWidget(mFullscreenCB);
+	theWidgetManager->AddWidget(mWidescreenCB);
 	theWidgetManager->AddWidget(mWebLinkButton);
 	theWidgetManager->AddWidget(mBackButton);
     theWidgetManager->AddWidget(mCheatsButton);
@@ -105,6 +109,7 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
 	theWidgetManager->RemoveWidget(m3DCB);
 	theWidgetManager->RemoveWidget(mFullscreenCB);
+	theWidgetManager->RemoveWidget(mWidescreenCB);
 	theWidgetManager->RemoveWidget(mWebLinkButton);
 	theWidgetManager->RemoveWidget(mBackButton);
     theWidgetManager->RemoveWidget(mCheatsButton);
@@ -121,6 +126,7 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->DrawString("Fullscreen", mFullscreenCB->mX - mX + 43, mFullscreenCB->mY - mY + 24);
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
 	g->DrawString("Hardware Acceleration", m3DCB->mX - mX + 43, m3DCB->mY - mY + 24);
+	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
 	g->SetColorizeImages(false);
 }
 
@@ -180,6 +186,7 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 	mFullscreenCB->Resize(mX + 33, mY + 128, 45, 46);
 	mCustomCursorsCB->Resize(mX + 161, mY + 128, 45, 46);
 	m3DCB->Resize(mX + 33, mY + 172, 45, 46);
+	mWidescreenCB->Resize(mX + 33, mY + 216, 45, 46);
 }
 
 int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
@@ -191,7 +198,7 @@ int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
 		aPrefHght += 34;
 	if (mWebLinkButton->mVisible)
 		aPrefHght += 34;
-	return aPrefHght;
+	return aPrefHght + 44; // switchfish: a row for Widescreen
 }
 
 void Sexy::OptionsDialog::WidgetClicked(int theId, bool theFlag)

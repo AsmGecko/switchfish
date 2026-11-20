@@ -250,6 +250,8 @@ public:
 	std::function<void()>	mTickHook;			// runs before every logic update (test plans)
 	bool					mScriptedInput = false;	// a test plan drives input: ignore the real mouse, keys and focus
 	void					ForceFocus() { mActive = true; RehupFocus(); }
+	int						WideCanvasWidth() const { return (mHeight * 16 / 9 + 1) & ~1; }	// 854 for 480
+	void					SetWidescreen(bool on);
 	int						mUpdateAppState;
 	int						mUpdateAppDepth;
 	double					mUpdateMultiplier;		

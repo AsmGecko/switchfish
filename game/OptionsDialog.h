@@ -21,6 +21,7 @@ namespace Sexy
 		Checkbox* mFullscreenCB;
 		Checkbox* mCustomCursorsCB;
 		Checkbox* m3DCB;
+		Checkbox* mWidescreenCB;	// switchfish
 		DialogButton* mRegisterButton;
 		DialogButton* mHelpButton;
 		DialogButton* mCheckUpdatesButton;

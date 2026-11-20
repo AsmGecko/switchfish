@@ -237,6 +237,8 @@ public:
 
 	bool					PreDraw();
 	void					Flush();
+	bool					CreateCanvas();
+	void					SetCanvasWidth(int theWidth);
 	void					BindCanvas();
 	void					ReadCanvas(MemoryImage* theImage);
 	void					Present();

@@ -7,6 +7,7 @@ the way they are and `docs/ROADMAP.md` for what's next.
 - Build through `./sf.sh` (`build switch` runs in Docker, `build` is the host build). Both must keep building.
 - Iterate on the host build; the Switch build is for validation. Platform-specific code goes in
   `framework/platform/switch/` or `framework/platform/default/`, guarded by `__SWITCH__` only where it must be.
+- Our own code goes in `port/` (entry point, notice screens); `game/` and `framework/` stay close to upstream.
 - `game/` is decompiled code: keep the original behaviour unless a change is a deliberate fix or an opt-in
   feature (widescreen, controls). Fixes from other decomps go in per file, with a note of where they came from.
 - Never commit or bundle game assets. `gameData/` and `upstream/` are gitignored.

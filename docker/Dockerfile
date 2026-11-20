@@ -4,7 +4,7 @@
 FROM devkitpro/devkita64:20260219
 
 RUN dkp-pacman -Syu --noconfirm --needed \
-        switch-dev switch-sdl2 switch-mesa switch-glad \
+        switch-dev switch-sdl2 switch-sdl2_ttf switch-freetype switch-mesa switch-glad \
         switch-libvorbis switch-libogg switch-mpg123 \
         switch-libpng switch-libjpeg-turbo switch-zlib \
     && yes | dkp-pacman -Scc

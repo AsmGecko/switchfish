@@ -5,7 +5,7 @@ project(switchfish VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-file(GLOB GAME_SOURCES CONFIGURE_DEPENDS game/*.cpp)
+file(GLOB GAME_SOURCES CONFIGURE_DEPENDS game/*.cpp port/*.cpp)
 file(GLOB FRAMEWORK_SOURCES CONFIGURE_DEPENDS
 	framework/*.cpp
 	framework/graphics/*.cpp
@@ -33,6 +33,7 @@ find_package(PkgConfig REQUIRED)
 # --static so the Switch build also gets libopenmpt's private deps (mpg123, vorbis)
 set(PKG_CONFIG_ARGN --static)
 pkg_check_modules(AUDIO REQUIRED IMPORTED_TARGET libopenmpt vorbisfile)
+pkg_check_modules(TTF REQUIRED IMPORTED_TARGET SDL2_ttf)
 
 set(USE_OGG_VORBIS_STB OFF)
 set(SDL_MIXER_X_STATIC ON CACHE BOOL "" FORCE)
@@ -47,16 +48,22 @@ target_compile_features(switchfish PRIVATE cxx_std_20)
 target_include_directories(switchfish PRIVATE
 	${PLATFORM_DIR}
 	game
+	port
 	framework
 	third_party/SDL-Mixer-X/include
 )
 target_compile_definitions(switchfish PRIVATE IMG_DOWNSCALE=1)
+if(NOT NINTENDO_SWITCH)
+	# the NRO carries port/romfs inside, host builds read it from the source tree
+	target_compile_definitions(switchfish PRIVATE SWITCHFISH_ROMFS="${CMAKE_CURRENT_SOURCE_DIR}/port/romfs")
+endif()
 # the decomp relies on x86 behaviour here
 target_compile_options(switchfish PRIVATE -fsigned-char -fno-strict-aliasing)
 
 target_link_libraries(switchfish PRIVATE
 	SDL2_mixer_ext_Static
 	PkgConfig::AUDIO
+	PkgConfig::TTF
 	PNG::PNG
 	JPEG::JPEG
 	ZLIB::ZLIB
@@ -75,5 +82,6 @@ if(NINTENDO_SWITCH)
 	nx_create_nro(switchfish
 		NACP switchfish.nacp
 		ICON ${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg
+		ROMFS ${CMAKE_CURRENT_SOURCE_DIR}/port/romfs
 	)
 endif()

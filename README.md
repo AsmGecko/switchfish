@@ -21,7 +21,7 @@ Status: the NRO and a macOS build compile; nothing has run on hardware yet. See 
 ./sf.sh upstream       # clone/update the reference repos in upstream/
 ```
 
-Host builds need `brew install cmake ninja sdl2 libopenmpt jpeg-turbo libpng libvorbis mpg123`.
+Host builds need `brew install cmake ninja sdl2 sdl2_ttf libopenmpt jpeg-turbo libpng libvorbis mpg123`.
 Switch builds only need Docker.
 
 ## On the Switch
@@ -43,6 +43,7 @@ runs homebrew with too little memory. A log goes to `sdmc:/switch/switchfish/log
 | Folder | What |
 |---|---|
 | `game/` | the game (WinFish decompilation, kyle-sylvestre's portable fork) |
+| `port/` | our own code: entry point, notice screens, `romfs/` (fonts) that goes inside the NRO |
 | `framework/` | SexyAppFramework on SDL2 + GLES2, with `platform/switch` and `platform/default` |
 | `third_party/` | SDL-Mixer-X |
 | `docker/` | Switch build image (devkitA64, libnx, SDL2, mesa, libopenmpt) |

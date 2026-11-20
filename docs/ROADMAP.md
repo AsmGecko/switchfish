@@ -11,11 +11,11 @@ Each milestone has an exit criterion; don't start the next one until it holds.
 **Exit:** both builds succeed from a clean checkout.
 
 ## M1: First light
-- [ ] Host build plays from the title screen with real game files in `gameData/`
+- [x] Host build reaches the main menu with real game files in `gameData/` (2026-11-20)
 - [ ] NRO boots on a Switch (title takeover) with the files in `sdmc:/switch/switchfish/`
-- [x] NRO boots in Ryubing on the Mac (`./sf.sh emu`, 2026-11-20); next: with game files
-- [x] Message screen when game data is missing (Switch console screen, Mac dialog)
-- [ ] Applet mode detection with a clear message
+- [x] NRO boots in Ryubing with the game files and reaches tank 1-1 (`./sf.sh emu`, 2026-11-20)
+- [x] Notice screens in the style of the game's dialogs: game files missing, started from the album
+      (`port/Notice.cpp`, preview with `--notice album|nodata`)
 
 **Exit:** tank 1-1 playable on hardware with touch.
 

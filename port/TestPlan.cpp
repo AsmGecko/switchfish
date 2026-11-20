@@ -31,6 +31,8 @@ size_t gNext = 0;
 std::string gOutDir;
 Uint32 gDeadline = 0;
 int gReleaseTick = -1, gReleaseX = 0, gReleaseY = 0, gReleaseButton = 1;
+int gKeyReleaseTick = -1;
+KeyCode gKeyHeld = KEYCODE_UNKNOWN;
 
 KeyCode KeyFromName(const std::string& name)
 {
@@ -79,7 +81,8 @@ void Run(SexyAppBase* app, const Step& s)
         {
             wm->KeyChar(s.arg[0]);
         }
-        wm->KeyUp(key);
+        gKeyHeld = key;
+        gKeyReleaseTick = s.tick + 2;
     }
     else if (s.action == "shot")
     {
@@ -156,6 +159,11 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
             SDL_Log("plan: time limit reached at tick %d, quitting", tick);
             app->Shutdown();
             return;
+        }
+        if (tick == gKeyReleaseTick)
+        {
+            app->mWidgetManager->KeyUp(gKeyHeld);
+            gKeyReleaseTick = -1;
         }
         if (tick == gReleaseTick)
         {

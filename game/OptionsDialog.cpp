@@ -36,7 +36,6 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 	if (aSfxValue > 1.0) aSfxValue = 1.0; if (aSfxValue < 0) aSfxValue = 0;
 	mSFXSlider->SetValue(aSfxValue);
 
-	mFullscreenCB = MakeCheckbox(7, this, !mApp->mIsWindowed);
 	mCustomCursorsCB = MakeCheckbox(8, this, mApp->mCustomCursorsEnabled);
 	m3DCB = MakeCheckbox(9, this, mApp->Is3DAccelerated());
 	mWidescreenCB = MakeCheckbox(11, this, mApp->mWidescreenAware);
@@ -65,8 +64,6 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mMusicSlider;
 	if (mSFXSlider)
 		delete mSFXSlider;
-	if (mFullscreenCB)
-		delete mFullscreenCB;
 	if (mCustomCursorsCB)
 		delete mCustomCursorsCB;
 	if (m3DCB)
@@ -91,7 +88,6 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mSFXSlider);
 	theWidgetManager->AddWidget(mCustomCursorsCB);
 	theWidgetManager->AddWidget(m3DCB);
-	theWidgetManager->AddWidget(mFullscreenCB);
 	theWidgetManager->AddWidget(mWidescreenCB);
 	theWidgetManager->AddWidget(mWebLinkButton);
 	theWidgetManager->AddWidget(mBackButton);
@@ -108,7 +104,6 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mSFXSlider);
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
 	theWidgetManager->RemoveWidget(m3DCB);
-	theWidgetManager->RemoveWidget(mFullscreenCB);
 	theWidgetManager->RemoveWidget(mWidescreenCB);
 	theWidgetManager->RemoveWidget(mWebLinkButton);
 	theWidgetManager->RemoveWidget(mBackButton);
@@ -123,7 +118,6 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->SetColor(mColors[4]);
 	g->DrawString("Music", 48, 78);
 	g->DrawString("Sound Fx", 48, 110);
-	g->DrawString("Fullscreen", mFullscreenCB->mX - mX + 43, mFullscreenCB->mY - mY + 24);
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
 	g->DrawString("Hardware Acceleration", m3DCB->mX - mX + 43, m3DCB->mY - mY + 24);
 	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
@@ -183,10 +177,10 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 	mMusicSlider->Resize(mX + 152, mY + 58, aSliderWidth, 33);
 	mSFXSlider->Resize(mX + 152, mY + 90, aSliderWidth, 33);
 
-	mFullscreenCB->Resize(mX + 33, mY + 128, 45, 46);
 	mCustomCursorsCB->Resize(mX + 161, mY + 128, 45, 46);
 	m3DCB->Resize(mX + 33, mY + 172, 45, 46);
-	mWidescreenCB->Resize(mX + 33, mY + 216, 45, 46);
+	// switchfish: Widescreen takes Fullscreen's place (the Mac window goes fullscreen itself, the Switch always is)
+	mWidescreenCB->Resize(mX + 33, mY + 128, 45, 46);
 }
 
 int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
@@ -198,22 +192,13 @@ int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
 		aPrefHght += 34;
 	if (mWebLinkButton->mVisible)
 		aPrefHght += 34;
-	return aPrefHght + 44; // switchfish: a row for Widescreen
+	return aPrefHght;
 }
 
 void Sexy::OptionsDialog::WidgetClicked(int theId, bool theFlag)
 {
 	MoneyDialog::WidgetClicked(theId, theFlag);
-	if (theId == 7)
-	{
-		if (!theFlag && mApp->mForceFullscreen)
-		{
-			mApp->DoDialog(8, true, "No Windowed Mode", "Windowed mode is only available if your desktop was running in either\n16 bit or 32 bit color mode when you started the game.\n\nIf you\'d like to run in Windowed mode then you need to quit the game and switch your desktop to 16 or 32 bit color mode.",
-				"OK", BUTTONS_FOOTER);
-			mFullscreenCB->SetChecked(true);
-		}
-	}
-	else if (theId == 9 && theFlag)
+	if (theId == 9 && theFlag)
 	{
 		if (!mApp->Is3DAccelerationSupported())
 			mApp->DoDialog(14, true, "Not Supported", 

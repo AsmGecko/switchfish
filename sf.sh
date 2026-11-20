@@ -119,8 +119,22 @@ send() {
 	docker run --rm -v "$PWD":/src -w /src -e SWITCH_IP="$1" "$IMAGE" bash -c '$DEVKITPRO/tools/bin/nxlink -a "$SWITCH_IP" '"$NRO"
 }
 
-# Each backdrop goes to Codex with its sides transparent; the game keeps the original middle pixel exact
-# and only uses the new parts. Generated from the player's own files, so never committed or shipped.
+# Runs a command, killing it (and its children) after $1 seconds.
+with_timeout() {
+	local secs=$1 pid killer rc
+	shift
+	"$@" &
+	pid=$!
+	(sleep "$secs"; pkill -P "$pid"; kill "$pid") 2>/dev/null &
+	killer=$!
+	wait "$pid"
+	rc=$?
+	kill "$killer" 2>/dev/null
+	return $rc
+}
+
+# Each backdrop's middle goes to Codex with its sides transparent, plus the whole original as a reference
+# for the glass walls; the game keeps the original middle pixel exact and only uses the new parts. Generated from the player's own files, so never committed or shipped.
 widen() {
 	[ -f gameData/properties/resources.xml ] || { echo "Put your game files in gameData/ first."; exit 1; }
 	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
@@ -130,12 +144,18 @@ widen() {
 	for i in 1 2 3 4 5 6; do
 		src=$(find gameData/images -maxdepth 1 -iname "aquarium$i.jpg" | head -1)
 		"$py" -I scripts/widescreen/canvas.py "$src" "$work/canvas$i.png"
-		~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" > "$work/codex$i.txt" &
+		# Codex sometimes hangs trying to edit files in its read-only sandbox
+		with_timeout 300 ~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" "$src" > "$work/codex$i.txt" &
 	done
 	wait
 	for i in 1 2 3 4 5 6; do
 		src=$(find gameData/images -maxdepth 1 -iname "aquarium$i.jpg" | head -1)
-		draft=$(grep -oE '/[^` )]+/generated_images/[^` )]+\.png' "$work/codex$i.txt" | head -1)
+		draft=$(grep -oE '/[^]`( )]+/generated_images/[^]`( )]+\.png' "$work/codex$i.txt" | head -1 || true)
+		if [ -z "$draft" ]; then
+			# Codex sometimes answers without an image; one more try
+			with_timeout 300 ~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" "$src" > "$work/codex$i.txt"
+			draft=$(grep -oE '/[^]`( )]+/generated_images/[^]`( )]+\.png' "$work/codex$i.txt" | head -1 || true)
+		fi
 		if [ -z "$draft" ]; then
 			echo "aquarium$i: no image from Codex, see $work/codex$i.txt"
 			continue

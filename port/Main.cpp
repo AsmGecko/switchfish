@@ -25,6 +25,44 @@ static const char* Arg(int argc, char** argv, const char* name)
     return nullptr;
 }
 
+// --quickplay (or a quickplay.txt in the game folder, for the Switch) and --level T-L, see WinFishCommon.h
+static void ReadTestFlags(int argc, char** argv)
+{
+    std::string level;
+    if (const char* arg = Arg(argc, argv, "--level"))
+    {
+        level = arg;
+        Sexy::gQuickPlay = true;
+    }
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--quickplay") == 0)
+        {
+            Sexy::gQuickPlay = true;
+        }
+    }
+    if (FILE* f = fopen("quickplay.txt", "r"))
+    {
+        char buf[16] = {};
+        if (fgets(buf, sizeof(buf), f) && level.empty())
+        {
+            level = buf;
+        }
+        fclose(f);
+        Sexy::gQuickPlay = true;
+    }
+    int tank = 0, lvl = 0;
+    if (sscanf(level.c_str(), "%d-%d", &tank, &lvl) == 2 && tank >= 1 && tank <= 5 && lvl >= 1 && lvl <= 5)
+    {
+        Sexy::gStartTank = tank;
+        Sexy::gStartLevel = lvl;
+    }
+    if (Sexy::gQuickPlay)
+    {
+        SDL_Log("quickplay: N finishes the level%s", Sexy::gStartTank ? ", starting at the given level" : "");
+    }
+}
+
 static const Notice kAlbumNotice = {
     "Started from the album",
     "Homebrew started from the album gets little memory and no keyboard for player names.\n\n"
@@ -154,6 +192,7 @@ int main(int argc, char* argv[])
     SDL_SetHint(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS, "0");
 #endif
     Sexy::ChDir(path);
+    ReadTestFlags(argc, argv);
 
     Sexy::WinFishApp app;
     app.Init();

@@ -34,8 +34,30 @@ MemoryImage* ExtendMask(SexyAppBase* app, MemoryImage* mask, MemoryImage* wide, 
     {
         for (int x = 0; x < ww; x++)
         {
-            // colour from the wide backdrop (the mask's own colour still has the old glass walls in it)
-            int mx = std::clamp(x - margin, 0, w - 1);
+            // alpha follows the original: its glass walls moved out to the edges, the middle where it was,
+            // the gaps take the column next to the wall. Colour always from the wide backdrop.
+            const int glass = 40;
+            int mx;
+            if (x < glass)
+            {
+                mx = x;
+            }
+            else if (x < margin + glass)
+            {
+                mx = glass;
+            }
+            else if (x < margin + w - glass)
+            {
+                mx = x - margin;
+            }
+            else if (x < ww - glass)
+            {
+                mx = w - glass - 1;
+            }
+            else
+            {
+                mx = x - 2 * margin;
+            }
             uint32_t alpha = mbits[y * w + mx] & 0xFF000000u;
             dst[y * ww + x] = alpha | (wbits[(theY + y) * ww + x] & 0x00FFFFFFu);
         }
@@ -118,71 +140,101 @@ MemoryImage* Extend(SexyAppBase* app, MemoryImage* src)
     return out;
 }
 
-// The original is shaded darker towards its old glass walls (corners especially) than the new parts.
-// Per row, take the colour difference across each seam and carry it into the new part, fading out over
-// `reach` pixels, so the shading ends softly instead of at a straight line.
-void MatchSeams(const uint32_t* src, int w, uint32_t* dst, int wide, int h, int seamL, int seamR, int srcL, int srcR,
+// A piece of the original that goes into the pack image pixel exact (its middle, inside the old glass walls).
+struct Piece
+{
+    int srcX0, srcX1, dstX;
+};
+
+// The original is shaded differently near its glass walls than the generated parts. Per row, take the
+// colour difference across a seam and carry it into the generated side, fading out over `reach` pixels
+// (full strength inside the feather), so the shading ends softly instead of at a straight line.
+void MatchSeam(const uint32_t* src, int w, uint32_t* dst, int wide, int h, int srcEdge, int dstEdge, int dir,
     int feather)
 {
     const int strip = 12, reach = 90, smooth = 15;
     auto channel = [](uint32_t c, int i) { return (int)((c >> (16 - 8 * i)) & 0xFF); };
-    for (int side = 0; side < 2; side++)
+    // dir = -1: the generated side is left of dstEdge, +1: right of it. srcEdge/dstEdge are the first
+    // column of the original piece on that side.
+    std::vector<float> diff(h * 3), smoothed(h * 3);
+    for (int y = 0; y < h; y++)
     {
-        // difference original - pack per row and channel, just inside the seam
-        std::vector<float> diff(h * 3);
-        for (int y = 0; y < h; y++)
+        for (int i = 0; i < 3; i++)
         {
+            float sum = 0;
+            for (int k = 0; k < strip; k++)
+            {
+                sum += channel(src[y * w + srcEdge - dir * k], i) - channel(dst[y * wide + dstEdge - dir * k], i);
+            }
+            diff[y * 3 + i] = sum / strip;
+        }
+    }
+    for (int y = 0; y < h; y++)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            float sum = 0;
+            int n = 0;
+            for (int k = std::max(0, y - smooth); k <= std::min(h - 1, y + smooth); k++, n++)
+            {
+                sum += diff[k * 3 + i];
+            }
+            smoothed[y * 3 + i] = sum / n;
+        }
+    }
+    for (int y = 0; y < h; y++)
+    {
+        for (int d = -feather; d < reach; d++)
+        {
+            int x = dstEdge + dir * (d + 1);
+            if (x < 0 || x >= wide)
+            {
+                break;
+            }
+            float weight = d < 0 ? 1.0f : 1.0f - (float)d / reach;
+            uint32_t& c = dst[y * wide + x];
+            int out[3];
             for (int i = 0; i < 3; i++)
             {
-                float sum = 0;
-                for (int k = 0; k < strip; k++)
-                {
-                    int sx = side == 0 ? srcL + k : srcR - 1 - k;
-                    int dx = side == 0 ? seamL + k : seamR - 1 - k;
-                    sum += channel(src[y * w + sx], i) - channel(dst[y * wide + dx], i);
-                }
-                diff[y * 3 + i] = sum / strip;
+                out[i] = std::clamp((int)(channel(c, i) + smoothed[y * 3 + i] * weight), 0, 255);
             }
-        }
-        std::vector<float> smoothed(h * 3);
-        for (int y = 0; y < h; y++)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                float sum = 0;
-                int n = 0;
-                for (int k = std::max(0, y - smooth); k <= std::min(h - 1, y + smooth); k++, n++)
-                {
-                    sum += diff[k * 3 + i];
-                }
-                smoothed[y * 3 + i] = sum / n;
-            }
-        }
-        // full strength inside the feather (it gets blended with the original), fading outwards from there
-        for (int y = 0; y < h; y++)
-        {
-            for (int d = -feather; d < reach; d++)
-            {
-                int x = side == 0 ? seamL - 1 - d : seamR + d;
-                if (x < 0 || x >= wide)
-                {
-                    break;
-                }
-                float weight = d < 0 ? 1.0f : 1.0f - (float)d / reach;
-                uint32_t& c = dst[y * wide + x];
-                int out[3];
-                for (int i = 0; i < 3; i++)
-                {
-                    out[i] = std::clamp((int)(channel(c, i) + smoothed[y * 3 + i] * weight), 0, 255);
-                }
-                c = (c & 0xFF000000u) | (out[0] << 16) | (out[1] << 8) | out[2];
-            }
+            c = (c & 0xFF000000u) | (out[0] << 16) | (out[1] << 8) | out[2];
         }
     }
 }
 
-// A pack image (the player's own, e.g. made with an image model from their backdrop) supplies everything
-// except the original's inner area, which stays pixel exact. The seam is feathered over a few pixels.
+void PastePiece(const uint32_t* src, int w, uint32_t* dst, int wide, int h, const Piece& p, int feather)
+{
+    const int width = p.srcX1 - p.srcX0;
+    const bool seamLeft = p.dstX > 0, seamRight = p.dstX + width < wide;
+    if (seamLeft)
+    {
+        MatchSeam(src, w, dst, wide, h, p.srcX0, p.dstX, -1, feather);
+    }
+    if (seamRight)
+    {
+        MatchSeam(src, w, dst, wide, h, p.srcX1 - 1, p.dstX + width - 1, +1, feather);
+    }
+    for (int y = 0; y < h; y++)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            int edge = std::min(seamLeft ? i : feather, seamRight ? width - 1 - i : feather);
+            uint32_t a = src[y * w + p.srcX0 + i], &b = dst[y * wide + p.dstX + i];
+            if (edge >= feather)
+            {
+                b = a;
+                continue;
+            }
+            int t = (edge + 1) * 256 / (feather + 1);
+            auto mix = [&](int shift) { return (((a >> shift) & 0xFF) * t + ((b >> shift) & 0xFF) * (256 - t)) >> 8; };
+            b = 0xFF000000u | (mix(16) << 16) | (mix(8) << 8) | mix(0);
+        }
+    }
+}
+
+// The pack image (the player's own, made with an image model from their backdrop, see scripts/widescreen)
+// supplies the gaps; everything else is the original, pixel exact.
 MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
 {
     std::string path = "widescreen/aquarium" + std::to_string(theBackgroundId);
@@ -198,26 +250,14 @@ MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
         delete pack;
         return nullptr;
     }
-    // inside the old glass walls, with a feather on both sides
-    const int inner0 = 40, inner1 = w - 40, feather = 12;
-    uint32_t* bits = src->GetBits();
-    uint32_t* dst = pack->GetBits();
-    MatchSeams(bits, w, dst, wide, h, margin + inner0, margin + inner1, inner0, inner1, feather);
-    for (int y = 0; y < h; y++)
+    const int glass = 40, feather = 12;
+    // the image model draws the glass walls at the new edges itself, so only the middle comes back
+    const Piece pieces[] = {
+        {glass, w - glass, margin + glass},
+    };
+    for (const Piece& p : pieces)
     {
-        for (int x = inner0; x < inner1; x++)
-        {
-            int edge = std::min(x - inner0, inner1 - 1 - x);
-            uint32_t a = bits[y * w + x], &b = dst[y * wide + margin + x];
-            if (edge >= feather)
-            {
-                b = a;
-                continue;
-            }
-            int t = (edge + 1) * 256 / (feather + 1);
-            auto mix = [&](int shift) { return (((a >> shift) & 0xFF) * t + ((b >> shift) & 0xFF) * (256 - t)) >> 8; };
-            b = 0xFF000000u | (mix(16) << 16) | (mix(8) << 8) | mix(0);
-        }
+        PastePiece(src->GetBits(), w, pack->GetBits(), wide, h, p, feather);
     }
     pack->BitsChanged();
     return pack;

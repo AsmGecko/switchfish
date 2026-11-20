@@ -18,7 +18,6 @@ namespace Sexy
 		WinFishApp* mApp2;
 		Slider* mMusicSlider;
 		Slider* mSFXSlider;
-		Checkbox* mFullscreenCB;
 		Checkbox* mCustomCursorsCB;
 		Checkbox* m3DCB;
 		Checkbox* mWidescreenCB;	// switchfish

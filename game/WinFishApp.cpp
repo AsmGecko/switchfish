@@ -2034,7 +2034,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	OptionsDialog* aDia = (OptionsDialog*)GetDialog(DIALOG_OPTIONS);
 	if (!aDia)
 		return;
-	SwitchScreenMode(!aDia->mFullscreenCB->IsChecked(), aDia->m3DCB->IsChecked());
+	SwitchScreenMode(mIsWindowed, aDia->m3DCB->IsChecked());
 	SetWidescreen(aDia->mWidescreenCB->IsChecked());
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
@@ -2176,6 +2176,13 @@ void Sexy::WinFishApp::CreateBoard()
 {
 	RemoveBoard();
 	m0x884 = false;
+	// switchfish: --level, once
+	if (gStartTank > 0 && mGameMode == GAMEMODE_ADVENTURE && mCurrentProfile)
+	{
+		mCurrentProfile->mTank = gStartTank;
+		mCurrentProfile->mLevel = gStartLevel;
+		gStartTank = 0;
+	}
 	// switchfish: a changed widescreen setting reaches the tank when a new one is made
 	bool aWide = mWidescreenAware && mWideTank;
 	if (aWide != (TankWidth() > 640))
@@ -2289,6 +2296,16 @@ void Sexy::WinFishApp::LogScreenSaverError(const std::string& theError)
 
 void Sexy::WinFishApp::UpdateFrames()
 {
+	// switchfish: --quickplay, N finishes the level whichever widget has the focus
+	if (gQuickPlay)
+	{
+		static bool sWasDown = false;
+		bool aDown = mWidgetManager->mKeyDown['N'];
+		if (aDown && !sWasDown && mBoard && mWidgetManager->mBaseModalWidget == nullptr)
+			mBoard->QuickFinishLevel();
+		sWasDown = aDown;
+	}
+
 	// switchfish: the first frame uploads every texture, so don't let the music run over a black screen
 	if (mTitleMusicPending && mDrawCount > 0)
 	{

@@ -301,6 +301,7 @@ namespace Sexy
 		int						GetNextVirtualTankId();
 		bool					HasAnyFish();
 		void					HandleBuyEgg();
+		void					QuickFinishLevel();
 		void					HandleFeedButton();
 		void					UpdateHasVirtualTankFish();
 		void					BonusRoundDropShell();

@@ -23,6 +23,12 @@ namespace Sexy
 	void				SetWideTank(bool wide);
 	void				FixLoadedXBounds(int& theMin, int& theMax);
 
+	// switchfish: test flags (--quickplay, --level T-L). N finishes the current level, and a new
+	// adventure board starts at gStartTank-gStartLevel once.
+	extern bool			gQuickPlay;
+	extern int			gStartTank;
+	extern int			gStartLevel;
+
 	DialogButton*		MakeDialogButton(int theId, ButtonListener* theListener, SexyString theText, Font* theFont);
 	DialogButton*		MakeDialogButton2(int theId, ButtonListener* theListener, SexyString theText, Image* theComponentImage);
 	void				DefaultDialogSettings(Dialog* theDialog);

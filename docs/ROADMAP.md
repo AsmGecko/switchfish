@@ -2,6 +2,9 @@
 
 Each milestone has an exit criterion; don't start the next one until it holds.
 
+**Next up** (from `docs/STATUS.md`): real hardware test (M1), Switch controls (M3), determinism check and
+robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
+
 ## M0: Repo and toolchain (done 2026-11-20)
 - [x] Reference repos in `upstream/`, research in `docs/research/`
 - [x] Docker image with devkitA64 r30, libnx 4.12, SDL2, mesa, libopenmpt 0.8.10
@@ -20,7 +23,10 @@ Each milestone has an exit criterion; don't start the next one until it holds.
 **Exit:** tank 1-1 playable on hardware with touch.
 
 ## M2: Test harness
-- [ ] JSON plans with clicks, keys, waits on named probes, screenshots, asserts (behind a CMake option)
+- [x] Plans with clicks, keys and screenshots per logic tick, time limit, forced focus (`port/TestPlan.cpp`)
+- [x] `--quickplay` (N finishes a level) and `--level T-L`
+- [ ] Waits on named probes (screen, money, level) and asserts, so plans stop depending on timing
+- [ ] Determinism check: per-tick state hash, classic 4:3 identical to the pre-widescreen build
 - [ ] Headless host runs (SDL dummy video, uncapped loop), `./sf.sh test`
 - [ ] Re-attach `.dmo` recording to the SDL event path; replay as regression tests
 - [ ] Plans for: new profile to tank 1-1 won, a full tank 1, store/pets, virtual tank

@@ -1,6 +1,12 @@
-Use your image generation / image editing tool on the attached PNG (854x480). It is a painted aquarium backdrop from a 2004 game with its left and right parts TRANSPARENT. Fill ONLY the transparent areas, so the result is one seamless 16:9 aquarium backdrop:
-- Keep every opaque pixel exactly as it is (same positions, same size, same colours). Do not redraw, move, rescale or restyle the existing painting.
-- Continue the scene naturally into the transparent areas: water with the same gradient and light rays at the top, the same sand/gravel floor at the same height, and objects that are cut off at the edge of the opaque area (coral, rocks, plants) continue or end naturally. Add only small, plain filler details (rocks, small plants) in the same style, no new large objects, and no mirrored or duplicated copies of existing objects.
-- The tank's glass side walls go at the far left and far right edges of the new image: a thin translucent vertical band, like the original tank glass.
-- Same hand-painted style, palette and lighting. No text, no fish, no UI, no frame.
-Output a single 854x480-proportioned (16:9) image. Tell me the absolute file path of the generated image in your final message.
+Use your image editing tool. Two images are attached:
+1. CANVAS (854x480): the middle of a painted aquarium backdrop from a 2004 game, with transparent areas on the left and right.
+2. REFERENCE (640x480): the complete original backdrop. Study its left and right edges: the tank's glass side walls are drawn in perspective (a slightly darker, tinted vertical band about 32 px wide with a thin bright inner edge line), and at the bottom the floor bends into the side wall, forming a 3D corner.
+
+Fill ONLY the transparent areas of the CANVAS, so it becomes the same aquarium, simply wider:
+- Keep every opaque pixel exactly as it is. Do not redraw, move, rescale or restyle the existing painting.
+- Extend only what is already there: the water with its gradient and light, the background scenery and the floor, at the same heights and in the same painting style, as if the same artist had painted a wider tank.
+- Objects cut off at the edge of the opaque area end naturally a little further out.
+- So the wider tank does not look empty, you may add a FEW small, quiet details in the outer half of each new area, e.g. a small rock, a small plant against the glass, a shell in the sand, in the same style and colours. Nothing large, nothing that draws attention away from the middle, no new structures, and no copies or near-copies of objects already in the painting.
+- At the far left and far right edges of the new image, draw the tank's glass side walls and the floor corners exactly in the style, width, colour and perspective of the REFERENCE's edges, so the tank keeps its 3D look.
+- No text, no fish, no UI, no frame.
+Output a single 16:9 image. Tell me the absolute file path of the generated image in your final message.

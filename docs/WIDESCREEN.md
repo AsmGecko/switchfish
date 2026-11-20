@@ -21,8 +21,12 @@ Built:
   tank, -107..747 wide), save fix-up on load (`FixLoadedXBounds`), Board draws and takes clicks across the
   canvas, waves and light bands continue, tank mask widened.
 - Backdrops: instead of quilting, an image model (Codex) fills the sides of each backdrop
-  (`./sf.sh widen`, `scripts/widescreen/`). The game keeps the original middle pixel exact and only uses the
-  new parts, feathered over 12 px. The pack lives in `gameData/widescreen/` and is never committed (it is
+  (`./sf.sh widen`, `scripts/widescreen/`), with the whole original attached as a reference so it draws the
+  glass side walls and floor corners at the new edges in the original's perspective, with at most a few
+  small, quiet details in the outer parts (no new structures, no copies). A plain version without details was
+  kept as `gameData/widescreen-alt/plain/`. The
+  game keeps the original middle (inside the old glass walls) pixel exact, feathered over 12 px, with the
+  colour difference across each seam faded into the new part. The pack lives in `gameData/widescreen/` and is never committed (it is
   derived from PopCap's art). Without a pack the sides are a blurred mirror of the edge.
 
 Not yet: HUD wings (the bar stays 640 and floats over the water), native wide backgrounds for menu screens,

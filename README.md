@@ -7,7 +7,8 @@ the whole Switch screen.
 **You need your own copy of Insaniquarium Deluxe** (for example from Steam). This repo and its builds contain
 no game assets.
 
-Status: the NRO and a macOS build compile; nothing has run on hardware yet. See `docs/ROADMAP.md`.
+Status: playable on the Mac and boots in the emulator, widescreen works; not yet run on a real Switch.
+See `docs/STATUS.md` for how solid things are and `docs/ROADMAP.md` for what's next.
 
 ## Daily use
 
@@ -33,6 +34,16 @@ game's 640x480 design coordinates (see `port/TestPlan.h`). A run always quits by
 ```bash
 ./build/host/switchfish --plan tests/plans/widetank.txt --out /tmp/shots --timeout 45
 ```
+
+## Quickplay (testing)
+
+```bash
+./sf.sh run --quickplay          # N finishes the current level the normal way (last egg piece)
+./sf.sh run --level 3-2          # a new adventure board starts at tank 3, level 2 (implies --quickplay)
+```
+
+On the Switch or in the emulator, put a `quickplay.txt` in the game folder (optionally containing `3-2`).
+It changes your profile's progress, so use a test profile.
 
 ## On the Switch
 

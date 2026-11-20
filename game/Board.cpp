@@ -1378,6 +1378,7 @@ void Board::DrawOverlay(Graphics* g, int thePriority)
 
 void Sexy::Board::KeyChar(SexyChar theChar)
 {
+
 	if (mApp->mGameMode == GAMEMODE_SANDBOX)
 	{
 		bool gusInTank = false;
@@ -3327,6 +3328,20 @@ bool Sexy::Board::HasAnyFish()
 		&& mGrubberList->empty() && mGekkoList->empty() && mBreederList->empty())
 		return false;
 	return true;
+}
+
+// switchfish: --quickplay. Buys the last egg piece, so the level ends the way it normally does.
+void Sexy::Board::QuickFinishLevel()
+{
+	if (mApp->mGameMode == GAMEMODE_VIRTUAL_TANK)
+		return;
+	SDL_Log("quickplay: finishing tank %d-%d", mTank, mLevel);
+	// the egg slot only appears later in a level
+	if (GetMenuButtonById(SLOT_EGG) == nullptr)
+		MakeAndUnlockMenuButton(SLOT_EGG, true);
+	m0x43c = 3;
+	mMoney += mSlotPrices[SLOT_EGG];
+	HandleBuyEgg();
 }
 
 void Sexy::Board::HandleBuyEgg()
@@ -5867,12 +5882,18 @@ void Sexy::Board::DrawTankWaves(Graphics* g, int theY)
 	int aCel = IMAGE_WAVE->GetAnimCel(mGameUpdateCnt);
 	Rect aRect = IMAGE_WAVE->GetCelRect(aCel);
 	g->DrawImageMirror(IMAGE_WAVESIDE, TankLeft(), theY, aRect, false);
+	// the wave cel tiles with itself; when whole cels don't fit between the caps (wide tank), they are
+	// stretched a little so each one still meets the next and the right cap
+	int aSpan = TankWidth() - 320;
+	int aCount = std::max(1, (aSpan + 80) / 160);
+	for (int i = 0; i < aCount; i++)
 	{
-		// the wave cel tiles with itself; clip the last one where the right cap starts (additive blend)
-		Graphics aMiddle(*g);
-		aMiddle.ClipRect(TankLeft() + 160, theY, TankWidth() - 320, IMAGE_WAVE->GetCelHeight());
-		for (int x = TankLeft() + 160; x < TankRight() - 160; x += 160)
-			aMiddle.DrawImageCel(IMAGE_WAVE, x, theY, aCel);
+		int aX0 = TankLeft() + 160 + aSpan * i / aCount;
+		int aX1 = TankLeft() + 160 + aSpan * (i + 1) / aCount;
+		if (aX1 - aX0 == 160)
+			g->DrawImageCel(IMAGE_WAVE, aX0, theY, aCel);
+		else
+			g->DrawImage(IMAGE_WAVE, Rect(aX0, theY, aX1 - aX0, aRect.mHeight), aRect);
 	}
 	g->DrawImageMirror(IMAGE_WAVESIDE, TankRight() - 160, theY, aRect, true);
 	g->SetDrawMode(Graphics::DRAWMODE_NORMAL);

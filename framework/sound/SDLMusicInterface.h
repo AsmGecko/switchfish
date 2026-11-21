@@ -57,7 +57,7 @@ class SDLMusicInterface : public MusicInterface
 {
 public:
 	SDLMusicMap				mMusicMap;
-	std::mutex				mMapLock;	// switchfish: LoadMusic runs on the loading thread, Update on the main one
+	std::recursive_mutex	mMapLock;	// switchfish: LoadMusic runs on its own thread at boot, the rest on the main one
 	int						mGlobalVolume;
 	int						mMusicLoadFlags;
 

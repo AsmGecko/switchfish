@@ -156,6 +156,9 @@ SDLSoundManager::SDLSoundManager()
 		return;
 	}
 	mInitializedMixer = true;
+	// switchfish: register the codecs now; doing it on first use isn't thread safe, and music and sounds load
+	// on different threads at boot
+	Mix_Init(MIX_INIT_MOD | MIX_INIT_OGG);
 
 	Mix_QuerySpec(&mMixerFreq, &mMixerFormat, &mMixerChannels);
 	Mix_AllocateChannels(MAX_CHANNELS);

@@ -638,6 +638,9 @@ void Board::RemovedFromManager(WidgetManager* theWidgetManager)
 void Board::Update()
 {
 	Widget::Update();
+	// switchfish: build this tank's wide art here rather than in the middle of drawing a frame
+	WideBackdrop(mCurrentBackgroundId);
+	WideTankMask(mCurrentBackgroundId);
 
 	if (mDropFoodDelay != 0)
 		mDropFoodDelay--;

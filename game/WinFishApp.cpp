@@ -57,7 +57,11 @@
 #include "RegisterDialog.h"
 
 #include <filesystem>
+#include <thread>
 #include <chrono>
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
 #include <ctime>
 
 namespace Sexy
@@ -569,15 +573,39 @@ void Sexy::WinFishApp::Init()
 void Sexy::WinFishApp::LoadingThreadProc()
 {
 	SDL_Log("boot: loading thread");
+	// switchfish: the music loads on its own thread next to the resources (the loading thread spends much of
+	// its time waiting for decoded images anyway); joined on every way out of this function
+	struct Joiner
+	{
+		std::thread mThread;
+		~Joiner()
+		{
+			if (mThread.joinable())
+			{
+				mThread.join();
+			}
+		}
+	} aMusic;
 	if (mLoadTitleMusic)
 	{
-		std::filesystem::path rsc = Sexy::GetResourceFolder();
-		mMusicInterface->LoadMusic(4, (rsc / "music" / "Insaniq2.mo3").string());
-		mMusicInterface->LoadMusic(1, (rsc / "music" / "Alien.mo3").string());
-		mMusicInterface->LoadMusic(3, (rsc / "music" / "Lullaby.mo3").string());
-		SDL_Log("boot: music loaded");
-		// started in UpdateFrames once the title screen is on screen
-		mTitleMusicPending = true;
+		aMusic.mThread = std::thread([this]()
+		{
+#ifdef __SWITCH__
+			// core 2, at the main thread's priority: above the image worker there (0x2D)
+			if (R_FAILED(svcSetThreadCoreMask(CUR_THREAD_HANDLE, 2, BIT(2))) ||
+				R_FAILED(svcSetThreadPriority(CUR_THREAD_HANDLE, 0x2C)))
+			{
+				SDL_Log("music thread: couldn't move it to core 2");
+			}
+#endif
+			std::filesystem::path rsc = Sexy::GetResourceFolder();
+			mMusicInterface->LoadMusic(4, (rsc / "music" / "Insaniq2.mo3").string());
+			// started in UpdateFrames once the title screen is on screen
+			mTitleMusicPending = true;
+			mMusicInterface->LoadMusic(1, (rsc / "music" / "Alien.mo3").string());
+			mMusicInterface->LoadMusic(3, (rsc / "music" / "Lullaby.mo3").string());
+			SDL_Log("boot: music loaded");
+		});
 	}
 	SexyString aResNames[] = {"Register", "LoadingThread"};
 
@@ -652,7 +680,6 @@ void Sexy::WinFishApp::LoadingThreadProc()
 	// switchfish: wide tank art (the tank width is set before this thread starts)
 	LogFileStats("boot: loading thread resources done");
 	BuildWideBackdrops(this);
-	SDL_Log("boot: wide backdrops built");
 
 	aImgId = IMAGE_SCL_STINKY_ID;
 	aImgCounter = 0;
@@ -697,6 +724,7 @@ void Sexy::WinFishApp::LoadingThreadProc()
 		mCompletedLoadingThreadTasks++;
 		aImgCounter++;
 	}
+	SDL_Log("boot: loading thread done");
 }
 
 void Sexy::WinFishApp::LoadingThreadCompleted()

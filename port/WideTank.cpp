@@ -271,35 +271,46 @@ MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
 
 } // namespace
 
+// Each tank's art is built the first time it is drawn (about 60 ms on the Switch), not all six at load time
+static SexyAppBase* gWideApp = nullptr;
+static bool gWideBuilt[6];
+
 void BuildWideBackdrops(SexyAppBase* app)
 {
+    gWideApp = app;
     for (int i = 0; i < 6; i++)
     {
         delete gWide[i];
         gWide[i] = nullptr;
         delete gWideMask[i];
         gWideMask[i] = nullptr;
-        if (TankWidth() <= 640)
-        {
-            continue;
-        }
-        MemoryImage* src = dynamic_cast<MemoryImage*>(GetImageById(IMAGE_AQUARIUM1_ID + i));
-        if (src)
-        {
-            gWide[i] = FromPack(app, src, i + 1);
-            if (!gWide[i])
-            {
-                gWide[i] = Extend(app, src);
-            }
-        }
+        gWideBuilt[i] = false;
+    }
+}
+
+static void BuildWideBackdrop(int i)
+{
+    gWideBuilt[i] = true;
+    if (TankWidth() <= 640 || !gWideApp)
+    {
+        return;
+    }
+    MemoryImage* src = dynamic_cast<MemoryImage*>(GetImageById(IMAGE_AQUARIUM1_ID + i));
+    if (src)
+    {
+        gWide[i] = FromPack(gWideApp, src, i + 1);
         if (!gWide[i])
         {
-            SDL_Log("wide tank: no pixels for backdrop %d", i + 1);
-            continue;
+            gWide[i] = Extend(gWideApp, src);
         }
-        MemoryImage* mask = dynamic_cast<MemoryImage*>(GetImageById(IMAGE_TANKMASK1_ID + i));
-        gWideMask[i] = mask ? ExtendMask(app, mask, gWide[i], 365) : nullptr;
     }
+    if (!gWide[i])
+    {
+        SDL_Log("wide tank: no pixels for backdrop %d", i + 1);
+        return;
+    }
+    MemoryImage* mask = dynamic_cast<MemoryImage*>(GetImageById(IMAGE_TANKMASK1_ID + i));
+    gWideMask[i] = mask ? ExtendMask(gWideApp, mask, gWide[i], 365) : nullptr;
 }
 
 Image* WideTankMask(int theBackgroundId)
@@ -307,6 +318,10 @@ Image* WideTankMask(int theBackgroundId)
     if (theBackgroundId < 1 || theBackgroundId > 6)
     {
         return nullptr;
+    }
+    if (!gWideBuilt[theBackgroundId - 1])
+    {
+        BuildWideBackdrop(theBackgroundId - 1);
     }
     return gWideMask[theBackgroundId - 1];
 }
@@ -316,6 +331,10 @@ Image* WideBackdrop(int theBackgroundId)
     if (theBackgroundId < 1 || theBackgroundId > 6)
     {
         return nullptr;
+    }
+    if (!gWideBuilt[theBackgroundId - 1])
+    {
+        BuildWideBackdrop(theBackgroundId - 1);
     }
     return gWide[theBackgroundId - 1];
 }

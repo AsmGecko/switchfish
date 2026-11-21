@@ -45,7 +45,7 @@ SDLMusicInterface::~SDLMusicInterface()
 {
 	Mix_HaltMusic();
 	// switchfish: free the songs while the mixer is still open (~SDLSoundManager closes it right after)
-	std::lock_guard<std::mutex> aLock(mMapLock);
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	for (auto& anEntry : mMusicMap)
 	{
 		if (anEntry.second.mHMusic)
@@ -82,7 +82,7 @@ bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)
 	
 	SDLMusicInfo aMusicInfo;	
 	aMusicInfo.mHMusic = aHMusic;
-	std::scoped_lock aLock(mMapLock);
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	mMusicMap.insert(SDLMusicMap::value_type(theSongId, aMusicInfo));
 
 	return true;
@@ -90,6 +90,7 @@ bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)
 
 void SDLMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
 	if (anItr != mMusicMap.end())
 	{
@@ -108,6 +109,7 @@ void SDLMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 
 void SDLMusicInterface::StopMusic(int theSongId)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	Mix_HaltMusic();
 
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
@@ -121,6 +123,7 @@ void SDLMusicInterface::StopMusic(int theSongId)
 
 void SDLMusicInterface::PauseMusic(int theSongId)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
 	if (anItr != mMusicMap.end())
 	{
@@ -131,6 +134,7 @@ void SDLMusicInterface::PauseMusic(int theSongId)
 
 void SDLMusicInterface::ResumeMusic(int theSongId)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
 	if (anItr != mMusicMap.end())
 	{
@@ -142,6 +146,7 @@ void SDLMusicInterface::ResumeMusic(int theSongId)
 
 void SDLMusicInterface::StopAllMusic()
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.begin();
 	while (anItr != mMusicMap.end())
 	{
@@ -154,6 +159,7 @@ void SDLMusicInterface::StopAllMusic()
 
 void SDLMusicInterface::UnloadMusic(int theSongId)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	StopMusic(theSongId);
 	
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
@@ -168,6 +174,7 @@ void SDLMusicInterface::UnloadMusic(int theSongId)
 
 void SDLMusicInterface::UnloadAllMusic()
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	StopAllMusic();
 	for (SDLMusicMap::iterator anItr = mMusicMap.begin(); anItr != mMusicMap.end(); ++anItr)
 	{
@@ -179,6 +186,7 @@ void SDLMusicInterface::UnloadAllMusic()
 
 void SDLMusicInterface::PauseAllMusic()
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	for (SDLMusicMap::iterator anItr = mMusicMap.begin(); anItr != mMusicMap.end(); ++anItr)
 	{
 		SDLMusicInfo* aMusicInfo = &anItr->second;
@@ -189,6 +197,7 @@ void SDLMusicInterface::PauseAllMusic()
 
 void SDLMusicInterface::ResumeAllMusic()
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	for (SDLMusicMap::iterator anItr = mMusicMap.begin(); anItr != mMusicMap.end(); ++anItr)
 	{
 		SDLMusicInfo* aMusicInfo = &anItr->second;
@@ -199,6 +208,7 @@ void SDLMusicInterface::ResumeAllMusic()
 
 void SDLMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, bool noLoop)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
 	if (anItr != mMusicMap.end())
 	{
@@ -217,6 +227,7 @@ void SDLMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, bo
 
 void SDLMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.find(theSongId);
 	if (anItr != mMusicMap.end())
 	{		
@@ -233,6 +244,7 @@ void SDLMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
 
 void SDLMusicInterface::FadeOutAll(bool stopSong, double theSpeed)
 {
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.begin();
 	while (anItr != mMusicMap.end())
 	{
@@ -299,7 +311,7 @@ void SDLMusicInterface::Update()
 	Mix_VolumeMusic(mGlobalVolume);
 	Mix_VolumeMusicGeneral(mGlobalVolume);
 
-	std::scoped_lock aLock(mMapLock);
+	std::lock_guard<std::recursive_mutex> aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.begin();
 	while (anItr != mMusicMap.end())
 	{

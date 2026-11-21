@@ -1729,7 +1729,11 @@ bool SexyAppBase::DrawDirtyStuff()
 	{
 		mLastDrawWasEmpty = false;
 
-		mDrawCount++;		
+		mDrawCount++;
+		if (mDrawCount == 1)
+		{
+			SDL_Log("boot: first frame drawn");
+		}
 
 		uint32_t aMidTime = SDL_GetTicks();
 
@@ -2289,7 +2293,14 @@ void SexyAppBase::LoadingThreadCompleted()
 void SexyAppBase::LoadingThreadProcStub(SexyAppBase *theArg)
 {
 	SexyAppBase* aSexyApp = theArg;
-	
+
+#ifdef __SWITCH__
+	// switchfish: the Switch used to load before the first frame (30 s of black screen). Now it loads in
+	// this thread, on a core of its own: threads start on the main thread's core, and the Switch only
+	// switches between equal threads when one waits, which this one never does.
+	Result rc = svcSetThreadCoreMask(CUR_THREAD_HANDLE, 1, BIT(1));
+	SDL_Log("loading thread on core 1: %s", R_SUCCEEDED(rc) ? "ok" : "failed");
+#endif
 	aSexyApp->LoadingThreadProc();		
 
 	SDL_Log("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
@@ -2301,10 +2312,16 @@ void SexyAppBase::StartLoadingThread()
 {	
 	if (!mLoadingThreadStarted)
 	{
+#ifdef __SWITCH__
+		// switchfish: the loading thread gets a core of its own (LoadingThreadProcStub), the title screen
+		// doesn't have to make room for it
+		mYieldMainThread = false;
+#else
 		mYieldMainThread = true; 
+#endif
 		//::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);		
 		mLoadingThreadStarted = true;
-#if defined(__EMSCRIPTEN__) || defined(__SWITCH__)
+#if defined(__EMSCRIPTEN__)
 		LoadingThreadProcStub(this);
 #else
         //_beginthread(LoadingThreadProcStub, 0, this);

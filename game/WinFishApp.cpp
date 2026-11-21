@@ -473,13 +473,16 @@ void Sexy::WinFishApp::Init()
 		}
 	}
     
+	SDL_Log("boot: init");
 	bool aSuccessfulResLoad = mResourceManager->ParseResourcesFile("properties/resources.xml");
+	SDL_Log("boot: resources.xml parsed");
 
 	if (aSuccessfulResLoad)
 	{
 		aSuccessfulResLoad = mResourceManager->LoadResources("Init") && 
 			ExtractInitResources(mResourceManager) && 
 			LoadImageById(mResourceManager, IMAGE_STINKY_ID);
+		SDL_Log("boot: Init group loaded");
 
 		if (aSuccessfulResLoad)
 		{
@@ -524,18 +527,9 @@ void Sexy::WinFishApp::Init()
 				mWidgetManager->AddWidget(mTitleScreen);
 
 
-				if (!anIsScreenSaver)
-				{
-					std::filesystem::path rsc = Sexy::GetResourceFolder();
-					std::filesystem::path rsc1 = rsc / "music" / "Insaniq2.mo3";
-					std::filesystem::path rsc2 = rsc / "music" / "Alien.mo3";
-					std::filesystem::path rsc3 = rsc / "music" / "Lullaby.mo3";
-					mMusicInterface->LoadMusic(4, rsc1.string());
-					mMusicInterface->LoadMusic(1, rsc2.string());
-					mMusicInterface->LoadMusic(3, rsc3.string());
-					// switchfish: started in UpdateFrames once the title screen is on screen
-					mTitleMusicPending = true;
-				}
+				// switchfish: the music loads first thing in the loading thread instead of here, before the
+				// first frame (decoding the MO3s took seconds on the Switch)
+				mLoadTitleMusic = !anIsScreenSaver;
 				SetCursorImage(CURSOR_POINTER, IMAGE_CURSOR_POINTER);
 				SetCursorImage(CURSOR_HAND, IMAGE_CURSOR_HAND);
 				SetCursorImage(CURSOR_DRAGGING, IMAGE_CURSOR_DRAGGING);
@@ -555,6 +549,17 @@ void Sexy::WinFishApp::Init()
 
 void Sexy::WinFishApp::LoadingThreadProc()
 {
+	SDL_Log("boot: loading thread");
+	if (mLoadTitleMusic)
+	{
+		std::filesystem::path rsc = Sexy::GetResourceFolder();
+		mMusicInterface->LoadMusic(4, (rsc / "music" / "Insaniq2.mo3").string());
+		mMusicInterface->LoadMusic(1, (rsc / "music" / "Alien.mo3").string());
+		mMusicInterface->LoadMusic(3, (rsc / "music" / "Lullaby.mo3").string());
+		SDL_Log("boot: music loaded");
+		// started in UpdateFrames once the title screen is on screen
+		mTitleMusicPending = true;
+	}
 	SexyString aResNames[] = {"Register", "LoadingThread"};
 
 	int arraySize = sizeof(aResNames) / sizeof(aResNames[0]);
@@ -626,7 +631,9 @@ void Sexy::WinFishApp::LoadingThreadProc()
 	}
 
 	// switchfish: wide tank art (the tank width is set before this thread starts)
+	SDL_Log("boot: loading thread resources done");
 	BuildWideBackdrops(this);
+	SDL_Log("boot: wide backdrops built");
 
 	aImgId = IMAGE_SCL_STINKY_ID;
 	aImgCounter = 0;
@@ -2356,6 +2363,7 @@ void Sexy::WinFishApp::UpdateFrames()
 	if (mTitleMusicPending && mDrawCount > 0)
 	{
 		mTitleMusicPending = false;
+		SDL_Log("boot: first frame");
 		PlayMusic(2, 45);
 	}
 

@@ -1,6 +1,7 @@
 #ifndef __WINFISHAPP_H__
 #define __WINFISHAPP_H__
 
+#include <atomic>
 #include "SexyApp.h"
 #include "misc/MTRand.h"
 #include "graphics/Color.h"
@@ -219,7 +220,8 @@ namespace Sexy
 		TankScreen*						mTankScreen;
 		HighScoreScreen*				mHighScoreScreen;
 		HelpScreen*						mHelpScreen;
-		bool							mTitleMusicPending;
+		std::atomic<bool>				mTitleMusicPending;
+		bool							mLoadTitleMusic = false;
 		bool							mScreenSaverEnabled;
 		bool							mScreenSaverSound;
 		bool							mScreenSaverRotateBackdrops;

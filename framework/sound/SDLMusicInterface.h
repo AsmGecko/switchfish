@@ -28,6 +28,7 @@
 #include "MusicInterface.h"
 
 #include <SDL.h>
+#include <mutex>
 #include <SDL_mixer_ext/SDL_mixer_ext.h>
 
 namespace Sexy
@@ -56,6 +57,7 @@ class SDLMusicInterface : public MusicInterface
 {
 public:
 	SDLMusicMap				mMusicMap;
+	std::mutex				mMapLock;	// switchfish: LoadMusic runs on the loading thread, Update on the main one
 	int						mGlobalVolume;
 	int						mMusicLoadFlags;
 

@@ -65,6 +65,7 @@ bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)
 	
 	SDLMusicInfo aMusicInfo;	
 	aMusicInfo.mHMusic = aHMusic;
+	std::scoped_lock aLock(mMapLock);
 	mMusicMap.insert(SDLMusicMap::value_type(theSongId, aMusicInfo));
 
 	return true;
@@ -281,6 +282,7 @@ void SDLMusicInterface::Update()
 	Mix_VolumeMusic(mGlobalVolume);
 	Mix_VolumeMusicGeneral(mGlobalVolume);
 
+	std::scoped_lock aLock(mMapLock);
 	SDLMusicMap::iterator anItr = mMusicMap.begin();
 	while (anItr != mMusicMap.end())
 	{

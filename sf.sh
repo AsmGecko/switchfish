@@ -120,6 +120,7 @@ emu() {
 	fi
 	cp "$NRO" "$EMU_SD/"
 	rm -f "$EMU_SD/log.txt"
+	touch "$EMU_SD/debug.txt"	# the game only writes log.txt with this
 	# Without --no-gui Ryubing won't load anything until it has prod.keys; homebrew doesn't need them.
 	if $gui; then
 		"$RYUBING" "$@" "$PWD/$EMU_SD/switchfish.nro" || true

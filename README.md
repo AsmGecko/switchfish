@@ -65,7 +65,9 @@ sdmc:/switch/switchfish/
 ```
 
 Start it from hbmenu through title takeover (hold R while starting any game), not from the album: the album
-runs homebrew with too little memory. A log goes to `sdmc:/switch/switchfish/log.txt`.
+runs homebrew with too little memory. If the game crashes it writes its last log lines and the crash
+address to `sdmc:/switch/switchfish/crash.txt`; with a `debug.txt` in that folder it logs everything to
+`log.txt` (slower, every line is a write to the SD card).
 
 Copying the game files over USB works best through hekate's USB mass storage (the SD card shows up as a
 normal disk); MTP tools on a Mac are slow and unreliable with hundreds of small files. After that only the

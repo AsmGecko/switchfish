@@ -9,6 +9,8 @@
 #include <cstring>
 #include <filesystem>
 #include <string>
+#include <mutex>
+#include <exception>
 
 static bool IsGameDirectory(const std::filesystem::path& p)
 {
@@ -100,17 +102,77 @@ static Notice MissingDataNotice(const std::string& path)
             false};
 }
 
+// The log: live in the Mac's terminal when started with ./sf.sh send, in log.txt only when the game folder
+// has a debug.txt (the emulator runs), and otherwise only the last lines in memory, written to crash.txt
+// if the game crashes. Writing every line to the SD card cost time.
 static bool gNxlink = false;
+static FILE* gLogFile = nullptr;
+
+static const int kRecentLines = 256, kLineLength = 160;
+static char gRecent[kRecentLines][kLineLength];
+static int gRecentNext = 0;
+static std::mutex gRecentLock;
+
+static void WriteRecent(FILE* f)
+{
+    for (int i = 0; i < kRecentLines; i++)
+    {
+        const char* line = gRecent[(gRecentNext + i) % kRecentLines];
+        if (line[0])
+        {
+            fprintf(f, "%s\n", line);
+        }
+    }
+}
+
+// libnx calls this on a crash in any thread (with __nx_exception_stack); returning lets the system handle it
+extern "C" {
+alignas(16) u8 __nx_exception_stack[0x4000];
+u64 __nx_exception_stack_size = sizeof(__nx_exception_stack);
+extern char __start__;
+
+void __libnx_exception_handler(ThreadExceptionDump* ctx)
+{
+    // no locks here: the crashed thread may hold one
+    FILE* f = fopen("sdmc:/switch/switchfish/crash.txt", "w");
+    if (!f)
+    {
+        return;
+    }
+    u64 base = (u64)&__start__;
+    fprintf(f, "switchfish crashed (error 0x%x)\n", ctx->error_desc);
+    fprintf(f, "pc 0x%lx lr 0x%lx (in the ELF: pc 0x%lx lr 0x%lx)\n", ctx->pc.x, ctx->lr.x, ctx->pc.x - base,
+        ctx->lr.x - base);
+    fprintf(f, "sp 0x%lx far 0x%lx esr 0x%x\n\nlast log lines:\n", ctx->sp.x, ctx->far.x, ctx->esr);
+    WriteRecent(f);
+    fclose(f);
+}
+}
+
+static void Terminated()
+{
+    if (FILE* f = fopen("sdmc:/switch/switchfish/crash.txt", "w"))
+    {
+        fprintf(f, "switchfish stopped on an unhandled C++ error\n\nlast log lines:\n");
+        WriteRecent(f);
+        fclose(f);
+    }
+    abort();
+}
 
 static void StartLog()
 {
-    // started with ./sf.sh send: the log also goes to the Mac's terminal (nxlink -s)
     if (__nxlink_host.s_addr != 0 && R_SUCCEEDED(socketInitializeDefault()))
     {
         gNxlink = nxlinkStdio() >= 0;
     }
-    static FILE* logfile = fopen("sdmc:/switch/switchfish/log.txt", "wb");
-    SDL_LogSetOutputFunction([](void* userdata, int, SDL_LogPriority, const char* message)
+    if (FILE* flag = fopen("sdmc:/switch/switchfish/debug.txt", "rb"))
+    {
+        fclose(flag);
+        gLogFile = fopen("sdmc:/switch/switchfish/log.txt", "wb");
+    }
+    std::set_terminate(Terminated);
+    SDL_LogSetOutputFunction([](void*, int, SDL_LogPriority, const char* message)
     {
         if (!message)
         {
@@ -119,17 +181,20 @@ static void StartLog()
         // seconds since start, to see where the time goes
         static const u64 start = armGetSystemTick();
         double t = armTicksToNs(armGetSystemTick() - start) / 1e9;
-        if (userdata)
+        std::lock_guard<std::mutex> lock(gRecentLock);
+        snprintf(gRecent[gRecentNext], kLineLength, "%7.3f %s", t, message);
+        gRecentNext = (gRecentNext + 1) % kRecentLines;
+        if (gLogFile)
         {
-            fprintf((FILE*)userdata, "%7.3f %s\n", t, message);
-            fflush((FILE*)userdata);
+            fprintf(gLogFile, "%7.3f %s\n", t, message);
+            fflush(gLogFile);
         }
         if (gNxlink)
         {
             printf("%7.3f %s\n", t, message);
             fflush(stdout);
         }
-    }, logfile);
+    }, nullptr);
 }
 
 #else

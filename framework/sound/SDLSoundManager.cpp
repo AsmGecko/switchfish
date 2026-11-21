@@ -465,6 +465,11 @@ SoundInstance* SDLSoundManager::GetSoundInstance(intptr_t theSfxID)
 	mPlayingSounds[aFreeChannel]->SetBasePan(mBasePans[theSfxID]);
 	mPlayingSounds[aFreeChannel]->SetBaseVolume(mBaseVolumes[theSfxID]);
 
+	if (mPlayHook)
+	{
+		mPlayHook(theSfxID);
+	}
+
 	return mPlayingSounds[aFreeChannel];
 }
 

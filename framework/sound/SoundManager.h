@@ -26,6 +26,7 @@
 #define __SOUNDMANAGER_H__
 
 #include "Common.h"
+#include <functional>
 
 namespace Sexy
 {
@@ -40,6 +41,9 @@ class SoundManager
 public:
 	SoundManager() {}
 	virtual ~SoundManager() {}
+
+	// switchfish: told about every sound about to play (the game rumbles on some)
+	std::function<void(intptr_t)> mPlayHook;
 
 	virtual bool			Initialized() = 0;
 

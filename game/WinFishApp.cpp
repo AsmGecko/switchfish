@@ -1,3 +1,5 @@
+#include "platform/PadCursor.h"
+#include "sound/SoundManager.h"
 #include "WideTank.h"
 #include "SEHCatcher.h"
 #include "SexyAppBase.h"
@@ -368,6 +370,46 @@ Sexy::WinFishApp::~WinFishApp()
 		delete mHighScoreMgr;
 }
 
+// switchfish: the controller rumbles on the moments that matter (docs/CONTROLS.md), told by the sound
+// that goes with them: low motor, high motor (0..1), milliseconds.
+static void RumbleForSound(intptr_t theSound)
+{
+	// before loading every SOUND_ is still 0
+	if (!gSexyAppBase->mLoadingThreadCompleted)
+	{
+		return;
+	}
+	// the last field is the least time between two rumbles for that sound
+	static const struct { intptr_t* mSound; float mLow, mHigh; int mMs, mGapMs; } kRumbles[] = {
+		// an alien arrives (each kind has its own sound), and the warning before it
+		{&SOUND_ROAR, 0.7f, 0.35f, 450, 0}, {&SOUND_ROAR2, 0.7f, 0.35f, 450, 0}, {&SOUND_ROAR3, 0.7f, 0.35f, 450, 0},
+		{&SOUND_GUFFAW, 0.7f, 0.35f, 450, 0}, {&SOUND_INTERFER, 0.7f, 0.35f, 450, 0}, {&SOUND_EVILLAFF, 0.7f, 0.35f, 450, 0},
+		{&SOUND_AWOOGA, 0.4f, 0.2f, 500, 0},
+		// an alien goes down, a bomb goes off (a dead alien keeps exploding for 2 s; bombs close together rumble once)
+		{&SOUND_EXPLOSION1, 0.8f, 0.6f, 300, 0}, {&SOUND_EXPLOSION4, 0.8f, 0.6f, 300, 0}, {&SOUND_EXPLODE, 0.6f, 0.5f, 250, 2200},
+		// each shot that hits, and a tap on the glass
+		{&SOUND_HIT, 0.1f, 0.25f, 35, 0}, {&SOUND_TAPGLASS, 0.2f, 0.45f, 50, 0},
+		// a fish dies, a pet hatches
+		{&SOUND_DIE, 0.35f, 0.1f, 200, 0}, {&SOUND_HATCH, 0.3f, 0.3f, 250, 0},
+	};
+	static Uint32 sLast[sizeof(kRumbles) / sizeof(kRumbles[0])] = {};
+	for (size_t i = 0; i < sizeof(kRumbles) / sizeof(kRumbles[0]); i++)
+	{
+		const auto& r = kRumbles[i];
+		if (*r.mSound != theSound)
+		{
+			continue;
+		}
+		Uint32 now = SDL_GetTicks();
+		if (sLast[i] == 0 || now - sLast[i] >= (Uint32)r.mGapMs)
+		{
+			sLast[i] = now;
+			RumblePad(r.mLow, r.mHigh, r.mMs);
+		}
+		return;
+	}
+}
+
 void Sexy::WinFishApp::Init()
 {
 	DoParseCmdLine();
@@ -375,6 +417,10 @@ void Sexy::WinFishApp::Init()
 	mMuteOnLostFocus = true;
 
 	SexyApp::Init();
+	if (mSoundManager)
+	{
+		mSoundManager->mPlayHook = RumbleForSound;
+	}
 
 	if (CheckForVista())
 	{

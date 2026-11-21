@@ -42,6 +42,18 @@ static u32 gTouchFinger = 0;
 static int gTouchX = 0, gTouchY = 0, gTouchButton = 1;
 // fingers that started in the letterbox or alongside the tracked one, ignored until they lift
 static std::vector<u32> gIgnoredFingers;
+// rumble motors for handheld, a Pro Controller and dual Joy-Cons (each style has its own handles)
+static HidVibrationDeviceHandle gVibration[3][2];
+static bool gVibrationReady[3];
+static int gRumbleDevice = -1;
+// what rumbles now, and a longer weaker rumble a short stronger one interrupted, to go back to
+struct Rumble
+{
+	float mLow = 0, mHigh = 0;
+	u64 mEnd = 0;
+	float Strength() const { return std::max(mLow, mHigh); }
+};
+static Rumble gRumble, gRumbleUnder;
 
 void SexyAppBase::InitInput()
 {
@@ -50,6 +62,9 @@ void SexyAppBase::InitInput()
 	padInitializeDefault(&gPad);
 	hidInitializeTouchScreen();
 	hidInitializeMouse();
+	gVibrationReady[0] = R_SUCCEEDED(hidInitializeVibrationDevices(gVibration[0], 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld));
+	gVibrationReady[1] = R_SUCCEEDED(hidInitializeVibrationDevices(gVibration[1], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadFullKey));
+	gVibrationReady[2] = R_SUCCEEDED(hidInitializeVibrationDevices(gVibration[2], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual));
 
 	if (!mMouseIn)
 		mMouseIn = true;
@@ -93,6 +108,96 @@ bool SexyAppBase::StartTextInput(std::string& theInput, int theMaxChars)
 void SexyAppBase::StopTextInput()
 {
 	
+}
+
+static u64 NowMs()
+{
+	return armTicksToNs(armGetSystemTick()) / 1000000;
+}
+
+static void SendRumble(int theDevice, float theLow, float theHigh)
+{
+	HidVibrationValue value;
+	value.amp_low = theLow;
+	value.freq_low = 160.0f;
+	value.amp_high = theHigh;
+	value.freq_high = 320.0f;
+	HidVibrationValue values[2] = {value, value};
+	hidSendVibrationValues(gVibration[theDevice], values, 2);
+}
+
+// The controller being played with: the console's own Joy-Cons in handheld mode, otherwise player 1's
+// Pro Controller or Joy-Con pair (padInitializeDefault reads both, so its style set alone can't tell).
+static int RumbleDevice()
+{
+	u32 handheld = hidGetNpadStyleSet(HidNpadIdType_Handheld);
+	u32 first = hidGetNpadStyleSet(HidNpadIdType_No1);
+	if ((handheld & HidNpadStyleTag_NpadHandheld) && (appletGetOperationMode() == AppletOperationMode_Handheld || !first))
+	{
+		return 0;
+	}
+	if (first & HidNpadStyleTag_NpadFullKey)
+	{
+		return 1;
+	}
+	if (first & HidNpadStyleTag_NpadJoyDual)
+	{
+		return 2;
+	}
+	return -1;
+}
+
+void Sexy::RumblePad(float theLow, float theHigh, int theMs)
+{
+	u64 now = NowMs();
+	Rumble next;
+	next.mLow = theLow;
+	next.mHigh = theHigh;
+	next.mEnd = now + theMs;
+	if (now < gRumble.mEnd && next.Strength() < gRumble.Strength())
+	{
+		return;
+	}
+	int device = RumbleDevice();
+	if (device < 0 || !gVibrationReady[device])
+	{
+		return;
+	}
+	if (gRumbleDevice >= 0 && gRumbleDevice != device)
+	{
+		SendRumble(gRumbleDevice, 0, 0);
+	}
+	if (now < gRumble.mEnd && gRumble.mEnd > next.mEnd)
+	{
+		gRumbleUnder = gRumble;
+	}
+	SendRumble(device, theLow, theHigh);
+	gRumbleDevice = device;
+	gRumble = next;
+}
+
+// the motors keep going until told otherwise; a rumble that was interrupted picks up again
+static void StopRumble(bool theNow)
+{
+	if (gRumbleDevice < 0)
+	{
+		return;
+	}
+	u64 now = NowMs();
+	if (!theNow && now < gRumble.mEnd)
+	{
+		return;
+	}
+	if (!theNow && now < gRumbleUnder.mEnd)
+	{
+		gRumble = gRumbleUnder;
+		gRumbleUnder = Rumble();
+		SendRumble(gRumbleDevice, gRumble.mLow, gRumble.mHigh);
+		return;
+	}
+	SendRumble(gRumbleDevice, 0, 0);
+	gRumbleDevice = -1;
+	gRumble = gRumbleUnder = Rumble();
 }
 
 static PadInput ReadPad()
@@ -254,6 +359,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 {
 	if (!appletMainLoop())
 	{
+		StopRumble(true);
 		mShutdown = true;
 		return false;
 	}
@@ -266,6 +372,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 
 	padUpdate(&gPad);
 
+	StopRumble(mScriptedInput);
 	if (mScriptedInput)
 	{
 		UpdatePadCursor(this, gScriptedPad);
@@ -282,6 +389,11 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 		{
 			mWidgetManager->MarkAllDirty();
 		}
+	}
+
+	if (!focused)
+	{
+		StopRumble(true);
 	}
 
 	// out of focus, the held buttons come back up

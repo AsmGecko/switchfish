@@ -70,6 +70,7 @@ Controls (details and reasoning in `docs/CONTROLS.md`):
 | + / − | menu / pause |
 | Touch | point and tap directly (handheld); ZL + tap is a right click |
 | USB mouse | through the dock |
+| Rumble | aliens arriving and going down, hits, taps on the glass |
 
 On the Mac a game controller drives the same cursor.
 

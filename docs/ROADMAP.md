@@ -39,7 +39,8 @@ robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
 - [x] Direct touch with our own coordinate mapping (SDL touch-to-mouse off)
 - [x] swkbd for player names (current text and length)
 - [x] D-pad to buttons, USB mouse, pause on focus loss
-- [ ] Tune on hardware; gyro, rumble, single Joy-Con
+- [x] Rumble on aliens, hits, glass taps, deaths
+- [ ] Tune on hardware; gyro, single Joy-Con
 - [ ] Docked/handheld switching, audio restart after resume
 - [ ] 4:3 presentation with sharp-bilinear scaling and blurred backdrop side bars
 - [ ] Remove the framework's dependency on game resources

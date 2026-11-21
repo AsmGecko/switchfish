@@ -387,6 +387,14 @@ static PadInput ReadController()
 	return in;
 }
 
+void Sexy::RumblePad(float theLow, float theHigh, int theMs)
+{
+	if (gController)
+	{
+		SDL_GameControllerRumble(gController, (Uint16)(theLow * 0xFFFF), (Uint16)(theHigh * 0xFFFF), (Uint32)theMs);
+	}
+}
+
 bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 {
 #ifdef __EMSCRIPTEN__

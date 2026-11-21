@@ -32,6 +32,10 @@ bool ClampPointer(SexyAppBase* theApp, int& theX, int& theY);
 // Where to draw the cursor; false while it is hidden.
 bool GetPadCursor(int& theX, int& theY);
 
+// Rumble on the controller in use, strengths 0..1 for the low and high motors. On the Switch a weaker
+// rumble doesn't cut a stronger one short. Implemented per platform (Input.cpp).
+void RumblePad(float theLow, float theHigh, int theMs);
+
 // The controller as a test plan sets it, used instead of the real one while input is scripted.
 extern PadInput gScriptedPad;
 }

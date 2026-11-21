@@ -19,7 +19,7 @@ things are assumed rather than shown.
 | # | Risk | Why |
 |---|---|---|
 | 1 | **Never run on a real Switch** | Only a short check in Ryubing. Performance, memory, the mesa driver, the new canvas and the controls are unknown. Biggest risk. |
-| 2 | **Controls untested on hardware** | Stick cursor, touch, B, D-pad, menu/pause, USB mouse are built (`docs/CONTROLS.md`) and checked on the Mac and in Ryubing, but how they feel and focus/sleep handling need a real Switch. Gyro and rumble wait for that. |
+| 2 | **Controls untested on hardware** | Stick cursor, touch, B, D-pad, menu/pause, USB mouse are built (`docs/CONTROLS.md`) and checked on the Mac and in Ryubing, but how they feel and focus/sleep handling need a real Switch. Rumble is built, its strengths are a guess; gyro waits for hardware. |
 | 3 | **"4:3 is identical" is claimed, not proven** | The ~95 converted bounds were checked by me, an agent and Codex, but no test checks it. Exactly the kind of mistake that slips in silently. |
 | 4 | **The decomp itself** | We build on kyle-sylvestre's fork. It misses 32 later fixes from vindirect and the more accurate re-decompilation by 5N00Z3R. There are bugs we don't know about. |
 | 5 | **Test plans are brittle** | Fixed ticks and click positions. A dialog that wasn't there before makes the rest click beside the target (happened several times). No "wait until this screen" steps, no values read from the game (money, level). |
@@ -30,7 +30,7 @@ things are assumed rather than shown.
 ## What to do first to make it stable
 
 1. **Test on real hardware** (Atmosphère, title takeover). Removes the biggest unknown.
-2. **Switch controls**: built (stick cursor, touch, B, D-pad, mouse); tune on hardware, then gyro and rumble.
+2. **Switch controls**: built (stick cursor, touch, B, D-pad, mouse, rumble); tune on hardware, then gyro.
 3. **Determinism check**: the same input in 4:3 must give the same state tick for tick as before the
    widescreen changes. Plus "wait until" steps and game values in test plans so they stop breaking on
    timing.

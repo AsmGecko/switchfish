@@ -55,6 +55,16 @@ Follows one finger (the first down) and ignores the rest. A press that starts in
 dropped, a drag that leaves the canvas is clamped. Down is a mouse down straight away (speed matters),
 release sends the up and a leave so nothing stays highlighted.
 
+## Rumble
+
+The controller rumbles with the sounds of the moments that matter (`RumbleForSound` in
+`game/WinFishApp.cpp`): an alien arriving (strong, every alien kind has its own sound) and the warning
+before it, an alien going down or a bomb going off, a light tick for each shot that hits and for a tap
+on the glass, a fish dying, a pet hatching. The sound manager tells the game about every sound that
+starts (`SoundManager::mPlayHook`), so the game code itself is untouched. HD rumble at 160/320 Hz; a
+weaker rumble doesn't cut a stronger one short; it stops on focus loss and on exit. Strengths are a first
+guess until felt on hardware.
+
 ## Text
 
 The Switch keyboard opens when a name field gets the focus, starting from the current text and with the
@@ -67,10 +77,10 @@ field's length limit. Tapping a field that already has the focus doesn't reopen 
    repeat zone on the wide tank. A game controller on the Mac drives the same cursor.
 2. Done: D-pad to buttons, slower cursor over clickable things, double click, swkbd with the current text
    and length.
-3. Done: USB mouse (after insaniquarium_nx's sample handling).
+3. Done: USB mouse (after insaniquarium_nx's sample handling), rumble.
 4. Waiting for hardware, because they need tuning on a real controller: gyro aiming (insaniquarium_nx had to
-   flip axis signs per controller type), rumble, single Joy-Con held sideways, USB keyboard, reopening
-   the keyboard when a focused name field is tapped.
+   flip axis signs per controller type), the rumble strengths, single Joy-Con held sideways, USB keyboard,
+   reopening the keyboard when a focused name field is tapped.
 
 Checked on the Mac (test plans and a controller-free run of the same code) and booted in Ryubing; how the
 curve feels, touch, focus loss and swkbd still need a real Switch.

@@ -55,7 +55,13 @@ bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)
 	if (aDotPos!=std::string::npos)
 		anExt = StringToLower(theFileName.substr(aDotPos+1));
 
-	aHMusic = Mix_LoadMUS(theFileName.c_str());
+	// switchfish: modules (the game's MO3s) get their type up front. Detecting it falls through to the MP3
+	// check, which reads up to 10 KB a byte at a time with a tell after each; on the Switch every tell threw
+	// away the stdio buffer, about 7 of the 9 s the music took to load.
+	if (anExt == "mo3" || anExt == "it" || anExt == "xm" || anExt == "s3m" || anExt == "mod")
+		aHMusic = Mix_LoadMUSType_RW(SDL_RWFromFile(theFileName.c_str(), "rb"), MUS_MOD, 1);
+	else
+		aHMusic = Mix_LoadMUS(theFileName.c_str());
 
 	if (aHMusic==0)
     {

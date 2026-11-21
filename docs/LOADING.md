@@ -1,5 +1,8 @@
 # Faster loading on the Switch
 
+Done so far: step 1 (directory indexes in fcaseopen), step 2 (MO3 type up front), step 0 partly (boot lines
+with opens, misses and directories read). Ryubing went from 7.1 s to 1.4 s.
+
 Research by an agent on 2026-11-21 from the hardware boot log (38.6 s to "click here to play"). Work through
 it in order; check off what is done.
 

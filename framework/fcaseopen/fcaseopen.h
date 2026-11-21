@@ -31,6 +31,10 @@ extern "C" {
 extern FILE *fcaseopen(char const *path, char const *mode);
 extern FILE *fcaseopenat(char const *base, char const *path, char const *mode);
 extern int casechdir(char const *path);
+#if !defined(_WIN32)
+// switchfish: read-mode opens, opens whose name wasn't in its directory, directories read (for boot timings)
+extern void fcaseopen_stats(int *opens, int *misses, int *scans);
+#endif
 
 #if defined(__cplusplus)
 }

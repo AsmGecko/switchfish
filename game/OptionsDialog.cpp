@@ -37,7 +37,6 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 	mSFXSlider->SetValue(aSfxValue);
 
 	mCustomCursorsCB = MakeCheckbox(8, this, mApp->mCustomCursorsEnabled);
-	m3DCB = MakeCheckbox(9, this, mApp->Is3DAccelerated());
 	mWidescreenCB = MakeCheckbox(11, this, mApp->mWidescreenAware);
     mCheatsButton = MakeDialogButton(10, this, "Cheats", NULL);
 
@@ -66,8 +65,6 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mSFXSlider;
 	if (mCustomCursorsCB)
 		delete mCustomCursorsCB;
-	if (m3DCB)
-		delete m3DCB;
 	if (mWidescreenCB)
 		delete mWidescreenCB;
 	if (mHelpButton)
@@ -87,7 +84,6 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mMusicSlider);
 	theWidgetManager->AddWidget(mSFXSlider);
 	theWidgetManager->AddWidget(mCustomCursorsCB);
-	theWidgetManager->AddWidget(m3DCB);
 	theWidgetManager->AddWidget(mWidescreenCB);
 	theWidgetManager->AddWidget(mWebLinkButton);
 	theWidgetManager->AddWidget(mBackButton);
@@ -103,7 +99,6 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mMusicSlider);
 	theWidgetManager->RemoveWidget(mSFXSlider);
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
-	theWidgetManager->RemoveWidget(m3DCB);
 	theWidgetManager->RemoveWidget(mWidescreenCB);
 	theWidgetManager->RemoveWidget(mWebLinkButton);
 	theWidgetManager->RemoveWidget(mBackButton);
@@ -119,7 +114,6 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->DrawString("Music", 48, 78);
 	g->DrawString("Sound Fx", 48, 110);
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
-	g->DrawString("Hardware Acceleration", m3DCB->mX - mX + 43, m3DCB->mY - mY + 24);
 	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
 	g->SetColorizeImages(false);
 }
@@ -178,7 +172,6 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 	mSFXSlider->Resize(mX + 152, mY + 90, aSliderWidth, 33);
 
 	mCustomCursorsCB->Resize(mX + 161, mY + 128, 45, 46);
-	m3DCB->Resize(mX + 33, mY + 172, 45, 46);
 	// switchfish: Widescreen takes Fullscreen's place (the Mac window goes fullscreen itself, the Switch always is)
 	mWidescreenCB->Resize(mX + 33, mY + 128, 45, 46);
 }
@@ -192,24 +185,13 @@ int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
 		aPrefHght += 34;
 	if (mWebLinkButton->mVisible)
 		aPrefHght += 34;
-	return aPrefHght;
+	// switchfish: no Hardware Acceleration row (this port always draws with the GPU, Is3DAccelerated is true)
+	return aPrefHght - 44;
 }
 
 void Sexy::OptionsDialog::WidgetClicked(int theId, bool theFlag)
 {
 	MoneyDialog::WidgetClicked(theId, theFlag);
-	if (theId == 9 && theFlag)
-	{
-		if (!mApp->Is3DAccelerationSupported())
-			mApp->DoDialog(14, true, "Not Supported", 
-				"Hardware Acceleration cannot be enabled on this computer.\n\nYour video card does not\nmeet the minimum requirements\nfor this game.",
-				"OK", BUTTONS_FOOTER);
-
-		if (!mApp->Is3DAccelerationRecommended())
-			mApp->DoDialog(14, true, "Warning",
-				"Your video card may not fully support this feature.\n\nIf you experience slower performance, please disable Hardware Acceleration.",
-				"OK", BUTTONS_FOOTER);
-	}
 }
 
 void Sexy::OptionsDialog::CheckboxChecked(int theId, bool checked)

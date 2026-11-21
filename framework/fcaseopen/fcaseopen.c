@@ -34,6 +34,7 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <pthread.h>
 #endif
 #ifdef __HAIKU__
 // this function seems to not exist under haiku??
@@ -238,8 +239,173 @@ static wchar_t *utf8_to_wide_alloc(const char *utf8)
 }
 #endif
 
+#if !defined(_WIN32)
+// switchfish: directory indexes. The resource code probes every file under several extensions, and each
+// miss used to scan the whole directory (427 entries in images/): on the Switch's SD card that was most of
+// a 38 s boot. Now each directory is read once; a read-mode open looks the name up in memory and opens the
+// real spelling. A name the index doesn't have still gets one literal fopen, so files written after the
+// directory was read are found as long as they are read back with the spelling they were written with
+// (the game's saves are). Write-mode opens through here also drop the indexes, though the game writes
+// its files another way.
+typedef struct
+{
+    char *dir;
+    char **names;
+    int count;
+} DirIndex;
+
+#define MAX_DIR_INDEXES 64
+static DirIndex gDirIndexes[MAX_DIR_INDEXES];
+static int gDirIndexCount = 0;
+static pthread_mutex_t gDirIndexLock = PTHREAD_MUTEX_INITIALIZER;
+static int gStatOpens = 0, gStatMisses = 0, gStatScans = 0;
+
+static void drop_dir_indexes(void)
+{
+    for (int i = 0; i < gDirIndexCount; i++)
+    {
+        for (int j = 0; j < gDirIndexes[i].count; j++)
+            free(gDirIndexes[i].names[j]);
+        free(gDirIndexes[i].names);
+        free(gDirIndexes[i].dir);
+    }
+    gDirIndexCount = 0;
+}
+
+static DirIndex *dir_index(const char *dir)
+{
+    for (int i = 0; i < gDirIndexCount; i++)
+    {
+        if (strcmp(gDirIndexes[i].dir, dir) == 0)
+            return &gDirIndexes[i];
+    }
+    if (gDirIndexCount == MAX_DIR_INDEXES)
+        return NULL;
+    DIR *d = opendir(dir);
+    if (!d)
+        return NULL;
+    gStatScans++;
+    DirIndex *x = &gDirIndexes[gDirIndexCount];
+    int capacity = 64;
+    x->names = (char **)malloc(sizeof(char *) * capacity);
+    x->count = 0;
+    struct dirent *e;
+    while ((e = readdir(d)) != NULL)
+    {
+        if (x->count == capacity)
+        {
+            capacity *= 2;
+            x->names = (char **)realloc(x->names, sizeof(char *) * capacity);
+        }
+        x->names[x->count++] = strdup(e->d_name);
+    }
+    closedir(d);
+    x->dir = strdup(dir);
+    gDirIndexCount++;
+    return x;
+}
+
+// The real spelling of path through the indexes: 1 found (in r), 0 not in its directory, -1 can't tell.
+// r must have strlen(path) + 3 bytes.
+static int index_lookup(const char *path, char *r)
+{
+    size_t len = strlen(path);
+    char *p = (char *)alloca(len + 1);
+    strcpy(p, path);
+
+    // the directory the walk starts in: "/" or "sdmc:/" for absolute paths, "." for relative ones
+    char *rest = p;
+    char *colon = strchr(p, ':');
+    if (p[0] == '/')
+    {
+        strcpy(r, "/");
+        rest = p + 1;
+    }
+    else if (colon && colon[1] == '/' && strchr(p, '/') > colon)
+    {
+        size_t n = (size_t)(colon - p) + 2;
+        memcpy(r, p, n);
+        r[n] = 0;
+        rest = colon + 2;
+    }
+    else
+    {
+        strcpy(r, ".");
+    }
+
+    char *c = strsep(&rest, "/\\");
+    while (c)
+    {
+        char *next = strsep(&rest, "/\\");
+        if (c[0] == 0 || strcmp(c, ".") == 0)
+        {
+            c = next;
+            continue;
+        }
+        DirIndex *x = dir_index(r);
+        if (!x)
+            return -1;
+        const char *found = NULL;
+        for (int i = 0; i < x->count; i++)
+        {
+            if (strcasecmp(c, x->names[i]) == 0)
+            {
+                found = x->names[i];
+                break;
+            }
+        }
+        if (!found)
+            return next ? -1 : 0;
+        size_t rl = strlen(r);
+        if (strcmp(r, ".") == 0)
+            rl = 0;
+        else if (r[rl - 1] != '/')
+            r[rl++] = '/';
+        strcpy(r + rl, found);
+        c = next;
+    }
+    return 1;
+}
+
+static int is_write_mode(const char *mode)
+{
+    return strchr(mode, 'w') || strchr(mode, 'a') || strchr(mode, '+');
+}
+
+void fcaseopen_stats(int *opens, int *misses, int *scans)
+{
+    pthread_mutex_lock(&gDirIndexLock);
+    *opens = gStatOpens;
+    *misses = gStatMisses;
+    *scans = gStatScans;
+    pthread_mutex_unlock(&gDirIndexLock);
+}
+#endif
+
 FILE *fcaseopen(char const *path, char const *mode)
 {
+#if !defined(_WIN32)
+    if (!is_write_mode(mode))
+    {
+        char *r = (char *)alloca(strlen(path) + 3);
+        pthread_mutex_lock(&gDirIndexLock);
+        gStatOpens++;
+        int found = index_lookup(path, r);
+        if (found == 0)
+            gStatMisses++;
+        pthread_mutex_unlock(&gDirIndexLock);
+        if (found == 1)
+            return fopen(r, mode);
+        if (found == 0)
+            return fopen(path, mode);
+    }
+    else
+    {
+        pthread_mutex_lock(&gDirIndexLock);
+        drop_dir_indexes();
+        pthread_mutex_unlock(&gDirIndexLock);
+    }
+#endif
 #if defined(_WIN32)
     wchar_t *wpath = utf8_to_wide_alloc(path);
     wchar_t *wmode = utf8_to_wide_alloc(mode);
@@ -310,16 +476,8 @@ FILE *fcaseopenat(char const *base, char const *path, char const *mode)
     }
     strcpy(full + fl, path);
 
-    FILE *f = fopen(full, mode);
-    if (!f)
-    {
-        char *r = (char *)alloca(baseLen + pathLen + 3);
-        if (casepathat(base, path, r))
-        {
-            f = fopen(r, mode);
-        }
-    }
-    return f;
+    // switchfish: through fcaseopen and its directory indexes
+    return fcaseopen(full, mode);
 #else
     if (!base || base[0] == '\0')
         return fcaseopen(path, mode);

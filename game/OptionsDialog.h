@@ -19,7 +19,6 @@ namespace Sexy
 		Slider* mMusicSlider;
 		Slider* mSFXSlider;
 		Checkbox* mCustomCursorsCB;
-		Checkbox* m3DCB;
 		Checkbox* mWidescreenCB;	// switchfish
 		DialogButton* mRegisterButton;
 		DialogButton* mHelpButton;

@@ -1,4 +1,5 @@
 #include "platform/PadCursor.h"
+#include "fcaseopen/fcaseopen.h"
 #include "sound/SoundManager.h"
 #include "WideTank.h"
 #include "SEHCatcher.h"
@@ -370,6 +371,18 @@ Sexy::WinFishApp::~WinFishApp()
 		delete mHighScoreMgr;
 }
 
+// switchfish: boot timings with how much file system work it took
+static void LogFileStats(const char* theWhat)
+{
+#if !defined(_WIN32)
+	int anOpens, aMisses, aScans;
+	fcaseopen_stats(&anOpens, &aMisses, &aScans);
+	SDL_Log("%s (%d opens, %d not found, %d directories read)", theWhat, anOpens, aMisses, aScans);
+#else
+	SDL_Log("%s", theWhat);
+#endif
+}
+
 // switchfish: the controller rumbles on the moments that matter (docs/CONTROLS.md), told by the sound
 // that goes with them: low motor, high motor (0..1), milliseconds.
 static void RumbleForSound(intptr_t theSound)
@@ -482,7 +495,7 @@ void Sexy::WinFishApp::Init()
 		aSuccessfulResLoad = mResourceManager->LoadResources("Init") && 
 			ExtractInitResources(mResourceManager) && 
 			LoadImageById(mResourceManager, IMAGE_STINKY_ID);
-		SDL_Log("boot: Init group loaded");
+		LogFileStats("boot: Init group loaded");
 
 		if (aSuccessfulResLoad)
 		{
@@ -631,7 +644,7 @@ void Sexy::WinFishApp::LoadingThreadProc()
 	}
 
 	// switchfish: wide tank art (the tank width is set before this thread starts)
-	SDL_Log("boot: loading thread resources done");
+	LogFileStats("boot: loading thread resources done");
 	BuildWideBackdrops(this);
 	SDL_Log("boot: wide backdrops built");
 
@@ -2087,7 +2100,6 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	OptionsDialog* aDia = (OptionsDialog*)GetDialog(DIALOG_OPTIONS);
 	if (!aDia)
 		return;
-	SwitchScreenMode(mIsWindowed, aDia->m3DCB->IsChecked());
 	SetWidescreen(aDia->mWidescreenCB->IsChecked());
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);

@@ -1475,8 +1475,9 @@ void GLInterface::Present()
 // drawn into the canvas, which keeps its contents between frames.
 void GLInterface::DrawPadCursor()
 {
+	// not while shutting down: ~GLInterface still flushes once, after the cursor images are gone
 	int x, y;
-	if (!GetPadCursor(x, y) || mApp->mCursorNum == CURSOR_NONE)
+	if (mApp->mShutdown || !GetPadCursor(x, y) || mApp->mCursorNum == CURSOR_NONE)
 	{
 		return;
 	}

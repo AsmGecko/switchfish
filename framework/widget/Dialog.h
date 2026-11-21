@@ -139,6 +139,10 @@ public:
 
 	virtual void			ButtonPress(int theId);
 	virtual void			ButtonDepress(int theId);
+	// switchfish: B, + or Escape. Presses No/Cancel, or the only button (OK, a footer like "Resume game");
+	// false if there is neither
+	virtual bool			Cancel();
+	virtual void			KeyDown(KeyCode theKey);
 	virtual void			ButtonDownTick(int){}
 	virtual void			ButtonMouseEnter(int){}
 	virtual void			ButtonMouseLeave(int){}

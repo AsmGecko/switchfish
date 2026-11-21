@@ -4,6 +4,7 @@
 #include "widget/WidgetManager.h"
 #include "widget/ButtonWidget.h"
 #include "widget/Checkbox.h"
+#include "widget/Dialog.h"
 #include "misc/KeyCodes.h"
 #include <SDL2/SDL.h>
 #include <algorithm>
@@ -21,6 +22,8 @@ static Uint64 gLastTicks = 0;
 // buttons still held when touch or a mouse took over count only once released and pressed again
 static bool gBlockClick = false, gBlockRightClick = false;
 static Uint64 gLastClickTicks = 0;
+// B pressed while a dialog was open went to Dialog::Cancel, so its release isn't a right click either
+static bool gBCancelled = false;
 static int gLastClickX = -100, gLastClickY = -100;
 
 // Design units per second for a stick at radius r: deadzone 0.12, full at 0.95, quadratic in between.
@@ -235,26 +238,35 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 			wm->MouseUp(x, y, 1);
 		}
 	}
+	// B and + close the topmost dialog (Dialog::Cancel), whatever has the focus inside it
+	auto cancelDialog = [&]()
+	{
+		return !theApp->mDialogList.empty() && theApp->mDialogList.back()->Cancel();
+	};
 	if (in.mRightClick != gLast.mRightClick)
 	{
 		if (in.mRightClick)
 		{
-			wm->MouseDown(x, y, -1);
+			gBCancelled = cancelDialog();
+			if (!gBCancelled)
+			{
+				wm->MouseDown(x, y, -1);
+			}
 		}
-		else
+		else if (!gBCancelled)
 		{
 			wm->MouseUp(x, y, -1);
 		}
 	}
 	if (in.mMenu != gLast.mMenu)
 	{
-		if (in.mMenu)
-		{
-			wm->KeyDown(KEYCODE_ESCAPE);
-		}
-		else
+		if (!in.mMenu)
 		{
 			wm->KeyUp(KEYCODE_ESCAPE);
+		}
+		else if (!cancelDialog())
+		{
+			wm->KeyDown(KEYCODE_ESCAPE);
 		}
 	}
 	if (in.mPause != gLast.mPause)
@@ -282,7 +294,7 @@ void Sexy::HidePadCursor(SexyAppBase* theApp, int theX, int theY)
 		gLast.mClick = false;
 		gBlockClick = true;
 	}
-	if (gLast.mRightClick)
+	if (gLast.mRightClick && !gBCancelled)
 	{
 		wm->MouseUp((int)gX, (int)gY, -1);
 		gLast.mRightClick = false;

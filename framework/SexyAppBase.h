@@ -367,6 +367,7 @@ protected:
 	virtual bool			DoUpdateFrames();
 	virtual void			DoUpdateFramesF(float theFrac);
 	virtual void			MakeWindow();
+	void					DestroyWindow();	// switchfish: Switch only (platform/switch/Window.cpp)
 	virtual void			EnforceCursor();
 	virtual void			ReInitImages();
 	virtual void			DeleteNativeImageData();	

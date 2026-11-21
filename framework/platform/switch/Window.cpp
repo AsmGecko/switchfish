@@ -40,6 +40,28 @@
 
 using namespace Sexy;
 
+// switchfish: tears down what MakeWindow set up, so the GPU is handed back cleanly on exit
+void SexyAppBase::DestroyWindow()
+{
+	if (!mWindow)
+	{
+		return;
+	}
+	eglMakeCurrent((EGLDisplay)mWindow, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	if (mContext)
+	{
+		eglDestroyContext((EGLDisplay)mWindow, (EGLContext)mContext);
+	}
+	if (mSurface)
+	{
+		eglDestroySurface((EGLDisplay)mWindow, (EGLSurface)mSurface);
+	}
+	eglTerminate((EGLDisplay)mWindow);
+	mWindow = nullptr;
+	mContext = nullptr;
+	mSurface = nullptr;
+}
+
 void SexyAppBase::MakeWindow()
 {
 	// Connect to the EGL default display

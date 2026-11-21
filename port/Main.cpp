@@ -221,18 +221,24 @@ int main(int argc, char* argv[])
         outPath = std::filesystem::absolute("plan-out").string();
     }
 
-    SDL_Log("boot: main");
-    Sexy::WinFishApp app;
-    app.Init();
-    SDL_Log("boot: app ready");
-    // before Start() launches the loading thread, which builds the wide tank art
-    Sexy::SetWideTank(app.mWidescreenAware && app.mWideTank);
-    if (!planPath.empty())
+    // in a block, so the app (whose destructor saves the profile) is gone before the Switch may close us
     {
-        const char* timeout = Arg(argc, argv, "--timeout");
-        LoadTestPlan(&app, planPath.c_str(), outPath.c_str(), timeout ? atoi(timeout) : 60);
+        SDL_Log("boot: main");
+        Sexy::WinFishApp app;
+        app.Init();
+        SDL_Log("boot: app ready");
+        // before Start() launches the loading thread, which builds the wide tank art
+        Sexy::SetWideTank(app.mWidescreenAware && app.mWideTank);
+        if (!planPath.empty())
+        {
+            const char* timeout = Arg(argc, argv, "--timeout");
+            LoadTestPlan(&app, planPath.c_str(), outPath.c_str(), timeout ? atoi(timeout) : 60);
+        }
+        app.Start();
+        app.Shutdown();
     }
-    app.Start();
-    app.Shutdown();
+#if defined(__SWITCH__)
+    appletUnlockExit();
+#endif
     return 0;
 }

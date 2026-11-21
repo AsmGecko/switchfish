@@ -432,6 +432,28 @@ void Dialog::ButtonPress(int theId)
 		mDialogListener->DialogButtonPress(mId, theId);
 }
 
+bool Dialog::Cancel()
+{
+	DialogButton* aButton = mNoButton ? mNoButton : mYesButton;
+	if (!aButton || !aButton->mVisible || aButton->mDisabled)
+	{
+		return false;
+	}
+	// press and release, like a click (the press plays the button sound)
+	ButtonPress(aButton->mId);
+	ButtonDepress(aButton->mId);
+	return true;
+}
+
+void Dialog::KeyDown(KeyCode theKey)
+{
+	if (theKey == KEYCODE_ESCAPE && Cancel())
+	{
+		return;
+	}
+	Widget::KeyDown(theKey);
+}
+
 void Dialog::ButtonDepress(int theId)
 {
 	if ((theId == ID_YES) || (theId == ID_NO))

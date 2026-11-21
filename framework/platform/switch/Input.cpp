@@ -57,6 +57,9 @@ static Rumble gRumble, gRumbleUnder;
 
 void SexyAppBase::InitInput()
 {
+	// the system waits for appletUnlockExit (end of main) before it closes us, so we can save first
+	appletLockExit();
+
 	padConfigureInput(1, HidNpadStyleSet_NpadStandard);
 	// handheld plus the first controller
 	padInitializeDefault(&gPad);
@@ -357,10 +360,12 @@ static void ReadTouch(SexyAppBase* theApp, bool theRightClick)
 
 bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 {
+	// closed from Home (or another game started): shut down the normal way, which saves the level in
+	// progress, the profile and the settings; appletLockExit (InitInput) gives us the time
 	if (!appletMainLoop())
 	{
 		StopRumble(true);
-		mShutdown = true;
+		Shutdown();
 		return false;
 	}
 

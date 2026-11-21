@@ -404,7 +404,12 @@ SexyAppBase::~SexyAppBase()
 
 	WriteDemoBuffer();
     
+#ifdef __SWITCH__
+    // switchfish: mWindow is the EGL display here; give the GPU back before returning to the homebrew loader
+    DestroyWindow();
+#else
     SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr;
+#endif
     SDL_Quit();
 }
 

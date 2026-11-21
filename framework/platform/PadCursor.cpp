@@ -13,7 +13,7 @@
 using namespace Sexy;
 
 PadInput Sexy::gScriptedPad;
-int (*Sexy::gPadTargetHook)(SexyAppBase*, int, int, int&, int&) = nullptr;
+int (*Sexy::gPadTargetHook)(SexyAppBase*, int, int, bool, int&, int&, bool&) = nullptr;
 
 static float gX = 320, gY = 240;
 static bool gShown = false;
@@ -229,14 +229,15 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 		{
 			continue;
 		}
-		// A held is already clicking
-		bool click = !in.mPrecision && !in.mClick;
+		// A held is already clicking; with A just let go or B down, the down would go to that widget instead
+		bool click = !in.mPrecision && !in.mClick && !gLast.mClick && !in.mRightClick;
 		bool again = kind == gAimKind && gAimAge < 1.5 && x == gAimX && y == gAimY;
 		// clicked money is gone, so a clicking press starts at the top again; a fed fish stays hungry until
 		// it eats, so the next press goes on to the next one
 		int index = (again && !(click && kind == 1)) ? gAimIndex + 1 : 0;
 		int tx, ty;
-		int found = gPadTargetHook(theApp, kind, index, tx, ty);
+		bool clickable = false;
+		int found = gPadTargetHook(theApp, kind, index, repeat, tx, ty, clickable);
 		if (found > 0)
 		{
 			gAimKind = kind;
@@ -247,7 +248,7 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 			x = gAimX = tx;
 			y = gAimY = ty;
 			jumped = true;
-			aimClick |= click;
+			aimClick |= click && clickable;
 		}
 		else if (found == 0 && fresh && theApp->mRumble)
 		{

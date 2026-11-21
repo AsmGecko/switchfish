@@ -40,8 +40,10 @@ void RumblePad(float theLow, float theHigh, int theMs);
 
 // Quick aim (X and Y): the game's theIndex'th target of theKind (0 the hungriest fish, 1 money; the index
 // wraps), in widget coordinates. 1 found, 0 none in the tank, -1 not now (no board, a dialog, paused).
-// Set by the game (port/PadTargets.cpp).
-extern int (*gPadTargetHook)(SexyAppBase* theApp, int theKind, int theIndex, int& theX, int& theY);
+// theClickable says whether a click there does what the button means (it could land on a pet, or buzz when
+// the food can't be paid for on a repeat). Set by the game (port/PadTargets.cpp).
+extern int (*gPadTargetHook)(SexyAppBase* theApp, int theKind, int theIndex, bool theRepeat, int& theX, int& theY,
+	bool& theClickable);
 
 // The controller as a test plan sets it, used instead of the real one while input is scripted.
 extern PadInput gScriptedPad;

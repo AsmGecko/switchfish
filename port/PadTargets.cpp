@@ -4,6 +4,7 @@
 #include "Coin.h"
 #include "Fish.h"
 #include "Breeder.h"
+#include "widget/WidgetManager.h"
 #include <algorithm>
 #include <vector>
 
@@ -54,7 +55,8 @@ void AddCoin(std::vector<Target>& theTargets, Coin* theCoin)
 
 } // namespace
 
-int FindPadTarget(SexyAppBase* theApp, int theKind, int theIndex, int& theX, int& theY)
+int FindPadTarget(SexyAppBase* theApp, int theKind, int theIndex, bool theRepeat, int& theX, int& theY,
+    bool& theClickable)
 {
     WinFishApp* app = (WinFishApp*)theApp;
     Board* board = app->mBoard;
@@ -98,5 +100,15 @@ int FindPadTarget(SexyAppBase* theApp, int theKind, int theIndex, int& theX, int
     GameObject* target = targets[theIndex % targets.size()].mObject;
     theX = target->mX + target->mWidth / 2;
     theY = target->mY + target->mHeight / 2;
+    // the click has to reach the target (or the tank behind it, when fish ignore the mouse): a pet on top,
+    // like a charged Amp, would take it
+    int aWidgetX, aWidgetY;
+    Widget* aHit = app->mWidgetManager->GetWidgetAt(theX, theY, &aWidgetX, &aWidgetY);
+    theClickable = aHit == target || aHit == board;
+    // held, feeding stops when the food can't be paid for, instead of buzzing every repeat
+    if (theRepeat && theKind == 0 && app->mGameMode != GAMEMODE_VIRTUAL_TANK && board->mMoney < board->m0x4ac)
+    {
+        theClickable = false;
+    }
     return 1;
 }

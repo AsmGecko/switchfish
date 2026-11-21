@@ -71,6 +71,7 @@ static const Notice kAlbumNotice = {
 
 #if defined(__SWITCH__)
 #include <switch.h>
+#include <netinet/in.h>
 
 extern "C" {
     u32 __nx_stack_size = 4 * 1024 * 1024;
@@ -97,15 +98,34 @@ static Notice MissingDataNotice(const std::string& path)
             false};
 }
 
+static bool gNxlink = false;
+
 static void StartLog()
 {
+    // started with ./sf.sh send: the log also goes to the Mac's terminal (nxlink -s)
+    if (__nxlink_host.s_addr != 0 && R_SUCCEEDED(socketInitializeDefault()))
+    {
+        gNxlink = nxlinkStdio() >= 0;
+    }
     static FILE* logfile = fopen("sdmc:/switch/switchfish/log.txt", "wb");
     SDL_LogSetOutputFunction([](void* userdata, int, SDL_LogPriority, const char* message)
     {
-        if (userdata && message)
+        if (!message)
         {
-            fprintf((FILE*)userdata, "%s\n", message);
+            return;
+        }
+        // seconds since start, to see where the time goes
+        static const u64 start = armGetSystemTick();
+        double t = armTicksToNs(armGetSystemTick() - start) / 1e9;
+        if (userdata)
+        {
+            fprintf((FILE*)userdata, "%7.3f %s\n", t, message);
             fflush((FILE*)userdata);
+        }
+        if (gNxlink)
+        {
+            printf("%7.3f %s\n", t, message);
+            fflush(stdout);
         }
     }, logfile);
 }
@@ -193,9 +213,18 @@ int main(int argc, char* argv[])
 #endif
     Sexy::ChDir(path);
     ReadTestFlags(argc, argv);
+    // a plan.txt in the game folder runs as a test plan (for the emulator, where there are no arguments);
+    // screenshots go to plan-out/
+    if (planPath.empty() && std::filesystem::exists("plan.txt"))
+    {
+        planPath = std::filesystem::absolute("plan.txt").string();
+        outPath = std::filesystem::absolute("plan-out").string();
+    }
 
+    SDL_Log("boot: main");
     Sexy::WinFishApp app;
     app.Init();
+    SDL_Log("boot: app ready");
     // before Start() launches the loading thread, which builds the wide tank art
     Sexy::SetWideTank(app.mWidescreenAware && app.mWideTank);
     if (!planPath.empty())

@@ -182,14 +182,15 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
 #if !defined(__SWITCH__)
     // no waiting for the display either: a sleeping screen never sends the vsync a swap waits for
     SDL_GL_SetSwapInterval(0);
-#endif
-    // and if the main loop hangs anyway, the run still ends a few seconds after its time is up
+    // and if the main loop hangs anyway, the run still ends a few seconds after its time is up (not on the
+    // Switch: detach() throws there)
     std::thread([timeoutSeconds]()
     {
         std::this_thread::sleep_for(std::chrono::seconds(timeoutSeconds + 5));
         SDL_Log("plan: main loop stuck past the time limit, exiting");
         _exit(3);
     }).detach();
+#endif
     app->mTickHook = [app]()
     {
         int tick = app->mUpdateCount;

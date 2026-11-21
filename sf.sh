@@ -23,7 +23,9 @@ Usage: ./sf.sh <command>
   widen           regenerate the widescreen tank sides in port/romfs/widescreen/ from your
                   backdrops with Codex (an image model; costs API credit). Only the new parts are
                   stored; check the result with git diff, undo with git checkout.
-  send <ip>       build the NRO and send it to hbmenu's netloader (press Y on the Switch)
+  send <ip> [args] build the NRO and send it over wifi to hbmenu's netloader (press Y on the
+                  Switch): it lands in sdmc:/switch/switchfish/, starts with [args] (--level 3-2)
+                  and its log shows here until Ctrl-C
   upstream        clone or update the reference repos in upstream/
   clean           remove build/
 
@@ -58,7 +60,23 @@ build_host() {
 	ln -sf build/host/compile_commands.json compile_commands.json
 }
 
+need_pyenv() {
+	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
+}
+
+# The NRO icon: the guppy from your own title screen when the game files are in gameData/ (it stays in
+# build/, never in the repo), otherwise switch/icon.jpg.
+make_icon() {
+	local title
+	title=$(find gameData/images -maxdepth 1 -iname titlescreen.jpg 2>/dev/null | head -1)
+	[ -n "$title" ] || return 0
+	need_pyenv
+	mkdir -p build/switch
+	tools/pyenv/bin/python -I scripts/icon.py "$title" build/switch/icon.jpg
+}
+
 build_switch() {
+	make_icon
 	need_image
 	docker run --rm -v "$PWD":/src -w /src -e BUILD_TYPE="${BUILD_TYPE:-Release}" "$IMAGE" bash -c '
 		cmake -S . -B build/switch -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake \
@@ -114,10 +132,17 @@ emu() {
 	fi
 }
 
+# Over wifi to hbmenu's netloader: the NRO lands in sdmc:/switch/switchfish/ (so hbmenu has it afterwards)
+# and starts with the given arguments; its log shows here until Ctrl-C. The Switch connects back to
+# nxlink's server on port 28771, hence the published port.
 send() {
-	[ -n "${1:-}" ] || { echo "Usage: ./sf.sh send <switch-ip>"; exit 1; }
+	[ -n "${1:-}" ] || { echo "Usage: ./sf.sh send <switch-ip> [game arguments, e.g. --level 3-2]"; exit 1; }
+	local ip=$1 tty=
+	shift
 	build_switch
-	docker run --rm -v "$PWD":/src -w /src -e SWITCH_IP="$1" "$IMAGE" bash -c '$DEVKITPRO/tools/bin/nxlink -a "$SWITCH_IP" '"$NRO"
+	[ -t 1 ] && tty=-it
+	docker run --rm $tty -p 28771:28771 -v "$PWD":/src -w /src -e SWITCH_IP="$ip" -e GAME_ARGS="$*" "$IMAGE" bash -c '
+		$DEVKITPRO/tools/bin/nxlink -a "$SWITCH_IP" -p switchfish/switchfish.nro -s ${GAME_ARGS:+--args "$GAME_ARGS"} '"$NRO"
 }
 
 # Runs a command, killing it (and its children) after $1 seconds.
@@ -139,7 +164,7 @@ with_timeout() {
 # stores only those (fit.py) and they can live in the repo.
 widen() {
 	[ -f gameData/properties/resources.xml ] || { echo "Put your game files in gameData/ first."; exit 1; }
-	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
+	need_pyenv
 	local work py=tools/pyenv/bin/python
 	work=$(mktemp -d)
 	for i in 1 2 3 4 5 6; do

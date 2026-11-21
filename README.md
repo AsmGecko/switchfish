@@ -66,17 +66,23 @@ sdmc:/switch/switchfish/
 Start it from hbmenu through title takeover (hold R while starting any game), not from the album: the album
 runs homebrew with too little memory. A log goes to `sdmc:/switch/switchfish/log.txt`.
 
+Copying the game files over USB works best through hekate's USB mass storage (the SD card shows up as a
+normal disk); MTP tools on a Mac are slow and unreliable with hundreds of small files. After that only the
+NRO changes, and `./sf.sh send <switch-ip>` puts a new build on the Switch over wifi in seconds: open hbmenu,
+press Y, run the command. Arguments after the IP go to the game (`./sf.sh send 192.168.1.20 --level 3-2`),
+and its log shows in the terminal until Ctrl-C.
+
 ## Building
 
 Switch builds only need Docker; the toolchain (devkitA64, libnx, SDL2, mesa, libopenmpt) lives in an image.
 
 ```bash
 ./sf.sh setup          # once: Docker image, Homebrew packages, Ryubing
-./sf.sh build switch   # build/switch/switchfish.nro
+./sf.sh build switch   # build/switch/switchfish.nro (icon: the guppy from your own title screen)
 ./sf.sh build          # Mac build in build/host/
 ./sf.sh run            # Mac build with the game files in gameData/ (or --data <dir>)
 ./sf.sh emu            # the NRO in the Ryubing emulator
-./sf.sh send <ip>      # send the NRO to hbmenu's netloader (press Y on the Switch)
+./sf.sh send <ip>      # over wifi to hbmenu's netloader (press Y): installs, starts, shows the log here
 ./sf.sh widen          # redraw the widescreen sides with Codex (needs Codex)
 ./sf.sh upstream       # clone or update the reference projects in upstream/
 ```

@@ -28,6 +28,7 @@ static bool gBCancelled = false;
 // quick aim: pressing the same button again soon, without moving, goes to the next target
 static int gAimKind = -1, gAimIndex = 0, gAimX = 0, gAimY = 0;
 static double gAimAge = 0;	// seconds since the last jump (in logic ticks for test plans, like dt)
+static double gAimHeld[2];	// how long X/Y has been held since its last action
 static int gLastClickX = -100, gLastClickY = -100;
 
 // Design units per second for a stick at radius r: deadzone 0.12, full at 0.95, quadratic in between.
@@ -201,18 +202,39 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 		}
 	}
 
-	// quick aim: X to the hungriest fish, Y to money (QOL.md), one jump per press
+	// quick aim: X to the hungriest fish, Y to money (QOL.md). A press jumps there and clicks (ZL held: only
+	// jumps); held, it does so again every 0.3 s
 	gAimAge += dt;
+	bool aimClick = false;
 	for (int kind = 0; kind < 2; kind++)
 	{
 		bool held = kind == 0 ? in.mJumpFish : in.mJumpMoney;
 		bool was = kind == 0 ? gLast.mJumpFish : gLast.mJumpMoney;
-		if (!held || was || in.mPointerElsewhere || !theApp->mQuickAim || !gPadTargetHook)
+		bool fresh = held && !was;
+		bool repeat = false;
+		if (held && was)
+		{
+			gAimHeld[kind] += dt;
+			if (gAimHeld[kind] >= 0.3)
+			{
+				gAimHeld[kind] = 0;
+				repeat = true;
+			}
+		}
+		else
+		{
+			gAimHeld[kind] = 0;
+		}
+		if (!(fresh || repeat) || in.mPointerElsewhere || !theApp->mQuickAim || !gPadTargetHook)
 		{
 			continue;
 		}
+		// A held is already clicking
+		bool click = !in.mPrecision && !in.mClick;
 		bool again = kind == gAimKind && gAimAge < 1.5 && x == gAimX && y == gAimY;
-		int index = again ? gAimIndex + 1 : 0;
+		// clicked money is gone, so a clicking press starts at the top again; a fed fish stays hungry until
+		// it eats, so the next press goes on to the next one
+		int index = (again && !(click && kind == 1)) ? gAimIndex + 1 : 0;
 		int tx, ty;
 		int found = gPadTargetHook(theApp, kind, index, tx, ty);
 		if (found > 0)
@@ -225,8 +247,9 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 			x = gAimX = tx;
 			y = gAimY = ty;
 			jumped = true;
+			aimClick |= click;
 		}
-		else if (found == 0 && theApp->mRumble)
+		else if (found == 0 && fresh && theApp->mRumble)
 		{
 			// in the tank, but nothing to aim at
 			RumblePad(0.15f, 0.0f, 40);
@@ -256,6 +279,12 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 		gShown = true;
 		wm->MouseMove(x, y);
 		theApp->mCustomCursorDirty = true;
+	}
+
+	if (aimClick)
+	{
+		wm->MouseDown(x, y, 1);
+		wm->MouseUp(x, y, 1);
 	}
 
 	if (in.mClick != gLast.mClick)

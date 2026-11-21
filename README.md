@@ -37,7 +37,7 @@ Designed from what the game actually does (`docs/CONTROLS.md`):
 | A or ZR | click, hold to keep feeding |
 | B | right click (tap the glass) |
 | D-pad | jump to the next button that way |
-| X / Y | jump to the hungriest fish / to the money (Quick Aim in Options); press again for the next one |
+| X / Y | feed the hungriest fish / grab the money (Quick Aim in Options); hold to keep going, ZL + X/Y only aims |
 | + / − | menu / pause |
 | Touch | point and tap directly in handheld; ZL + tap is a right click |
 | USB mouse | through the dock |

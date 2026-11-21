@@ -10,7 +10,7 @@ Loading on the Switch comes first: `docs/LOADING.md`.
 
 - [x] 1. Save when the game is closed from Home (needs a check on hardware)
 - [x] 2. B and + close dialogs (Escape on a keyboard too)
-- [x] 3. Y jumps to the hungriest fish, X to money ("Quick Aim (Y/X)" in Options, on by default)
+- [x] 3. X jumps to the hungriest fish, Y to money ("Quick Aim (X/Y)" in Options, on by default)
 - [x] 3b. Remove the Hardware Acceleration checkbox (Is3DAccelerated is always true here)
 - [x] 3c. Write saves and settings atomically (temp file + rename, .bak on the Switch)
 - [x] 4. Controls page in the Help screen (page 9), a Controls button in Options
@@ -52,7 +52,7 @@ that can't be undone.
 ### 4. Controls page (faithful, M)
 `HelpScreen` draws pages through a switch with a title and four rows, each with an animated icon box ("The
 Basics" is the template). A CONTROLS page with the game's own art and the button letters in its font: stick,
-ZL/right stick, A/ZR, B, D-pad, Y/X, +/−, touch. Reachable from a Controls button in Options (the Check
+ZL/right stick, A/ZR, B, D-pad, X/Y, +/−, touch. Reachable from a Controls button in Options (the Check
 Updates slot is free) and as page 1 of Help. The tank 1 instruction page and the pause dialog could carry
 a short button reminder.
 

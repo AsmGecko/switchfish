@@ -201,7 +201,7 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 		}
 	}
 
-	// quick aim: Y to the hungriest fish, X to money (QOL.md), one jump per press
+	// quick aim: X to the hungriest fish, Y to money (QOL.md), one jump per press
 	gAimAge += dt;
 	for (int kind = 0; kind < 2; kind++)
 	{
@@ -262,7 +262,7 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 	{
 		if (in.mClick)
 		{
-			// what was aimed at may be gone now (a collected coin), so the next Y/X starts from the top
+			// what was aimed at may be gone now (a collected coin), so the next X/Y starts from the top
 			gAimKind = -1;
 			// a second press soon after, in the same spot, is a double click (as SDL reports on the desktop)
 			bool twice = now - gLastClickTicks < SDL_GetPerformanceFrequency() * 4 / 10 &&

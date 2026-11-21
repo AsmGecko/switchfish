@@ -131,7 +131,7 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->DrawString("Sound Fx", 48, 110);
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
 	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
-	g->DrawString("Quick Aim (Y/X)", mQuickAimCB->mX - mX + 43, mQuickAimCB->mY - mY + 24);
+	g->DrawString("Quick Aim (X/Y)", mQuickAimCB->mX - mX + 43, mQuickAimCB->mY - mY + 24);
 	g->DrawString("Rumble", mRumbleCB->mX - mX + 43, mRumbleCB->mY - mY + 24);
 	g->SetColorizeImages(false);
 }

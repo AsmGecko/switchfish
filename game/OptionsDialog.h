@@ -20,7 +20,7 @@ namespace Sexy
 		Slider* mSFXSlider;
 		Checkbox* mCustomCursorsCB;
 		Checkbox* mWidescreenCB;	// switchfish
-		Checkbox* mQuickAimCB;			// switchfish: Y/X jump the controller cursor to fish and money
+		Checkbox* mQuickAimCB;			// switchfish: X/Y jump the controller cursor to fish and money
 		Checkbox* mRumbleCB;			// switchfish
 		DialogButton* mControlsButton;	// switchfish: opens Help at the Controls page
 		DialogButton* mRegisterButton;

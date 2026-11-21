@@ -227,8 +227,8 @@ static PadInput ReadPad()
 	in.mDown = held & HidNpadButton_Down;
 	in.mLeft = held & HidNpadButton_Left;
 	in.mRight = held & HidNpadButton_Right;
-	in.mJumpFish = held & HidNpadButton_Y;
-	in.mJumpMoney = held & HidNpadButton_X;
+	in.mJumpFish = held & HidNpadButton_X;
+	in.mJumpMoney = held & HidNpadButton_Y;
 	return in;
 }
 

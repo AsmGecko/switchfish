@@ -864,7 +864,7 @@ void Sexy::HelpScreen::DrawControlsPage(Graphics* g)
 		"stick nudges.  The D-pad jumps from button to button.");
 	DrawVertTabText(g, 1, "A or ZR clicks: hold it to keep dropping food.  B taps the glass",
 		"and closes menus.  + opens the menu, - pauses the game.");
-	DrawVertTabText(g, 2, "Y jumps to the hungriest fish, X to the money.  Press again for",
+	DrawVertTabText(g, 2, "X jumps to the hungriest fish, Y to the money.  Press again for",
 		"the next one.  Turn Quick Aim off in Options if you like.");
 	DrawVertTabText(g, 3, "In handheld mode just tap the screen.  Hold ZL while tapping",
 		"to tap the glass.  A USB mouse works in the dock.");

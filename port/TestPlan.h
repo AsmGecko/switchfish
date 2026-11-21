@@ -11,7 +11,7 @@ namespace Sexy
 //   <tick> click <x> <y>        left click (right click: rclick)
 //   <tick> move <x> <y>
 //   <tick> key <name>           escape, return, space, or a single character
-//   <tick> pad <lx> <ly> [a] [b] [zl] [plus] [minus] [up] [down] [left] [right] [y] [x]
+//   <tick> pad <lx> <ly> [a] [b] [zl] [plus] [minus] [up] [down] [left] [right] [x] [y]
 //                               the controller as held from now on: left stick -1..1 (y up) and buttons;
 //                               logs where the cursor was
 //   <tick> shot <name>          writes <outdir>/<name>.png from the canvas

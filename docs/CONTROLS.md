@@ -29,6 +29,8 @@ game knows. Designed from what the game actually does, compared against insaniqu
 | − | pause (the game's own space key) |
 | Touch (handheld) | direct pointing, one finger; hold ZL while tapping for a right click |
 | D-pad | jump to the nearest button that way (plus arrow keys) |
+| Y | jump to the hungriest fish the game shows as hungry; again within 1.5 s goes to the next |
+| X | jump to money: bombs first, then what lies on the floor longest, then what falls lowest (not in bonus rounds) |
 | A twice | double click (within 0.4 s and 6 units) |
 | USB mouse (dock) | moves the same cursor, left and right button click |
 

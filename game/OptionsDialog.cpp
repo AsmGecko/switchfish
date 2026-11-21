@@ -38,6 +38,7 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 
 	mCustomCursorsCB = MakeCheckbox(8, this, mApp->mCustomCursorsEnabled);
 	mWidescreenCB = MakeCheckbox(11, this, mApp->mWidescreenAware);
+	mQuickAimCB = MakeCheckbox(12, this, mApp->mQuickAim);
     mCheatsButton = MakeDialogButton(10, this, "Cheats", NULL);
 
 	if (theFlag)
@@ -67,6 +68,8 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mCustomCursorsCB;
 	if (mWidescreenCB)
 		delete mWidescreenCB;
+	if (mQuickAimCB)
+		delete mQuickAimCB;
 	if (mHelpButton)
 		delete mHelpButton;
 	if (mBackButton)
@@ -85,6 +88,7 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mSFXSlider);
 	theWidgetManager->AddWidget(mCustomCursorsCB);
 	theWidgetManager->AddWidget(mWidescreenCB);
+	theWidgetManager->AddWidget(mQuickAimCB);
 	theWidgetManager->AddWidget(mWebLinkButton);
 	theWidgetManager->AddWidget(mBackButton);
     theWidgetManager->AddWidget(mCheatsButton);
@@ -100,6 +104,7 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mSFXSlider);
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
 	theWidgetManager->RemoveWidget(mWidescreenCB);
+	theWidgetManager->RemoveWidget(mQuickAimCB);
 	theWidgetManager->RemoveWidget(mWebLinkButton);
 	theWidgetManager->RemoveWidget(mBackButton);
     theWidgetManager->RemoveWidget(mCheatsButton);
@@ -115,6 +120,7 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->DrawString("Sound Fx", 48, 110);
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
 	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
+	g->DrawString("Quick Aim (Y/X)", mQuickAimCB->mX - mX + 43, mQuickAimCB->mY - mY + 24);
 	g->SetColorizeImages(false);
 }
 
@@ -174,6 +180,8 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 	mCustomCursorsCB->Resize(mX + 161, mY + 128, 45, 46);
 	// switchfish: Widescreen takes Fullscreen's place (the Mac window goes fullscreen itself, the Switch always is)
 	mWidescreenCB->Resize(mX + 33, mY + 128, 45, 46);
+	// switchfish: where Hardware Acceleration was (this port always draws with the GPU)
+	mQuickAimCB->Resize(mX + 33, mY + 172, 45, 46);
 }
 
 int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
@@ -185,8 +193,7 @@ int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)
 		aPrefHght += 34;
 	if (mWebLinkButton->mVisible)
 		aPrefHght += 34;
-	// switchfish: no Hardware Acceleration row (this port always draws with the GPU, Is3DAccelerated is true)
-	return aPrefHght - 44;
+	return aPrefHght;
 }
 
 void Sexy::OptionsDialog::WidgetClicked(int theId, bool theFlag)

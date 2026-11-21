@@ -2102,6 +2102,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	if (!aDia)
 		return;
 	SetWidescreen(aDia->mWidescreenCB->IsChecked());
+	mQuickAim = aDia->mQuickAimCB->IsChecked();
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
 	ClearUpdateBacklog(true);

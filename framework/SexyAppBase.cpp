@@ -994,6 +994,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("ScreenMode", mIsWindowed ? 0 : 1);
 	RegistryWriteInteger("Widescreen", mWidescreenAware ? 1 : 0);
 	RegistryWriteInteger("WideTank", mWideTank ? 1 : 0);
+	RegistryWriteInteger("QuickAim", mQuickAim ? 1 : 0);
 	RegistryWriteInteger("PreferredX", mPreferredX);
 	RegistryWriteInteger("PreferredY", mPreferredY);
 	RegistryWriteInteger("CustomCursors", mCustomCursorsEnabled ? 1 : 0);		
@@ -1243,6 +1244,9 @@ void SexyAppBase::ReadFromRegistry()
 	if (RegistryReadInteger("WideTank", &anInt))
 		mWideTank = anInt != 0;
 #endif
+
+	if (RegistryReadInteger("QuickAim", &anInt))
+		mQuickAim = anInt != 0;
 
 	RegistryReadInteger("PreferredX", &mPreferredX);
 	RegistryReadInteger("PreferredY", &mPreferredY);	

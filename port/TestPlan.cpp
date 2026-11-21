@@ -94,6 +94,8 @@ void Run(SexyAppBase* app, const Step& s)
             pad.mDown |= button == "down";
             pad.mLeft |= button == "left";
             pad.mRight |= button == "right";
+            pad.mJumpFish |= button == "y";
+            pad.mJumpMoney |= button == "x";
         }
         gScriptedPad = pad;
         int x, y;

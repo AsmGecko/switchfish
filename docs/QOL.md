@@ -10,7 +10,7 @@ Loading on the Switch comes first: `docs/LOADING.md`.
 
 - [x] 1. Save when the game is closed from Home (needs a check on hardware)
 - [x] 2. B and + close dialogs (Escape on a keyboard too)
-- [ ] 3. Y jumps to the hungriest fish, X to money (setting)
+- [x] 3. Y jumps to the hungriest fish, X to money ("Quick Aim (Y/X)" in Options, on by default)
 - [x] 3b. Remove the Hardware Acceleration checkbox (Is3DAccelerated is always true here)
 - [x] 3c. Write saves and settings atomically (temp file + rename, .bak on the Switch)
 - [ ] 4. Controls page in the Help screen, a Controls button in Options

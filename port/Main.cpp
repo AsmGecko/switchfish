@@ -2,6 +2,8 @@
 #include "WinFishCommon.h"
 #include "Notice.h"
 #include "TestPlan.h"
+#include "PadTargets.h"
+#include "platform/PadCursor.h"
 #include <SDL2/SDL.h>
 #include <cstdlib>
 #include <cstring>
@@ -225,6 +227,7 @@ int main(int argc, char* argv[])
     {
         SDL_Log("boot: main");
         Sexy::WinFishApp app;
+        Sexy::gPadTargetHook = FindPadTarget;
         app.Init();
         SDL_Log("boot: app ready");
         // before Start() launches the loading thread, which builds the wide tank art

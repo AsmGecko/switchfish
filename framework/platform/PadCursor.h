@@ -17,6 +17,8 @@ struct PadInput
 	bool mMenu = false;
 	bool mPause = false;
 	bool mUp = false, mDown = false, mLeft = false, mRight = false;
+	bool mJumpFish = false;		// Y: the hungriest fish
+	bool mJumpMoney = false;	// X: the money that will be gone first
 	// a USB mouse moves the same cursor, in design units this frame
 	float mMouseX = 0, mMouseY = 0;
 	// another pointer (a finger) owns the mouse: no motion or clicks, held buttons wait for a release
@@ -35,6 +37,11 @@ bool GetPadCursor(int& theX, int& theY);
 // Rumble on the controller in use, strengths 0..1 for the low and high motors. On the Switch a weaker
 // rumble doesn't cut a stronger one short. Implemented per platform (Input.cpp).
 void RumblePad(float theLow, float theHigh, int theMs);
+
+// Quick aim (Y and X): the game's theIndex'th target of theKind (0 the hungriest fish, 1 money; the index
+// wraps), in widget coordinates. 1 found, 0 none in the tank, -1 not now (no board, a dialog, paused).
+// Set by the game (port/PadTargets.cpp).
+extern int (*gPadTargetHook)(SexyAppBase* theApp, int theKind, int theIndex, int& theX, int& theY);
 
 // The controller as a test plan sets it, used instead of the real one while input is scripted.
 extern PadInput gScriptedPad;

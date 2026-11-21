@@ -13,6 +13,7 @@
 using namespace Sexy;
 
 PadInput Sexy::gScriptedPad;
+int (*Sexy::gPadTargetHook)(SexyAppBase*, int, int, int&, int&) = nullptr;
 
 static float gX = 320, gY = 240;
 static bool gShown = false;
@@ -24,6 +25,9 @@ static bool gBlockClick = false, gBlockRightClick = false;
 static Uint64 gLastClickTicks = 0;
 // B pressed while a dialog was open went to Dialog::Cancel, so its release isn't a right click either
 static bool gBCancelled = false;
+// quick aim: pressing the same button again soon, without moving, goes to the next target
+static int gAimKind = -1, gAimIndex = 0, gAimX = 0, gAimY = 0;
+static double gAimAge = 0;	// seconds since the last jump (in logic ticks for test plans, like dt)
 static int gLastClickX = -100, gLastClickY = -100;
 
 // Design units per second for a stick at radius r: deadzone 0.12, full at 0.95, quadratic in between.
@@ -197,9 +201,42 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 		}
 	}
 
-	bool anyButton = in.mClick || in.mRightClick || in.mMenu || in.mPause || in.mUp || in.mDown || in.mLeft || in.mRight;
+	// quick aim: Y to the hungriest fish, X to money (QOL.md), one jump per press
+	gAimAge += dt;
+	for (int kind = 0; kind < 2; kind++)
+	{
+		bool held = kind == 0 ? in.mJumpFish : in.mJumpMoney;
+		bool was = kind == 0 ? gLast.mJumpFish : gLast.mJumpMoney;
+		if (!held || was || in.mPointerElsewhere || !theApp->mQuickAim || !gPadTargetHook)
+		{
+			continue;
+		}
+		bool again = kind == gAimKind && gAimAge < 1.5 && x == gAimX && y == gAimY;
+		int index = again ? gAimIndex + 1 : 0;
+		int tx, ty;
+		int found = gPadTargetHook(theApp, kind, index, tx, ty);
+		if (found > 0)
+		{
+			gAimKind = kind;
+			gAimIndex = index;
+			gAimAge = 0;
+			gX = (float)tx;
+			gY = (float)ty;
+			x = gAimX = tx;
+			y = gAimY = ty;
+			jumped = true;
+		}
+		else if (found == 0)
+		{
+			// in the tank, but nothing to aim at
+			RumblePad(0.15f, 0.0f, 40);
+		}
+	}
+
+	bool anyButton = in.mClick || in.mRightClick || in.mMenu || in.mPause || in.mUp || in.mDown || in.mLeft || in.mRight ||
+		in.mJumpFish || in.mJumpMoney;
 	bool changed = anyButton || gLast.mClick || gLast.mRightClick || gLast.mMenu || gLast.mPause ||
-		gLast.mUp || gLast.mDown || gLast.mLeft || gLast.mRight;
+		gLast.mUp || gLast.mDown || gLast.mLeft || gLast.mRight || gLast.mJumpFish || gLast.mJumpMoney;
 	if (!changed && dx == 0 && dy == 0 && !mouseMoved && !jumped)
 	{
 		if (gShown && (x != oldX || y != oldY))
@@ -225,6 +262,8 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 	{
 		if (in.mClick)
 		{
+			// what was aimed at may be gone now (a collected coin), so the next Y/X starts from the top
+			gAimKind = -1;
 			// a second press soon after, in the same spot, is a double click (as SDL reports on the desktop)
 			bool twice = now - gLastClickTicks < SDL_GetPerformanceFrequency() * 4 / 10 &&
 				std::abs(x - gLastClickX) <= 6 && std::abs(y - gLastClickY) <= 6;

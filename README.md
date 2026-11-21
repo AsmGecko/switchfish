@@ -1,49 +1,56 @@
 # switchfish
 
-Insaniquarium Deluxe on the Nintendo Switch, as a native homebrew NRO. Built from the WinFish decompilation on
-an SDL2/GLES2 port of PopCap's SexyAppFramework. Goal: a stable port that eventually plays widescreen across
-the whole Switch screen.
+Insaniquarium Deluxe as native Nintendo Switch homebrew, built from the source code the community
+decompiled, with a widescreen tank that fills the whole Switch screen and controls made for a console.
 
 **You need your own copy of Insaniquarium Deluxe** (for example from Steam). This repo and its builds contain
 no game assets.
 
-Status: playable on the Mac and boots in the emulator, widescreen works; not yet run on a real Switch.
-See `docs/STATUS.md` for how solid things are and `docs/ROADMAP.md` for what's next.
+Status: plays on the Mac, boots in the Ryubing emulator, not yet run on a real Switch. `docs/STATUS.md` says
+honestly how solid things are, `docs/ROADMAP.md` what comes next.
 
-## Daily use
+## What switchfish adds
 
-```bash
-./sf.sh setup          # once: Docker image with the Switch toolchain
-./sf.sh build switch   # build/switch/switchfish.nro
-./sf.sh build          # host build in build/host/
-./sf.sh run            # host build with the game files in gameData/ (or --data <dir>)
-./sf.sh emu            # NRO in the Ryubing emulator (installed in tools/ on first use)
-./sf.sh widen          # regenerate the widescreen tank sides via Codex (port/romfs/widescreen/)
-./sf.sh send <ip>      # send the NRO to hbmenu's netloader (press Y on the Switch)
-./sf.sh upstream       # clone/update the reference repos in upstream/
-```
+### A widescreen tank you can play in
 
-Host builds need `brew install cmake ninja sdl2 sdl2_ttf libopenmpt jpeg-turbo libpng libvorbis mpg123`.
-Switch builds only need Docker.
+The game was made for 640x480. switchfish turns on the widescreen mode PopCap left in its own framework and
+widens the tank itself to 854x480, so on a 16:9 screen the whole picture is aquarium: fish swim, food falls,
+coins drop and aliens chase you into the new sides. Menus, dialogs and the HUD stay as they were.
 
-## Test plans
+- The extra sides of the six tank backdrops were drawn by an image model, with the glass walls and floor
+  corners in the original's perspective. They hold no PopCap pixels: the game pastes the original middle
+  back from your own files when it loads, pixel exact, and blends the seams.
+- **Widescreen** is a checkbox in Options (where Fullscreen used to be, which did nothing on a Switch).
+  Turned off you get the original 4:3 game, every number as it was, with blurred side bars instead of black.
+- The picture is scaled with a sharp-bilinear filter, so the pixel art stays crisp at 720p and 1080p.
 
-`tests/plans/*.txt` drive the game hands-free: clicks, keys and screenshots at fixed logic ticks, in the
-game's 640x480 design coordinates (see `port/TestPlan.h`). A run always quits by itself:
+Details: `docs/WIDESCREEN.md`.
 
-```bash
-./build/host/switchfish --plan tests/plans/widetank.txt --out /tmp/shots --timeout 45
-```
+### Controls made for the Switch
 
-## Quickplay (testing)
+Designed from what the game actually does (`docs/CONTROLS.md`):
 
-```bash
-./sf.sh run --quickplay          # N finishes the current level the normal way (last egg piece)
-./sf.sh run --level 3-2          # a new adventure board starts at tank 3, level 2 (implies --quickplay)
-```
+| | |
+|---|---|
+| Left stick | cursor, with a deadzone and a speed curve; it slows down over coins and buttons so you can stop on them |
+| ZL / right stick | slow and precise / nudge |
+| A or ZR | click, hold to keep feeding |
+| B | right click (tap the glass) |
+| D-pad | jump to the next button that way |
+| + / − | menu / pause |
+| Touch | point and tap directly in handheld; ZL + tap is a right click |
+| USB mouse | through the dock |
+| Rumble | when an alien arrives or goes down, for every hit, a tap on the glass, a fish dying |
 
-On the Switch or in the emulator, put a `quickplay.txt` in the game folder (optionally containing `3-2`).
-It changes your profile's progress, so use a test profile.
+The cursor is the game's own. Home or sleep pauses and mutes the game like alt-tab does on a PC. The Switch
+keyboard opens for player names.
+
+### Small things
+
+- Screens in the game's own dialog style when the game files are missing or when you start from the album.
+- The title music waits until there is a picture.
+- Fixes: a highlighted button could stay lit after a click, holding the mouse to feed didn't work in the
+  wide tank's sides.
 
 ## On the Switch
 
@@ -59,43 +66,76 @@ sdmc:/switch/switchfish/
 Start it from hbmenu through title takeover (hold R while starting any game), not from the album: the album
 runs homebrew with too little memory. A log goes to `sdmc:/switch/switchfish/log.txt`.
 
-Controls (details and reasoning in `docs/CONTROLS.md`):
+## Building
 
-| | |
-|---|---|
-| Left stick | cursor (ZL held: slow and precise; right stick: nudge) |
-| A or ZR | click, hold to keep feeding |
-| B | right click (tap the glass) |
-| D-pad | jump to the next button |
-| + / − | menu / pause |
-| Touch | point and tap directly (handheld); ZL + tap is a right click |
-| USB mouse | through the dock |
-| Rumble | aliens arriving and going down, hits, taps on the glass |
+Switch builds only need Docker; the toolchain (devkitA64, libnx, SDL2, mesa, libopenmpt) lives in an image.
 
-On the Mac a game controller drives the same cursor.
+```bash
+./sf.sh setup          # once: Docker image, Homebrew packages, Ryubing
+./sf.sh build switch   # build/switch/switchfish.nro
+./sf.sh build          # Mac build in build/host/
+./sf.sh run            # Mac build with the game files in gameData/ (or --data <dir>)
+./sf.sh emu            # the NRO in the Ryubing emulator
+./sf.sh send <ip>      # send the NRO to hbmenu's netloader (press Y on the Switch)
+./sf.sh widen          # redraw the widescreen sides with Codex (needs Codex)
+./sf.sh upstream       # clone or update the reference projects in upstream/
+```
 
-## Layout
+On the Mac a game controller drives the same cursor as on the Switch.
+
+### Testing
+
+- **Test plans** (`tests/plans/`, format in `port/TestPlan.h`) drive the game hands-free: clicks, keys,
+  controller input and screenshots at fixed logic ticks. A run is silent, stays in the background and
+  always ends by itself:
+  `./build/host/switchfish --plan tests/plans/menus.txt --out /tmp/shots --timeout 45`
+- **Quickplay**: `./sf.sh run --quickplay` lets N finish the current level the normal way, and
+  `--level 3-2` starts a new adventure at that level. On the Switch, a `quickplay.txt` in the game folder
+  (optionally with `3-2` in it) does the same. It changes your profile, so use a test profile.
+
+### Layout
 
 | Folder | What |
 |---|---|
 | `game/` | the game (WinFish decompilation, kyle-sylvestre's portable fork) |
-| `port/` | our own code: entry point, notice screens, test plans, `romfs/` (fonts, widescreen sides) that goes inside the NRO |
 | `framework/` | SexyAppFramework on SDL2 + GLES2, with `platform/switch` and `platform/default` |
+| `port/` | our own code: entry point, notice screens, test plans, wide tank art, `romfs/` for the NRO |
+| `scripts/widescreen/` | how the widescreen sides are made |
 | `third_party/` | SDL-Mixer-X |
-| `docker/` | Switch build image (devkitA64, libnx, SDL2, mesa, libopenmpt) |
-| `docs/` | `ANALYSIS.md` (approach and decisions), `ROADMAP.md`, `UPSTREAM.md`, `research/` |
-| `upstream/` | reference repos, not part of the build (gitignored) |
-| `tools/` | Ryubing emulator in portable mode, its SD card is `tools/ryubing/portable/sdcard` (gitignored) |
-| `gameData/` | your own Insaniquarium files; `run` and `emu` use them (gitignored) |
+| `docker/` | the Switch build image |
+| `docs/` | analysis, status, roadmap, controls, widescreen, where everything came from |
+| `upstream/`, `tools/`, `gameData/` | reference projects, the emulator, your own game files (all gitignored) |
 
-## Credits and licenses
+## Thanks
 
-Game code from [vindirect/winfish](https://github.com/vindirect/winfish) and
-[kyle-sylvestre/WinFish](https://github.com/kyle-sylvestre/WinFish). Framework from
-[kyle-sylvestre/PvZ-Portable](https://github.com/kyle-sylvestre/PvZ-Portable), based on
-[wszqkzqk/PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) and headshot2017's work (LGPL-3.0-or-later).
-Controls and fixes informed by [insaniquarium_nx](https://github.com/ChanseyIsTheBest/insaniquarium_nx).
-Details in `docs/UPSTREAM.md`. Our own code is MIT; `LICENSE` says which license covers which folder.
+switchfish stands on a lot of other people's work:
+
+- **Flying Bear Entertainment and PopCap Games** for the game.
+- **[vindirect/winfish](https://github.com/vindirect/winfish)**, the decompilation that made a native port
+  possible.
+- **[kyle-sylvestre](https://github.com/kyle-sylvestre)** for the portable fork of
+  [WinFish](https://github.com/kyle-sylvestre/WinFish) and the `insaniquarium` branch of
+  [PvZ-Portable](https://github.com/kyle-sylvestre/PvZ-Portable) that this port is built on.
+- **[wszqkzqk/PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable)** and
+  **[headshot2017](https://github.com/headshot2017/re-plants-vs-zombies)** for bringing PopCap's
+  framework to SDL2 and OpenGL ES.
+- **[elgreams/OpenInsaniquarium](https://github.com/elgreams/OpenInsaniquarium)** for the reverse engineering
+  notes on timing, randomness, file formats and the music.
+- **[5N00Z3R/Insaniquarium-Decompilation](https://github.com/5N00Z3R/Insaniquarium-Decompilation)**, the most
+  accurate decompilation, our reference for fixes.
+- **[ChanseyIsTheBest/insaniquarium_nx](https://github.com/ChanseyIsTheBest/insaniquarium_nx)**, the first
+  Switch port, which proved it could be done and showed how to handle a USB mouse and the input conflicts.
+- **devkitPro, libnx and switchbrew** for the Switch toolchain, **Ryubing** for the emulator, **SDL**,
+  **SDL-Mixer-X**, **libopenmpt** and the **Fredoka** font.
+
+Where every vendored folder came from and at which commit: `docs/UPSTREAM.md`.
+
+## Credits and license
+
+switchfish is made by [AsmGecko](https://github.com/AsmGecko).
+
+Our own code is MIT; the framework stays LGPL-3.0-or-later and the PopCap Games Framework License, the game
+code is the WinFish decompilation's. `LICENSE` lists which license covers which folder.
 
 This product includes portions of the PopCap Games Framework, © 2005-2009 PopCap Games, Inc. All rights
 reserved. (http://popcapframework.sourceforge.net/)

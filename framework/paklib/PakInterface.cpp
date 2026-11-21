@@ -264,6 +264,39 @@ PFILE* PakInterface::FOpen(const char* theFileName, const char* anAccess)
 	aPFP->mRecord = nullptr;
 	aPFP->mPos = 0;
 	aPFP->mFP = aFP;
+
+	// switchfish: files the game reads are read whole, with one read, and served from memory like a pak
+	// record. The decoders read in small pieces (GIF: a byte, a block of up to 255 and a tell, over and
+	// over), and on the Switch that went to the SD card's file service again and again, one thread at a
+	// time, which was most of the time images took to load.
+	if ((strcasecmp(anAccess, "r") == 0) || (strcasecmp(anAccess, "rb") == 0) || (strcasecmp(anAccess, "rt") == 0))
+	{
+		long aSize = -1;
+		if (fseek(aFP, 0, SEEK_END) == 0)
+		{
+			aSize = ftell(aFP);
+		}
+		if (aSize >= 0 && aSize <= 64 * 1024 * 1024 && fseek(aFP, 0, SEEK_SET) == 0)
+		{
+			LoadedFile* aLoaded = new LoadedFile((size_t)aSize + 1);
+			if (aLoaded->mCollection.mDataPtr != nullptr &&
+				fread(aLoaded->mCollection.mDataPtr, 1, (size_t)aSize, aFP) == (size_t)aSize)
+			{
+				aLoaded->mRecord.mCollection = &aLoaded->mCollection;
+				aLoaded->mRecord.mFileName = theFileName;
+				aLoaded->mRecord.mFileTime = 0;
+				aLoaded->mRecord.mStartPos = 0;
+				aLoaded->mRecord.mSize = (int)aSize;
+				fclose(aFP);
+				aPFP->mFP = nullptr;
+				aPFP->mLoaded = aLoaded;
+				aPFP->mRecord = &aLoaded->mRecord;
+				return aPFP;
+			}
+			delete aLoaded;
+		}
+		fseek(aFP, 0, SEEK_SET);
+	}
 	return aPFP;
 }
 
@@ -272,6 +305,7 @@ int PakInterface::FClose(PFILE* theFile)
 {
 	if (theFile->mRecord == nullptr)
 		fclose(theFile->mFP);
+	delete theFile->mLoaded;
 	delete theFile;
 	return 0;
 }
@@ -284,7 +318,7 @@ int PakInterface::FSeek(PFILE* theFile, long theOffset, int theOrigin)
 		if (theOrigin == SEEK_SET)
 			theFile->mPos = theOffset;
 		else if (theOrigin == SEEK_END)
-			theFile->mPos = theFile->mRecord->mSize - theOffset;
+			theFile->mPos = theFile->mRecord->mSize + theOffset;	// switchfish: subtracted the offset, stdio adds it
 		else if (theOrigin == SEEK_CUR)
 			theFile->mPos += theOffset;
 
@@ -312,6 +346,9 @@ size_t PakInterface::FRead(void* thePtr, int theElemSize, int theCount, PFILE* t
 	{
 		// 实际读取的字节数不能超过当前资源文件剩余可读取的字节数
 		int aSizeBytes = std::min(theElemSize*theCount, theFile->mRecord->mSize - theFile->mPos);
+		// switchfish: a bogus size (an AU header's 0xFFFFFFFF) reads nothing instead of copying -1 bytes
+		if (aSizeBytes <= 0 || theElemSize <= 0)
+			return 0;
 
 		// 取得在整个 pak 中开始读取的位置的指针
 		uchar* src = (uchar*) theFile->mRecord->mCollection->mDataPtr + theFile->mRecord->mStartPos + theFile->mPos;

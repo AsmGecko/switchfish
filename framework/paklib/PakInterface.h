@@ -68,11 +68,21 @@ public:
 
 typedef std::list<PakCollection> PakCollectionList;
 
+// switchfish: a plain file read whole into memory when it is opened (PakInterface::FOpen)
+struct LoadedFile
+{
+	PakCollection			mCollection;
+	PakRecord				mRecord;
+
+	explicit LoadedFile(size_t theSize) : mCollection(theSize) {}
+};
+
 struct PFILE
 {
 	PakRecord*				mRecord;
 	int						mPos;
 	FILE*					mFP;
+	LoadedFile*				mLoaded = nullptr;	// switchfish: owned, mRecord points into it
 };
 
 class PakInterfaceBase

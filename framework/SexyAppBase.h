@@ -347,6 +347,7 @@ public:
 	bool					mWidescreenAware;
 	bool					mWideTank = true;	// with widescreen: gameplay uses the whole canvas
 	bool					mQuickAim = true;	// switchfish: Y/X jump the controller cursor to fish and money
+	bool					mRumble = true;		// switchfish: the controller rumbles
 	Rect					mScreenBounds;
 	bool					mEnableWindowAspect;
 	Ratio					mWindowAspect;

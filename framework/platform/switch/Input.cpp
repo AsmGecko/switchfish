@@ -40,6 +40,11 @@ static PadState gPad;
 static bool gTouching = false;
 static u32 gTouchFinger = 0;
 static int gTouchX = 0, gTouchY = 0, gTouchButton = 1;
+// a tap that wobbles less than this (canvas units) stays where it landed: a finger's contact point shifts as
+// it lifts, and on a small button that used to slide the release off it, so the button didn't fire
+static const int kTapSlop = 8;
+static bool gTouchDragging = false;
+static int gTouchStartX = 0, gTouchStartY = 0;
 // fingers that started in the letterbox or alongside the tracked one, ignored until they lift
 static std::vector<u32> gIgnoredFingers;
 // rumble motors for handheld, a Pro Controller and dual Joy-Cons (each style has its own handles)
@@ -325,15 +330,27 @@ static void ReadTouch(SexyAppBase* theApp, bool theRightClick)
 				return;
 			}
 			gTouching = true;
+			gTouchDragging = false;
+			gTouchStartX = x;
+			gTouchStartY = y;
 			gTouchFinger = touch->finger_id;
 			gTouchButton = theRightClick ? -1 : 1;
 			HidePadCursor(theApp, x, y);
 			wm->MouseMove(x, y);
 			wm->MouseDown(x, y, gTouchButton);
 		}
-		else if (x != gTouchX || y != gTouchY)
+		else
 		{
-			wm->MouseMove(x, y);
+			gTouchDragging |= std::abs(x - gTouchStartX) > kTapSlop || std::abs(y - gTouchStartY) > kTapSlop;
+			if (!gTouchDragging)
+			{
+				x = gTouchStartX;
+				y = gTouchStartY;
+			}
+			if (x != gTouchX || y != gTouchY)
+			{
+				wm->MouseMove(x, y);
+			}
 		}
 		gTouchX = x;
 		gTouchY = y;

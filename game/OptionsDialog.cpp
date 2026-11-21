@@ -41,6 +41,7 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 	mCustomCursorsCB = MakeCheckbox(8, this, mApp->mCustomCursorsEnabled);
 	mWidescreenCB = MakeCheckbox(11, this, mApp->mWidescreenAware);
 	mQuickAimCB = MakeCheckbox(12, this, mApp->mQuickAim);
+	mRumbleCB = MakeCheckbox(14, this, mApp->mRumble);
     mCheatsButton = MakeDialogButton(10, this, "Cheats", NULL);
 
 	if (theFlag)
@@ -72,6 +73,8 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mWidescreenCB;
 	if (mQuickAimCB)
 		delete mQuickAimCB;
+	if (mRumbleCB)
+		delete mRumbleCB;
 	if (mHelpButton)
 		delete mHelpButton;
 	if (mControlsButton)
@@ -94,6 +97,7 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mCustomCursorsCB);
 	theWidgetManager->AddWidget(mWidescreenCB);
 	theWidgetManager->AddWidget(mQuickAimCB);
+	theWidgetManager->AddWidget(mRumbleCB);
 	theWidgetManager->AddWidget(mWebLinkButton);
 	theWidgetManager->AddWidget(mBackButton);
     theWidgetManager->AddWidget(mCheatsButton);
@@ -111,6 +115,7 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
 	theWidgetManager->RemoveWidget(mWidescreenCB);
 	theWidgetManager->RemoveWidget(mQuickAimCB);
+	theWidgetManager->RemoveWidget(mRumbleCB);
 	theWidgetManager->RemoveWidget(mWebLinkButton);
 	theWidgetManager->RemoveWidget(mBackButton);
     theWidgetManager->RemoveWidget(mCheatsButton);
@@ -127,6 +132,7 @@ void Sexy::OptionsDialog::Draw(Graphics* g)
 	g->DrawString("Custom Cursors", mCustomCursorsCB->mX - mX + 43, mCustomCursorsCB->mY - mY + 24);
 	g->DrawString("Widescreen", mWidescreenCB->mX - mX + 43, mWidescreenCB->mY - mY + 24);
 	g->DrawString("Quick Aim (Y/X)", mQuickAimCB->mX - mX + 43, mQuickAimCB->mY - mY + 24);
+	g->DrawString("Rumble", mRumbleCB->mX - mX + 43, mRumbleCB->mY - mY + 24);
 	g->SetColorizeImages(false);
 }
 
@@ -191,6 +197,7 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 	mWidescreenCB->Resize(mX + 33, mY + 128, 45, 46);
 	// switchfish: where Hardware Acceleration was (this port always draws with the GPU)
 	mQuickAimCB->Resize(mX + 33, mY + 172, 45, 46);
+	mRumbleCB->Resize(mX + 207, mY + 172, 45, 46);
 }
 
 int Sexy::OptionsDialog::GetPreferredHeight(int theWidth)

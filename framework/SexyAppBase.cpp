@@ -369,6 +369,7 @@ SexyAppBase::SexyAppBase()
 SexyAppBase::~SexyAppBase()
 {
 	Shutdown();
+	SDL_Log("exit: dialogs");
 
 	DialogMap::iterator aDialogItr = mDialogMap.begin();
 	while (aDialogItr != mDialogMap.end())
@@ -380,11 +381,14 @@ SexyAppBase::~SexyAppBase()
 	mDialogMap.clear();
 	mDialogList.clear();
 	
+	SDL_Log("exit: widgets");
 	delete mWidgetManager;	
+	SDL_Log("exit: resources");
 	delete mResourceManager;
 	delete gFPSImage;
 	gFPSImage = nullptr;
 	
+	SDL_Log("exit: shared images");
 	SharedImageMap::iterator aSharedImageItr = mSharedImageMap.begin();
 	while (aSharedImageItr != mSharedImageMap.end())
 	{
@@ -394,9 +398,13 @@ SexyAppBase::~SexyAppBase()
 		mSharedImageMap.erase(aSharedImageItr++);		
 	}
 	
+	SDL_Log("exit: graphics");
 	delete mGLInterface;
+	SDL_Log("exit: music");
 	delete mMusicInterface;
+	SDL_Log("exit: sound");
 	delete mSoundManager;			
+	SDL_Log("exit: loading thread");
 
 	WaitForLoadingThread();	
 
@@ -406,11 +414,14 @@ SexyAppBase::~SexyAppBase()
     
 #ifdef __SWITCH__
     // switchfish: mWindow is the EGL display here; give the GPU back before returning to the homebrew loader
+    SDL_Log("exit: window");
     DestroyWindow();
 #else
     SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr;
 #endif
+    SDL_Log("exit: SDL");
     SDL_Quit();
+    SDL_Log("exit: app gone");
 }
 
 void SexyAppBase::ClearUpdateBacklog(bool relaxForASecond)
@@ -995,6 +1006,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("Widescreen", mWidescreenAware ? 1 : 0);
 	RegistryWriteInteger("WideTank", mWideTank ? 1 : 0);
 	RegistryWriteInteger("QuickAim", mQuickAim ? 1 : 0);
+	RegistryWriteInteger("Rumble", mRumble ? 1 : 0);
 	RegistryWriteInteger("PreferredX", mPreferredX);
 	RegistryWriteInteger("PreferredY", mPreferredY);
 	RegistryWriteInteger("CustomCursors", mCustomCursorsEnabled ? 1 : 0);		
@@ -1248,6 +1260,9 @@ void SexyAppBase::ReadFromRegistry()
 	if (RegistryReadInteger("QuickAim", &anInt))
 		mQuickAim = anInt != 0;
 
+	if (RegistryReadInteger("Rumble", &anInt))
+		mRumble = anInt != 0;
+
 	RegistryReadInteger("PreferredX", &mPreferredX);
 	RegistryReadInteger("PreferredY", &mPreferredY);	
 
@@ -1260,7 +1275,11 @@ void SexyAppBase::ReadFromRegistry()
 		mLastShutdownWasGraceful = anInt == 0;
 		
 	if (!IsScreenSaver())
-		RegistryWriteInteger("InProgress", 1);	
+	{
+		RegistryWriteInteger("InProgress", 1);
+		// switchfish: on disk now, so a crash during startup still counts as one (registry writes are batched)
+		regemu::Flush();
+	}
 }
 
 bool SexyAppBase::WriteBytesToFile(const std::string& theFileName, const void *theData, unsigned long theDataLen)
@@ -1518,7 +1537,10 @@ void SexyAppBase::Shutdown()
 		RestoreScreenResolution();
 
 		if (mReadFromRegistry)
+		{
 			WriteToRegistry();
+			regemu::Flush();
+		}
 
 #ifdef __EMSCRIPTEN__
 		// Exit browser fullscreen so the shell page returns to normal layout.
@@ -2863,6 +2885,9 @@ void SexyAppBase::DoMainLoop()
 
 bool SexyAppBase::UpdateAppStep(bool* updated)
 {
+	// switchfish: registry changes from the last step, in one write
+	regemu::Flush();
+
     // handle deferred message box calls
     {
         std::scoped_lock anAutoCrit(gMessageBoxLock);
@@ -3024,6 +3049,7 @@ void SexyAppBase::Start()
 	PreTerminate();
 
 	WriteToRegistry();
+	regemu::Flush();
 #endif
 }
 

@@ -44,6 +44,17 @@ SDLMusicInterface::SDLMusicInterface()
 SDLMusicInterface::~SDLMusicInterface()
 {
 	Mix_HaltMusic();
+	// switchfish: free the songs while the mixer is still open (~SDLSoundManager closes it right after)
+	std::lock_guard<std::mutex> aLock(mMapLock);
+	for (auto& anEntry : mMusicMap)
+	{
+		if (anEntry.second.mHMusic)
+		{
+			Mix_FreeMusic(anEntry.second.mHMusic);
+			anEntry.second.mHMusic = nullptr;
+		}
+	}
+	mMusicMap.clear();
 }
 
 bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)

@@ -47,6 +47,8 @@ namespace regemu
 	};
 
 	void SetRegFile(const std::string& fileName);
+	// switchfish: writes the file if anything changed since the last flush
+	void Flush();
 	bool RegistryRead(const std::string& keyName, const std::string& valueName, uint32_t* type, uint8_t* value, uint32_t* length);
 	bool RegistryWrite(const std::string& keyName, const std::string& valueName, uint32_t type, const uint8_t* value, uint32_t length);
 	bool RegistryEraseKey(const std::string& keyName);

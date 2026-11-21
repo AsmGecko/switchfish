@@ -48,6 +48,10 @@ typedef std::map<std::string, std::map<std::string, RegValue> > RegContents;
 static RegContents registry;
 static std::string currFile;
 
+// switchfish: changes are written once per frame (regemu::Flush), not per value: closing Options writes
+// a dozen values, and each full write of the file is several operations on the SD card
+static bool gDirty = false;
+
 static void SaveToFile()
 {
 	if (currFile.empty())
@@ -105,8 +109,18 @@ static void SaveToFile()
 	}
 }
 
+void regemu::Flush()
+{
+	if (gDirty)
+	{
+		gDirty = false;
+		SaveToFile();
+	}
+}
+
 void regemu::SetRegFile(const std::string& fileName)
 {
+	Flush();
 	currFile = fileName;
 	registry.clear();
 
@@ -249,7 +263,7 @@ bool regemu::RegistryWrite(const std::string& keyName, const std::string& valueN
 
 	registry[keyName][valueName] = regvalue;
 
-	SaveToFile();
+	gDirty = true;
 
 	return true;
 }
@@ -265,7 +279,7 @@ bool regemu::RegistryEraseKey(const std::string& keyName)
 	registry.erase(keyName);
 	SDL_Log("RegEmu: Erased key '%s'", keyName.c_str());
 
-	SaveToFile();
+	gDirty = true;
 
 	return true;
 }
@@ -279,7 +293,7 @@ bool regemu::RegistryEraseValue(const std::string& keyName, const std::string& v
 	registry[keyName].erase(valueName);
 	SDL_Log("RegEmu: Erased value '%s' from key '%s'", valueName.c_str(), keyName.c_str());
 
-	SaveToFile();
+	gDirty = true;
 
 	return true;
 }

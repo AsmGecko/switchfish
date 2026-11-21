@@ -296,6 +296,7 @@ WinFishApp::WinFishApp()
 
 Sexy::WinFishApp::~WinFishApp()
 {
+	SDL_Log("exit: game screens");
 	if (mBoard)
 		SaveCurrentUserData();
 
@@ -413,6 +414,10 @@ static void RumbleForSound(intptr_t theSound)
 		if (*r.mSound != theSound)
 		{
 			continue;
+		}
+		if (!gSexyAppBase->mRumble)
+		{
+			return;
 		}
 		Uint32 now = SDL_GetTicks();
 		if (sLast[i] == 0 || now - sLast[i] >= (Uint32)r.mGapMs)
@@ -2103,6 +2108,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 		return;
 	SetWidescreen(aDia->mWidescreenCB->IsChecked());
 	mQuickAim = aDia->mQuickAimCB->IsChecked();
+	mRumble = aDia->mRumbleCB->IsChecked();
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
 	ClearUpdateBacklog(true);

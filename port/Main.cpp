@@ -238,9 +238,12 @@ int main(int argc, char* argv[])
             LoadTestPlan(&app, planPath.c_str(), outPath.c_str(), timeout ? atoi(timeout) : 60);
         }
         app.Start();
+        SDL_Log("exit: main loop ended");
         app.Shutdown();
+        SDL_Log("exit: saved");
     }
 #if defined(__SWITCH__)
+    SDL_Log("exit: unlocking");
     appletUnlockExit();
 #endif
     return 0;

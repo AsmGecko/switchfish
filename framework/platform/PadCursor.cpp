@@ -226,7 +226,7 @@ void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 			y = gAimY = ty;
 			jumped = true;
 		}
-		else if (found == 0)
+		else if (found == 0 && theApp->mRumble)
 		{
 			// in the tank, but nothing to aim at
 			RumblePad(0.15f, 0.0f, 40);

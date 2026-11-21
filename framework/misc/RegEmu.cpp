@@ -56,7 +56,8 @@ static void SaveToFile()
 		return;
 	}
 
-	std::ofstream f(Sexy::PathFromU8(currFile), std::ios::binary);
+	// switchfish: into a .tmp, then put in place (Sexy::CommitTempFile)
+	std::ofstream f(Sexy::PathFromU8(currFile + ".tmp"), std::ios::binary);
 	if (!f)
 	{
 		SDL_Log("RegEmu: Couldn't open '%s' for writing", currFile.c_str());
@@ -92,6 +93,16 @@ static void SaveToFile()
 			f.write(reinterpret_cast<const char*>(value.mValue), value.mLength);
 		}
 	}
+	f.close();
+	if (!f)
+	{
+		std::remove((currFile + ".tmp").c_str());
+		SDL_Log("RegEmu: Couldn't write '%s'", currFile.c_str());
+	}
+	else if (!Sexy::CommitTempFile(currFile))
+	{
+		SDL_Log("RegEmu: Couldn't write '%s'", currFile.c_str());
+	}
 }
 
 void regemu::SetRegFile(const std::string& fileName)
@@ -99,6 +110,7 @@ void regemu::SetRegFile(const std::string& fileName)
 	currFile = fileName;
 	registry.clear();
 
+	Sexy::RecoverTempFile(currFile);
 	std::ifstream f(Sexy::PathFromU8(currFile), std::ios::binary);
 	if (!f)
 	{
@@ -212,7 +224,7 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 	}
 	if (!registry[keyName].count(valueName))
 	{
-		SDL_Log("RegEmu: Value '%s' does not exist", valueName.c_str());
+		// switchfish: not logged, a missing value is normal and every log line costs a write to the SD card
 		return false;
 	}
 

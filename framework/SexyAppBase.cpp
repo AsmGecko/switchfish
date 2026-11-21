@@ -1280,7 +1280,8 @@ bool SexyAppBase::WriteBytesToFile(const std::string& theFileName, const void *t
 	}	
 
 	MkDir(GetFileDir(theFileName));
-	std::ofstream aFile(PathFromU8(theFileName), std::ios::out | std::ios::binary | std::ios::trunc);
+	// switchfish: into a .tmp, then put in place (CommitTempFile)
+	std::ofstream aFile(PathFromU8(theFileName + ".tmp"), std::ios::out | std::ios::binary | std::ios::trunc);
 	if (!aFile)
 	{
 		if (mRecordingDemoBuffer)
@@ -1295,7 +1296,14 @@ bool SexyAppBase::WriteBytesToFile(const std::string& theFileName, const void *t
 	}
 
 	aFile.write(reinterpret_cast<const char*>(theData), static_cast<std::streamsize>(theDataLen));
+	aFile.close();
 	if (!aFile)
+	{
+		std::error_code ec;
+		std::filesystem::remove(PathFromU8(theFileName + ".tmp"), ec);
+		return false;
+	}
+	if (!CommitTempFile(theFileName))
 		return false;
 
 	if (mRecordingDemoBuffer)
@@ -1342,6 +1350,7 @@ bool SexyAppBase::ReadBufferFromFile(const std::string& theFileName, Buffer* the
 	}
 	else
 	{
+		RecoverTempFile(theFileName);
 		PFILE* aFP = p_fopen(theFileName.c_str(), "rb");
 
 		if (aFP == nullptr)
@@ -1435,7 +1444,12 @@ bool SexyAppBase::EraseFile(const std::string& theFileName)
 	if (mPlayingDemoBuffer)
 		return true;
 
-	return remove(theFileName.c_str()) == 0;
+	bool aRemoved = remove(theFileName.c_str()) == 0;
+	// a .bak would bring the erased file back on the next read (RecoverTempFile)
+	remove((theFileName + ".bak").c_str());
+	if (aRemoved)
+		ForgetDirectoryListings();
+	return aRemoved;
 }
 
 void SexyAppBase::SEHOccured()

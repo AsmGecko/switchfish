@@ -910,6 +910,23 @@ void ResourceManager::DeleteFont(const std::string &theName)
 	ReplaceFont(theName,nullptr);
 }
 
+// switchfish: time spent per resource type (images, sounds, fonts), for the boot lines
+static double gLoadSeconds[3];
+static int gLoadCounts[3];
+
+static bool Timed(int theType, Uint64 theStart, bool theResult)
+{
+	gLoadSeconds[theType] += (double)(SDL_GetPerformanceCounter() - theStart) / SDL_GetPerformanceFrequency();
+	gLoadCounts[theType]++;
+	return theResult;
+}
+
+std::string ResourceManager::LoadTimes()
+{
+	return StrFormat("images %d in %.2f s, sounds %d in %.2f s, fonts %d in %.2f s", gLoadCounts[0], gLoadSeconds[0],
+		gLoadCounts[1], gLoadSeconds[1], gLoadCounts[2], gLoadSeconds[2]);
+}
+
 bool ResourceManager::LoadNextResource()
 {
 	if (HadError())
@@ -924,6 +941,8 @@ bool ResourceManager::LoadNextResource()
 		if (aRes->mFromProgram)
 			continue;
 
+		Uint64 aStart = SDL_GetPerformanceCounter();
+
 		switch (aRes->mType)
 		{
 			case ResType_Image: 
@@ -932,7 +951,7 @@ bool ResourceManager::LoadNextResource()
 				if ((GLImage*)anImageRes->mImage!=nullptr)
 					continue;
 
-				return DoLoadImage(anImageRes); 
+				return Timed(0, aStart, DoLoadImage(anImageRes));
 			}
 			
 			case ResType_Sound: 
@@ -941,7 +960,7 @@ bool ResourceManager::LoadNextResource()
 				if (aSoundRes->mSoundId!=-1)
 					continue;
 
-				return DoLoadSound(aSoundRes); 
+				return Timed(1, aStart, DoLoadSound(aSoundRes));
 			}
 			
 			case ResType_Font: 
@@ -950,7 +969,7 @@ bool ResourceManager::LoadNextResource()
 				if (aFontRes->mFont!=nullptr)
 					continue;
 
-				return DoLoadFont(aFontRes);
+				return Timed(2, aStart, DoLoadFont(aFontRes));
 			}
 		}
 	}

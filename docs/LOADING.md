@@ -1,7 +1,9 @@
 # Faster loading on the Switch
 
-Done so far: step 1 (directory indexes in fcaseopen), step 2 (MO3 type up front), step 0 partly (boot lines
-with opens, misses and directories read). Ryubing went from 7.1 s to 1.4 s.
+Done so far: step 1 (directory indexes in fcaseopen, misses answered from memory), step 2 (MO3 type up
+front), step 0 (boot lines with opens, misses, directories read and time per resource type), the RegEmu log
+spam. Hardware went from 38.6 s to 11.8 s before misses were trusted; Ryubing from 7.1 s to 1.1 s. Not doing
+step 3 (CPU boost): the remaining time should come out of the data handling, not the clock.
 
 Research by an agent on 2026-11-21 from the hardware boot log (38.6 s to "click here to play"). Work through
 it in order; check off what is done.

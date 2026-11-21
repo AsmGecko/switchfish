@@ -29,6 +29,8 @@ bool DataReader::OpenFile(const std::string& theFileName)
 {
     Close();
 
+    // switchfish: saves are written through a .tmp (Sexy::CommitTempFile)
+    Sexy::RecoverTempFile(theFileName);
     mFileHandle = fopen(theFileName.c_str(), "rb");
     return mFileHandle != NULL;
 }

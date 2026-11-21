@@ -24,6 +24,7 @@
 
 #include "Common.h"
 #include "misc/MTRand.h"
+#include "fcaseopen/fcaseopen.h"
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -285,7 +286,8 @@ bool Sexy::FileExists(const std::string& theFileName)
 void Sexy::MkDir(const std::string& theDir)
 {
 	std::error_code ec;
-	std::filesystem::create_directories(PathFromU8(theDir), ec);
+	if (std::filesystem::create_directories(PathFromU8(theDir), ec))
+		ForgetDirectoryListings();
 }
 
 bool Sexy::ChDir(const std::string& theDir)
@@ -609,4 +611,55 @@ struct tm *Sexy::LocalTime(Time *theTime)
     localtime_r(&aNativeTime, &aResult);
 #endif
 	return &aResult;
+}
+
+bool Sexy::CommitTempFile(const std::string& theFileName)
+{
+	std::filesystem::path aFile = PathFromU8(theFileName);
+	std::filesystem::path aTemp = PathFromU8(theFileName + ".tmp");
+	std::filesystem::path aBackup = PathFromU8(theFileName + ".bak");
+	std::error_code ec;
+	bool aNew = !std::filesystem::exists(aFile, ec);
+	// atomic where renaming over a file is allowed. The Switch's file system refuses that, so there the old
+	// file steps aside as .bak first; RecoverTempFile puts it back if we're cut off before the new one is in
+	// place. A .tmp is never trusted.
+	std::filesystem::rename(aTemp, aFile, ec);
+	if (ec)
+	{
+		// a .bak left by a cut-off commit would block the rename (the file itself is complete here)
+		std::error_code ignored;
+		std::filesystem::remove(aBackup, ignored);
+		std::filesystem::rename(aFile, aBackup, ec);
+		std::filesystem::rename(aTemp, aFile, ec);
+		if (ec)
+		{
+			std::filesystem::rename(aBackup, aFile, ignored);
+			std::filesystem::remove(aTemp, ignored);
+			return false;
+		}
+		std::filesystem::remove(aBackup, ignored);
+	}
+	// replacing a file leaves the directory's names as they were
+	if (aNew)
+		ForgetDirectoryListings();
+	return true;
+}
+
+void Sexy::RecoverTempFile(const std::string& theFileName)
+{
+	std::filesystem::path aFile = PathFromU8(theFileName);
+	std::filesystem::path aBackup = PathFromU8(theFileName + ".bak");
+	std::error_code ec;
+	if (!std::filesystem::exists(aFile, ec) && std::filesystem::exists(aBackup, ec))
+	{
+		std::filesystem::rename(aBackup, aFile, ec);
+		ForgetDirectoryListings();
+	}
+}
+
+void Sexy::ForgetDirectoryListings()
+{
+#if !defined(_WIN32)
+	fcaseopen_forget();
+#endif
 }

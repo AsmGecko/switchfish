@@ -191,6 +191,7 @@ public:
 	int						GetNumResources(const std::string &theGroup);
 
 	virtual bool			LoadNextResource();
+	static std::string		LoadTimes();	// switchfish: time spent per resource type, for the boot lines
 	virtual void			ResourceLoadedHook(BaseRes *theRes);
 
 	virtual void			StartLoadResources(const std::string &theGroup);

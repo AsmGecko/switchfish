@@ -243,10 +243,10 @@ static wchar_t *utf8_to_wide_alloc(const char *utf8)
 // switchfish: directory indexes. The resource code probes every file under several extensions, and each
 // miss used to scan the whole directory (427 entries in images/): on the Switch's SD card that was most of
 // a 38 s boot. Now each directory is read once; a read-mode open looks the name up in memory and opens the
-// real spelling. A name the index doesn't have still gets one literal fopen, so files written after the
-// directory was read are found as long as they are read back with the spelling they were written with
-// (the game's saves are). Write-mode opens through here also drop the indexes, though the game writes
-// its files another way.
+// real spelling, and a name the index doesn't have is missing without touching the SD card (each failed
+// fopen there costs milliseconds, and there are ~1900 per boot). Everything that changes a directory calls
+// fcaseopen_forget (Sexy::CommitTempFile for saves and settings, DeleteFile, MkDir); write-mode opens
+// through here drop the indexes too.
 typedef struct
 {
     char *dir;
@@ -372,6 +372,13 @@ static int is_write_mode(const char *mode)
     return strchr(mode, 'w') || strchr(mode, 'a') || strchr(mode, '+');
 }
 
+void fcaseopen_forget(void)
+{
+    pthread_mutex_lock(&gDirIndexLock);
+    drop_dir_indexes();
+    pthread_mutex_unlock(&gDirIndexLock);
+}
+
 void fcaseopen_stats(int *opens, int *misses, int *scans)
 {
     pthread_mutex_lock(&gDirIndexLock);
@@ -397,7 +404,10 @@ FILE *fcaseopen(char const *path, char const *mode)
         if (found == 1)
             return fopen(r, mode);
         if (found == 0)
-            return fopen(path, mode);
+        {
+            errno = ENOENT;
+            return NULL;
+        }
     }
     else
     {

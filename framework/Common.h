@@ -405,6 +405,14 @@ inline constexpr uint64_t ToBE64(uint64_t v) noexcept { return EndianConvert<uin
 
 struct StringLessNoCase { bool operator()(const std::string &s1, const std::string &s2) const { return strcasecmp(s1.c_str(),s2.c_str())<0; } };
 
+// switchfish: saves and settings are written to "<name>.tmp" first and then put in place, so a crash or a
+// flat battery leaves the old file or the new one, never half of one. False (and no .tmp left) on failure.
+bool CommitTempFile(const std::string& theFileName);
+// puts back the old file (<name>.bak) when a commit was cut off before the new one was in place
+void RecoverTempFile(const std::string& theFileName);
+// fcaseopen caches directory listings; call after creating, renaming or deleting files outside it
+void ForgetDirectoryListings();
+
 }
 
 #endif //__SEXYAPPFRAMEWORK_COMMON_H__

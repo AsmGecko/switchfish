@@ -57,6 +57,8 @@ void Sexy::InternetManager::Update()
 
 				fwrite(aConstContent, 1, aContentLength, aFile);
 				fclose(aFile);
+				// switchfish: read back through fcaseopen, which caches directory listings
+				ForgetDirectoryListings();
 			}
 
 			aCurTransf->Reset();

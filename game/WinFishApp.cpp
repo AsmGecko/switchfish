@@ -377,7 +377,8 @@ static void LogFileStats(const char* theWhat)
 #if !defined(_WIN32)
 	int anOpens, aMisses, aScans;
 	fcaseopen_stats(&anOpens, &aMisses, &aScans);
-	SDL_Log("%s (%d opens, %d not found, %d directories read)", theWhat, anOpens, aMisses, aScans);
+	SDL_Log("%s (%d opens, %d not found, %d directories read; %s)", theWhat, anOpens, aMisses, aScans,
+		ResourceManager::LoadTimes().c_str());
 #else
 	SDL_Log("%s", theWhat);
 #endif

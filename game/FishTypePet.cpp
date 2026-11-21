@@ -769,9 +769,10 @@ void Sexy::FishTypePet::DrawFish(Graphics* g, bool mirror)
 {
 	if (m0x24c != nullptr)
 	{
-		g->Translate(m0x24c->mX - g->mTransX, m0x24c->mY - g->mTransY);
+		// switchfish: WidgetTransX, so Walter's glove stays with him on the wide tank
+		g->Translate(m0x24c->mX - WidgetTransX(g), m0x24c->mY - WidgetTransY(g));
 		m0x24c->Draw(g);
-		g->Translate(mX - g->mTransX, mY - g->mTransY);
+		g->Translate(mX - WidgetTransX(g), mY - WidgetTransY(g));
 	}
 	if (m0x230)
 	{

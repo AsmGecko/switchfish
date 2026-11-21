@@ -12,6 +12,7 @@
 
 namespace Sexy
 {
+	class Graphics;
 	// switchfish: the tank's edges in design coordinates. 0..640 as in the original unless the wide tank is
 	// on, then -107..747 (the whole 854 wide canvas). Every bound in the sim is written so it gives the
 	// original number at 0..640.
@@ -22,6 +23,10 @@ namespace Sexy
 	inline int			TankWidth() { return gTankRight - gTankLeft; }
 	void				SetWideTank(bool wide);
 	void				FixLoadedXBounds(int& theMin, int& theMax);
+	// switchfish: g's translation in widget coordinates. In widescreen the widget manager also translates by
+	// the canvas offset, so code that read mTransX as a widget's position goes through these (same in 4:3).
+	float				WidgetTransX(Graphics* g);
+	float				WidgetTransY(Graphics* g);
 
 	// switchfish: test flags (--quickplay, --level T-L). N finishes the current level, and a new
 	// adventure board starts at gStartTank-gStartLevel once.

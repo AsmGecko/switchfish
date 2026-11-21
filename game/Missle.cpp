@@ -392,11 +392,12 @@ void Sexy::Missle::DrawHelper(Graphics* g, bool flag)
             clampedY = (float)aTargetY;
         }
 
-        int screenBaseX = (int)(clampedX - g->mTransX);
-        int screenBaseY = (int)(clampedY - g->mTransY);
+        // switchfish: WidgetTransX, right on the wide tank too
+        int screenBaseX = (int)(clampedX - WidgetTransX(g));
+        int screenBaseY = (int)(clampedY - WidgetTransY(g));
 
-        int screenX = (int)(anInterpolatedX - g->mTransX);
-        int screenY = (int)(anInterpolatedY - g->mTransY);
+        int screenX = (int)(anInterpolatedX - WidgetTransX(g));
+        int screenY = (int)(anInterpolatedY - WidgetTransY(g));
         g->DrawImageCel(IMAGE_BALLS, screenX - 25, screenY - 25, m0x1a8 % 10, m0x1a0);
     }
 }

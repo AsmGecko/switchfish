@@ -60,6 +60,7 @@ void Sexy::MoneyDialog::WidgetClicked(int theId, bool theFlag)
 
 void Sexy::MoneyDialog::DrawEditWidgetBox(Graphics* g, EditWidget* theWidget)
 {
-	g->DrawImageBox(Rect((theWidget->mX - 8) - g->mTransX, (theWidget->mY - 4) - g->mTransY,
+	// switchfish: WidgetTransX, so the box stays around the field in widescreen
+	g->DrawImageBox(Rect((theWidget->mX - 8) - WidgetTransX(g), (theWidget->mY - 4) - WidgetTransY(g),
 		theWidget->mWidth + 16, theWidget->mHeight + 8), IMAGE_EDITBOX);
 }

@@ -1,4 +1,5 @@
 #include "widget/DialogButton.h"
+#include "widget/WidgetManager.h"
 #include "graphics/MemoryImage.h"
 #include "graphics/Font.h"
 
@@ -183,19 +184,29 @@ void Sexy::DrawVertCrease(Graphics* g, Image* theImage, int theX, int theY, int 
     }
 }
 
+float Sexy::WidgetTransX(Graphics* g)
+{
+	return g->mTransX + gSexyAppBase->mWidgetManager->mMouseDestRect.mX;
+}
+
+float Sexy::WidgetTransY(Graphics* g)
+{
+	return g->mTransY + gSexyAppBase->mWidgetManager->mMouseDestRect.mY;
+}
+
 void Sexy::DrawCheckboxString(Graphics* g, const SexyString& theLine, Checkbox* theCB, const char* theExtensionString)
 {
     if (theExtensionString == nullptr)
     {
-        g->DrawString(theLine, theCB->mX - g->mTransX + 43, theCB->mY - g->mTransY + 24);
+        g->DrawString(theLine, theCB->mX - WidgetTransX(g) + 43, theCB->mY - WidgetTransY(g) + 24);
     }
     else
     {
-        g->DrawString(theLine, theCB->mX - g->mTransX + 43, theCB->mY - g->mTransY + 15);
+        g->DrawString(theLine, theCB->mX - WidgetTransX(g) + 43, theCB->mY - WidgetTransY(g) + 15);
 
         SexyString aStr; 
         aStr.assign(theExtensionString);
-        g->DrawString(aStr, theCB->mX - g->mTransX + 43, theCB->mY - g->mTransY + 30);
+        g->DrawString(aStr, theCB->mX - WidgetTransX(g) + 43, theCB->mY - WidgetTransY(g) + 30);
     }
 }
 

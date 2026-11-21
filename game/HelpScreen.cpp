@@ -198,6 +198,9 @@ void Sexy::HelpScreen::Draw(Graphics* g)
 	case 8:
 		DrawCreditsPage(g);
 		break;
+	case 9:
+		DrawControlsPage(g);
+		break;
 	}
 	
 	SexyString aTabName = "";
@@ -227,6 +230,9 @@ void Sexy::HelpScreen::Draw(Graphics* g)
 	case 8:
 		aTabName = "CREDITS";
 		break;
+	case 9:
+		aTabName = "CONTROLS";
+		break;
 	}
 
 	if (mPageIdx != 0)
@@ -236,7 +242,7 @@ void Sexy::HelpScreen::Draw(Graphics* g)
 		DrawStringWithOutline(g, aTabName, 320 - FONT_CONTINUUMBOLD14->StringWidth(aTabName) / 2, 60, FONT_CONTINUUMBOLD14OUTLINE, 0);
 
 		g->SetColor(Color::White);
-		SexyString aTabPage = StrFormat("Page %d of 8", mPageIdx);
+		SexyString aTabPage = StrFormat("Page %d of %d", mPageIdx, NUM_HELP_PAGES);
 		DrawStringWithOutline(g, aTabPage, 320 - FONT_CONTINUUMBOLD14->StringWidth(aTabPage) / 2, 80,
 			FONT_CONTINUUMBOLD14OUTLINE, 0);
 	}
@@ -849,6 +855,48 @@ void Sexy::HelpScreen::DrawCreditsPageLeftText(Graphics* g, SexyString theString
 	DrawStringWithOutline(g, theString, theX, theY, FONT_CONTINUUMBOLD14OUTLINE, 0);
 }
 
+// switchfish: the Switch controls, in the style of The Basics
+void Sexy::HelpScreen::DrawControlsPage(Graphics* g)
+{
+	DrawTabTitle(g, "Play with the controller, the touch screen or a USB mouse.",
+		"The stick moves the cursor, the buttons do the clicking.");
+	DrawVertTabText(g, 0, "Left stick moves the cursor.  Hold ZL to aim precisely, the right",
+		"stick nudges.  The D-pad jumps from button to button.");
+	DrawVertTabText(g, 1, "A or ZR clicks: hold it to keep dropping food.  B taps the glass",
+		"and closes menus.  + opens the menu, - pauses the game.");
+	DrawVertTabText(g, 2, "Y jumps to the hungriest fish, X to the money.  Press again for",
+		"the next one.  Turn Quick Aim off in Options if you like.");
+	DrawVertTabText(g, 3, "In handheld mode just tap the screen.  Hold ZL while tapping",
+		"to tap the glass.  A USB mouse works in the dock.");
+
+	// the cursor circling, as on the instructions page
+	Rect aRect = GetLeftRectVertTab(0, 4);
+	int aCursorX, aCursorY;
+	CircleAroundCursor(mUpdateCnt, aRect.mX + aRect.mWidth / 2 + 4, aRect.mY + aRect.mHeight / 2 + 4, aCursorX, aCursorY);
+	DrawCursor(g, aCursorX, aCursorY, false);
+
+	// a pellet falling, clicked in every second
+	aRect = GetLeftRectVertTab(1, 4);
+	int aFall = mUpdateCnt % 36;
+	{
+		Graphics aClipG(*g);
+		aClipG.ClipRect(aRect);
+		aClipG.DrawImageCel(IMAGE_FOOD, aRect.mX + aRect.mWidth / 2 - 20, aRect.mY - 14 + aFall, mUpdateCnt / 3 % 10, 0);
+	}
+	DrawCursor(g, aRect.mX + aRect.mWidth / 2 + 6, aRect.mY + 12, aFall < 6);
+
+	// a hungry fish with the cursor on it
+	aRect = GetLeftRectVertTab(2, 4);
+	g->DrawImageCel(IMAGE_HUNGRYSWIM, aRect.mWidth / 2 - 40 + aRect.mX, aRect.mHeight / 2 - 40 + aRect.mY, mUpdateCnt / 3 % 10, 0);
+	DrawCursor(g, aRect.mX + aRect.mWidth / 2 + 8, aRect.mY + aRect.mHeight / 2 + 6, false);
+
+	// a coin with the hand on it
+	aRect = GetLeftRectVertTab(3, 4);
+	g->DrawImageCel(IMAGE_MONEY, aRect.mWidth / 2 - 36 + aRect.mX, aRect.mHeight / 2 - 36 + aRect.mY, mUpdateCnt / 2 % 10, 1);
+	g->DrawImage(IMAGE_CURSOR_HAND, aRect.mX + aRect.mWidth / 2 - IMAGE_CURSOR_HAND->mWidth / 2 + 10,
+		aRect.mY + aRect.mHeight / 2 - IMAGE_CURSOR_HAND->mHeight / 2 + 6);
+}
+
 void Sexy::HelpScreen::ButtonPress(int theId)
 {
 	mApp->PlaySample(SOUND_BUTTONCLICK);
@@ -874,7 +922,7 @@ void Sexy::HelpScreen::ButtonDepress(int theId)
 	else if (theId == 2)
 	{
 		mPageIdx++;
-		if (mPageIdx > 8)
+		if (mPageIdx > NUM_HELP_PAGES)
 			mPageIdx = 1;
 		return;
 	}
@@ -882,7 +930,7 @@ void Sexy::HelpScreen::ButtonDepress(int theId)
 	{
 		mPageIdx--;
 		if (mPageIdx < 1)
-			mPageIdx = 8;
+			mPageIdx = NUM_HELP_PAGES;
 		return;
 	}
 }

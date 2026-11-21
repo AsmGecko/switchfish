@@ -43,7 +43,7 @@ Designed from what the game actually does (`docs/CONTROLS.md`):
 | USB mouse | through the dock |
 | Rumble | when an alien arrives or goes down, for every hit, a tap on the glass, a fish dying |
 
-The cursor is the game's own. Home or sleep pauses and mutes the game like alt-tab does on a PC. The Switch
+The cursor is the game's own, and Options > Controls explains the buttons on a Help page in the game's style. Home or sleep pauses and mutes the game like alt-tab does on a PC. The Switch
 keyboard opens for player names.
 
 ### Small things

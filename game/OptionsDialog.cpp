@@ -4,6 +4,7 @@
 
 #include "CheatsDialog.h"
 #include "OptionsDialog.h"
+#include "HelpScreen.h"
 #include "WinFishApp.h"
 #include "WinFishCommon.h"
 #include "Board.h"
@@ -20,6 +21,7 @@ Sexy::OptionsDialog::OptionsDialog(WinFishApp* theApp, bool theFlag)
 	mFlag = theFlag;
 	mRegisterButton = MakeDialogButton(0, this, "Register", NULL);
 	mHelpButton = MakeDialogButton(1, this, "Help", NULL);
+	mControlsButton = MakeDialogButton(13, this, "Controls", NULL);
 	SexyString aWebLinkStr = mApp->GetString("weblinktext", "");
 	mWebLinkButton = MakeDialogButton(2, this, aWebLinkStr, NULL);
 
@@ -72,6 +74,8 @@ Sexy::OptionsDialog::~OptionsDialog()
 		delete mQuickAimCB;
 	if (mHelpButton)
 		delete mHelpButton;
+	if (mControlsButton)
+		delete mControlsButton;
 	if (mBackButton)
 		delete mBackButton;
     if (mCheatsButton)
@@ -84,6 +88,7 @@ void Sexy::OptionsDialog::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mRegisterButton);
 	theWidgetManager->AddWidget(mCheckUpdatesButton);
 	theWidgetManager->AddWidget(mHelpButton);
+	theWidgetManager->AddWidget(mControlsButton);
 	theWidgetManager->AddWidget(mMusicSlider);
 	theWidgetManager->AddWidget(mSFXSlider);
 	theWidgetManager->AddWidget(mCustomCursorsCB);
@@ -100,6 +105,7 @@ void Sexy::OptionsDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mRegisterButton);
 	theWidgetManager->RemoveWidget(mCheckUpdatesButton);
 	theWidgetManager->RemoveWidget(mHelpButton);
+	theWidgetManager->RemoveWidget(mControlsButton);
 	theWidgetManager->RemoveWidget(mMusicSlider);
 	theWidgetManager->RemoveWidget(mSFXSlider);
 	theWidgetManager->RemoveWidget(mCustomCursorsCB);
@@ -149,11 +155,14 @@ void Sexy::OptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight
 
 	std::vector<ButtonWidget*> aBottomButtons;
 	if (mHelpButton->mVisible) aBottomButtons.push_back(mHelpButton);
+	if (mControlsButton->mVisible) aBottomButtons.push_back(mControlsButton);
 	if (mRegisterButton->mVisible) aBottomButtons.push_back(mRegisterButton);
 	if (mCheckUpdatesButton->mVisible) aBottomButtons.push_back(mCheckUpdatesButton);
     if (mCheatsButton->mVisible) aBottomButtons.push_back(mCheatsButton);
 
-	if (aBottomButtons.size() == 1 || aBottomButtons.size() == 3)
+	// switchfish: 1 only (was 1 or 3). Three buttons (Help, Controls, Cheats) share one row, the dialog has
+	// no room for a second
+	if (aBottomButtons.size() == 1)
 	{
 		int aButtonX = mX + mContentInsets.mLeft;
 		int aButtonWidth = mWidth - mContentInsets.mLeft - mContentInsets.mRight;
@@ -232,6 +241,10 @@ void Sexy::OptionsDialog::ButtonDepress(int theId)
 		mApp->DoRegisterDialog();
 		return;
 	case 1:
+		mApp->SwitchToHelpScreen(false);
+		return;
+	case 13:
+		gHelpScreenTab = HELP_PAGE_CONTROLS;
 		mApp->SwitchToHelpScreen(false);
 		return;
 	case 2:

@@ -11,6 +11,8 @@ namespace Sexy
 	class BubbleMgr;
 
 	extern int gHelpScreenTab;
+	const int NUM_HELP_PAGES = 9;	// switchfish: 9 is Controls
+	const int HELP_PAGE_CONTROLS = 9;
 
 	class HelpScreen : public Widget, public ButtonListener
 	{
@@ -55,6 +57,7 @@ namespace Sexy
 		void					DrawConfigVirtualTankPage(Graphics* g);
 		void					DrawCreditsPage(Graphics* g);
 		void					DrawCreditsPageLeftText(Graphics* g, SexyString theString, int theX, int theY);
+		void					DrawControlsPage(Graphics* g);	// switchfish
 
 		virtual void			ButtonPress(int theId);
 		virtual void			ButtonDepress(int theId);

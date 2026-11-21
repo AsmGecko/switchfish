@@ -34,6 +34,8 @@ game knows. Designed from what the game actually does, compared against insaniqu
 | A twice | double click (within 0.4 s and 6 units) |
 | USB mouse (dock) | moves the same cursor, left and right button click |
 
+In the game, Options > Controls (Help page 9) explains this in the game's own style.
+
 Home and Capture stay with the system. Losing focus (Home, sleep) pauses and mutes like alt-tab does.
 
 ## Cursor

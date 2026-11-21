@@ -214,8 +214,9 @@ void EditWidget::GotFocus()
 	mBlinkAcc = 0;
 	MarkDirty();
 
-	std::string value;
-	bool wrote = mWidgetManager->mApp->StartTextInput(value);
+	// switchfish: the soft keyboard starts from what is there and knows the limit
+	std::string value = mString;
+	bool wrote = mWidgetManager->mApp->StartTextInput(value, mMaxChars);
 	if (wrote)
 		SetText(value);
 }

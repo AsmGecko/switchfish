@@ -199,6 +199,7 @@ public:
 	GLuint					mBlurTex[4] = {};
 	// set by screens that paint the whole canvas; otherwise the sides get a blurred copy of the middle
 	bool					mFullCanvas = false;
+	void					DrawPadCursor();
 
 	int						mNextCursorX;
 	int						mNextCursorY;

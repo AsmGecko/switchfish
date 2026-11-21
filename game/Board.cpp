@@ -850,7 +850,7 @@ void Board::Update()
 		if (!isLeftBtnDown)
 			mRepeatFood = false;
 		else if ((mGameUpdateCnt % (16 - gFoodLimit) == 0) && (m0x3c0 + 200 < aVal) && 
-			(aLastMouseX >= 31 && aLastMouseX <= 586) && (aLastMouseY >= 61 && aLastMouseY <= 399) && (aGusInTank || Buy(m0x4ac, false)))
+			(aLastMouseX >= TankLeft() + 31 && aLastMouseX <= TankRight() - 54) && (aLastMouseY >= 61 && aLastMouseY <= 399) && (aGusInTank || Buy(m0x4ac, false)))
 		{ // 301
 			DropFood(aLastMouseX - 10, aLastMouseY - 10, 0, false, 20, -1);
 		}
@@ -1522,6 +1522,13 @@ void Sexy::Board::KeyChar(SexyChar theChar)
 
 void Board::KeyDown(KeyCode theKey)
 {
+	// switchfish: Escape (+ on the Switch) does what the Menu button does
+	if (theKey == KEYCODE_ESCAPE && mMenuButton && mMenuButton->mVisible && !mMenuButton->mDisabled)
+	{
+		mApp->DoOptionsDialog(false);
+		return;
+	}
+
 	if (!mApp->mDebugKeysEnabled)
 		for (int i = 0; i < SDL_arraysize(mCheatCodes); i++)
 			if (mCheatCodes[i]->CheckCodeActivated(theKey))

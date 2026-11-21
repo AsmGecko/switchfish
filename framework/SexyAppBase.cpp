@@ -49,6 +49,7 @@
 #endif
 
 #include "SexyAppBase.h"
+#include "platform/PadCursor.h"
 //#include "misc/SEHCatcher.h"
 #include "widget/WidgetManager.h"
 #include "widget/Widget.h"
@@ -120,11 +121,14 @@ SexyAppBase::SexyAppBase()
     {
         SDL_Log("SDL_Init(SDL_INIT_TIMER): %s", SDL_GetError());
     }
+#ifndef __SWITCH__
+    // switchfish: on the Switch libnx owns the pad (platform/switch/Input.cpp)
     if (0 > SDL_Init(SDL_INIT_GAMECONTROLLER))
     {
         SDL_Log("SDL_Init(SDL_INIT_GAMECONTROLLER): %s", SDL_GetError());
     }
     SDL_Log("SDL_NumJoysticks: %d", SDL_NumJoysticks());
+#endif
 	mNotifyGameMessage = 0;
 
 #ifdef _PVZ_DEBUG
@@ -1746,7 +1750,8 @@ bool SexyAppBase::DrawDirtyStuff()
 		uint32_t aPreScreenBltTime = SDL_GetTicks();
 		mLastDrawTick = aPreScreenBltTime;
 
-		if (drewScreen)
+		// switchfish: a moved pad cursor needs a present even when the game drew nothing
+		if (drewScreen || mCustomCursorDirty)
 			Redraw(nullptr);		
 
 		// This is our one UpdateFTimeAcc if we are vsynched
@@ -2396,8 +2401,12 @@ void SexyAppBase::SetAlphaDisabled(bool isDisabled)
 
 void SexyAppBase::EnforceCursor()
 {
-	if (mCursorHidden)
+	int aPadX, aPadY;
+	// switchfish: the controller cursor is drawn by GLInterface, the desktop one stays out of the way
+	if (mCursorHidden || GetPadCursor(aPadX, aPadY))
     {
+        // the drawn cursor may have changed shape
+        mCustomCursorDirty = true;
         SDL_ShowCursor(SDL_DISABLE);
         return;
     }

@@ -321,7 +321,7 @@ bool ShowNotice(const Notice& notice)
             }
             padUpdate(&pad1);
             u64 down = padGetButtonsDown(&pad1);
-            if (down & HidNpadButton_Plus)
+            if (down & (HidNpadButton_Plus | HidNpadButton_B))
             {
                 choice = 0;
             }

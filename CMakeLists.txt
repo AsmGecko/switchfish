@@ -22,7 +22,7 @@ if(NINTENDO_SWITCH)
 else()
 	set(PLATFORM_DIR framework/platform/default)
 endif()
-list(APPEND FRAMEWORK_SOURCES ${PLATFORM_DIR}/Window.cpp ${PLATFORM_DIR}/Input.cpp)
+list(APPEND FRAMEWORK_SOURCES ${PLATFORM_DIR}/Window.cpp ${PLATFORM_DIR}/Input.cpp framework/platform/PadCursor.cpp)
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)

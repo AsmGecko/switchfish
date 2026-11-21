@@ -21,7 +21,9 @@ the way they are and `docs/ROADMAP.md` for what's next.
   drew: the original's middle is cut out and the game pastes it back from the player's files. Never commit
   a full widened backdrop or anything else with PopCap pixels in it.
 - Test runs: plans in `tests/plans/`, always short with `--timeout`; kill the game if it stalls. `--plan`
-  runs muted and in the background; keep it that way.
+  runs muted, in the background, without vsync, and exits on its own 5 s past `--timeout` even if the
+  main loop hangs; keep it that way. Run builds and test runs as separate commands, test runs with a
+  short outer limit.
 - No PopCap art in anything we ship (icon, splash). "PopCap" may not appear in the product name.
 - Keep the PopCap acknowledgment in README and in any release notes.
 

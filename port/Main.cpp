@@ -190,8 +190,6 @@ int main(int argc, char* argv[])
     Sexy::SetResourceFolder(path);
 #if defined(__SWITCH__)
     Sexy::SetAppDataFolder(path);
-    // keep SDL button positions, the framework maps them itself
-    SDL_SetHint(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS, "0");
 #endif
     Sexy::ChDir(path);
     ReadTestFlags(argc, argv);

@@ -59,6 +59,20 @@ sdmc:/switch/switchfish/
 Start it from hbmenu through title takeover (hold R while starting any game), not from the album: the album
 runs homebrew with too little memory. A log goes to `sdmc:/switch/switchfish/log.txt`.
 
+Controls (details and reasoning in `docs/CONTROLS.md`):
+
+| | |
+|---|---|
+| Left stick | cursor (ZL held: slow and precise; right stick: nudge) |
+| A or ZR | click, hold to keep feeding |
+| B | right click (tap the glass) |
+| D-pad | jump to the next button |
+| + / − | menu / pause |
+| Touch | point and tap directly (handheld); ZL + tap is a right click |
+| USB mouse | through the dock |
+
+On the Mac a game controller drives the same cursor.
+
 ## Layout
 
 | Folder | What |

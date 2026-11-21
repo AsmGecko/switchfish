@@ -34,6 +34,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/MemoryImage.h"
 #include "SexyAppBase.h"
+#include "platform/PadCursor.h"
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
@@ -1384,8 +1385,10 @@ void GLInterface::ReadCanvas(MemoryImage* theImage)
 }
 
 // Draws srcRect of a render target (top-left origin, in its pixels) into dstRect of the bound target.
+// Image textures are stored top-down, render targets bottom-up.
 static void DrawTarget(GLuint tex, int texW, int texH, float sx, float sy, float sw, float sh,
-	float dx, float dy, float dw, float dh, int targetW, int targetH, uint32_t color, bool sharp = true)
+	float dx, float dy, float dw, float dh, int targetW, int targetH, uint32_t color, bool sharp = true,
+	bool bottomUp = true)
 {
 	float ortho[16];
 	MakeOrthoMatrix(0, (float)targetW, (float)targetH, 0, -10, 10, ortho);
@@ -1394,9 +1397,13 @@ static void DrawTarget(GLuint tex, int texW, int texH, float sx, float sy, float
 	glUniform2f(gPfScale, sharp ? dw / sw : 1.0f, sharp ? dh / sh : 1.0f);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
-	// render targets are stored bottom-up
 	float u1 = sx / texW, u2 = (sx + sw) / texW;
-	float vTop = 1.0f - sy / texH, vBottom = 1.0f - (sy + sh) / texH;
+	float vTop = sy / texH, vBottom = (sy + sh) / texH;
+	if (bottomUp)
+	{
+		vTop = 1.0f - vTop;
+		vBottom = 1.0f - vBottom;
+	}
 	GLVertex quad[4] = {
 		{dx,      dy,      0, color, u1, vTop},
 		{dx + dw, dy,      0, color, u2, vTop},
@@ -1458,9 +1465,45 @@ void GLInterface::Present()
 			(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
 	}
 
-	glUseProgram(gProgram);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	DrawPadCursor();
+	glUseProgram(gProgram);
+}
+
+// The controller cursor with the game's own art, on top of the presented frame and at its scale. Never
+// drawn into the canvas, which keeps its contents between frames.
+void GLInterface::DrawPadCursor()
+{
+	int x, y;
+	if (!GetPadCursor(x, y) || mApp->mCursorNum == CURSOR_NONE)
+	{
+		return;
+	}
+	Image* image = mApp->mCursorImages[mApp->mCursorNum] ? mApp->mCursorImages[mApp->mCursorNum] : mApp->mCursorImages[CURSOR_POINTER];
+	MemoryImage* cursor = dynamic_cast<MemoryImage*>(image);
+	if (!cursor || !CreateImageTexture(cursor))
+	{
+		return;
+	}
+	TextureData* data = (TextureData*)cursor->mRenderData;
+	if (data->mTexVecWidth != 1 || data->mTexVecHeight != 1)
+	{
+		return;
+	}
+	const TextureDataPiece& piece = data->mTextures[0];
+	// image textures get their filter when drawn (GfxBindTexture); without one they sample black
+	glBindTexture(GL_TEXTURE_2D, piece.mTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	const Rect& r = mPresentationRect;
+	float scale = (float)r.mWidth / mWidth;
+	float w = cursor->mWidth * scale, h = cursor->mHeight * scale;
+	// the hotspot is the middle of the image, as on the desktop (SexyAppBase::EnforceCursor)
+	float dx = r.mX + (x - mApp->mScreenBounds.mX) * scale - w / 2;
+	float dy = r.mY + y * scale - h / 2;
+	DrawTarget(piece.mTexture, piece.mWidth, piece.mHeight, 0, 0, (float)cursor->mWidth, (float)cursor->mHeight,
+		dx, dy, w, h, mDisplayWidth, mDisplayHeight, 0xFFFFFFFFu, true, false);
 }
 
 void GLInterface::Flush()

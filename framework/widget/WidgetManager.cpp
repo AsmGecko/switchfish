@@ -589,10 +589,10 @@ void WidgetManager::RehupMouse()
 
 bool WidgetManager::MouseUp(int x, int y, int theClickCount)
 {	
+	// switchfish: the mouse finger stays, so what it is over still gets its MouseLeave and a second button
+	// held over the release isn't lost
 	Finger *f = GetFinger(0);
-    bool result = FingerUp(f, x, y, theClickCount);
-    if (f) *f = {};
-    return result;
+	return FingerUp(f, x, y, theClickCount);
 }
 
 bool WidgetManager::MouseDown(int x, int y, int theClickCount) 

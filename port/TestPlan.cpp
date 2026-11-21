@@ -10,9 +10,13 @@
 #include <cstring>
 #include <typeinfo>
 #include "widget/Widget.h"
+#include "platform/PadCursor.h"
 #include <sstream>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <thread>
+#include <unistd.h>
 
 using namespace Sexy;
 
@@ -72,6 +76,29 @@ void Run(SexyAppBase* app, const Step& s)
     else if (s.action == "move")
     {
         wm->MouseMove(s.x, s.y);
+    }
+    else if (s.action == "pad")
+    {
+        std::istringstream in(s.arg);
+        PadInput pad;
+        in >> pad.mLeftX >> pad.mLeftY;
+        std::string button;
+        while (in >> button)
+        {
+            pad.mClick |= button == "a";
+            pad.mRightClick |= button == "b";
+            pad.mPrecision |= button == "zl";
+            pad.mMenu |= button == "plus";
+            pad.mPause |= button == "minus";
+            pad.mUp |= button == "up";
+            pad.mDown |= button == "down";
+            pad.mLeft |= button == "left";
+            pad.mRight |= button == "right";
+        }
+        gScriptedPad = pad;
+        int x, y;
+        bool shown = GetPadCursor(x, y);
+        SDL_Log("plan: pad cursor at %d,%d%s", x, y, shown ? "" : " (hidden)");
     }
     else if (s.action == "key")
     {
@@ -137,6 +164,10 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
         {
             in >> s.x >> s.y;
         }
+        else if (s.action == "pad")
+        {
+            std::getline(in, s.arg);
+        }
         else
         {
             in >> s.arg;
@@ -148,6 +179,17 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
     app->mScriptedInput = true;
     // test runs are silent
     app->Mute(false);
+#if !defined(__SWITCH__)
+    // no waiting for the display either: a sleeping screen never sends the vsync a swap waits for
+    SDL_GL_SetSwapInterval(0);
+#endif
+    // and if the main loop hangs anyway, the run still ends a few seconds after its time is up
+    std::thread([timeoutSeconds]()
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(timeoutSeconds + 5));
+        SDL_Log("plan: main loop stuck past the time limit, exiting");
+        _exit(3);
+    }).detach();
     app->mTickHook = [app]()
     {
         int tick = app->mUpdateCount;

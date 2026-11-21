@@ -29,6 +29,7 @@
 #include "graphics/GLImage.h"
 #include "widget/WidgetManager.h"
 #include "misc/KeyCodes.h"
+#include "platform/PadCursor.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -250,9 +251,10 @@ void SexyAppBase::InitInput()
     }
 }
 
-bool SexyAppBase::StartTextInput(std::string& theInput)
+bool SexyAppBase::StartTextInput(std::string& theInput, int theMaxChars)
 {
 	(void)theInput;
+	(void)theMaxChars;
 	SDL_StartTextInput();
 
 #ifdef __EMSCRIPTEN__
@@ -344,6 +346,47 @@ static bool SDLSynthesizeAsciiCharFromKeyDown(const SDL_KeyboardEvent& theEvent,
     }
 }
 
+// switchfish: a game controller drives the same cursor as on the Switch (docs/CONTROLS.md)
+static SDL_GameController* gController = nullptr;
+
+static PadInput ReadController()
+{
+	if (gController && !SDL_GameControllerGetAttached(gController))
+	{
+		SDL_GameControllerClose(gController);
+		gController = nullptr;
+	}
+	for (int i = 0; !gController && i < SDL_NumJoysticks(); i++)
+	{
+		if (SDL_IsGameController(i))
+		{
+			gController = SDL_GameControllerOpen(i);
+		}
+	}
+	PadInput in;
+	if (!gController)
+	{
+		return in;
+	}
+	auto axis = [](SDL_GameControllerAxis theAxis) { return SDL_GameControllerGetAxis(gController, theAxis) / 32767.0f; };
+	auto button = [](SDL_GameControllerButton theButton) { return SDL_GameControllerGetButton(gController, theButton) != 0; };
+	// SDL's y axes point down
+	in.mLeftX = axis(SDL_CONTROLLER_AXIS_LEFTX);
+	in.mLeftY = -axis(SDL_CONTROLLER_AXIS_LEFTY);
+	in.mRightX = axis(SDL_CONTROLLER_AXIS_RIGHTX);
+	in.mRightY = -axis(SDL_CONTROLLER_AXIS_RIGHTY);
+	in.mClick = button(SDL_CONTROLLER_BUTTON_A) || axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 0.5f;
+	in.mRightClick = button(SDL_CONTROLLER_BUTTON_B);
+	in.mPrecision = axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT) > 0.5f;
+	in.mMenu = button(SDL_CONTROLLER_BUTTON_START);
+	in.mPause = button(SDL_CONTROLLER_BUTTON_BACK);
+	in.mUp = button(SDL_CONTROLLER_BUTTON_DPAD_UP);
+	in.mDown = button(SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+	in.mLeft = button(SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+	in.mRight = button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+	return in;
+}
+
 bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 {
 #ifdef __EMSCRIPTEN__
@@ -409,6 +452,15 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				event.window.event == SDL_WINDOWEVENT_LEAVE))))
 		{
 			return SDL_HasEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
+		}
+
+		// a real mouse takes over from the controller cursor
+		if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN)
+		{
+			int x = event.type == SDL_MOUSEMOTION ? event.motion.x : event.button.x;
+			int y = event.type == SDL_MOUSEMOTION ? event.motion.y : event.button.y;
+			mWidgetManager->RemapMouse(x, y);
+			HidePadCursor(this, x, y);
 		}
 
 		//SDL_Log("EVENT:%04X", event.type);
@@ -584,6 +636,21 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				}
 				break;
 			}
+		}
+	}
+
+	else
+	{
+		// once per frame, when the queue is empty
+		UpdatePadCursor(this, mScriptedInput ? gScriptedPad : ReadController());
+		// the desktop cursor gives way to the drawn one while the controller points (EnforceCursor)
+		static bool sPadShown = false;
+		int x, y;
+		bool shown = GetPadCursor(x, y);
+		if (shown != sPadShown)
+		{
+			sPadShown = shown;
+			EnforceCursor();
 		}
 	}
 

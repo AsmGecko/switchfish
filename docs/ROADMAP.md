@@ -35,10 +35,12 @@ robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
 **Exit:** `./sf.sh test` plays tank 1 hands-free and fails on a crash or a stuck level.
 
 ## M3: Switch controls and polish
-- [ ] Analog stick cursor, click mapping incl. B = right click, cursor speed modifiers
-- [ ] Direct touch with our own coordinate mapping (SDL touch-to-mouse off)
-- [ ] swkbd for player names
-- [ ] Docked/handheld switching, pause on focus loss, audio restart after resume
+- [x] Analog stick cursor, click mapping incl. B = right click, cursor speed modifiers (`docs/CONTROLS.md`)
+- [x] Direct touch with our own coordinate mapping (SDL touch-to-mouse off)
+- [x] swkbd for player names (current text and length)
+- [x] D-pad to buttons, USB mouse, pause on focus loss
+- [ ] Tune on hardware; gyro, rumble, single Joy-Con
+- [ ] Docked/handheld switching, audio restart after resume
 - [ ] 4:3 presentation with sharp-bilinear scaling and blurred backdrop side bars
 - [ ] Remove the framework's dependency on game resources
 

@@ -79,7 +79,7 @@ On the Mac a game controller drives the same cursor.
 | Folder | What |
 |---|---|
 | `game/` | the game (WinFish decompilation, kyle-sylvestre's portable fork) |
-| `port/` | our own code: entry point, notice screens, `romfs/` (fonts) that goes inside the NRO |
+| `port/` | our own code: entry point, notice screens, test plans, `romfs/` (fonts, widescreen sides) that goes inside the NRO |
 | `framework/` | SexyAppFramework on SDL2 + GLES2, with `platform/switch` and `platform/default` |
 | `third_party/` | SDL-Mixer-X |
 | `docker/` | Switch build image (devkitA64, libnx, SDL2, mesa, libopenmpt) |
@@ -95,7 +95,7 @@ Game code from [vindirect/winfish](https://github.com/vindirect/winfish) and
 [kyle-sylvestre/PvZ-Portable](https://github.com/kyle-sylvestre/PvZ-Portable), based on
 [wszqkzqk/PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) and headshot2017's work (LGPL-3.0-or-later).
 Controls and fixes informed by [insaniquarium_nx](https://github.com/ChanseyIsTheBest/insaniquarium_nx).
-Details in `docs/UPSTREAM.md`.
+Details in `docs/UPSTREAM.md`. Our own code is MIT; `LICENSE` says which license covers which folder.
 
 This product includes portions of the PopCap Games Framework, © 2005-2009 PopCap Games, Inc. All rights
 reserved. (http://popcapframework.sourceforge.net/)

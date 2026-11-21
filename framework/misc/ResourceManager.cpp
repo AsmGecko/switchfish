@@ -31,6 +31,7 @@
 #include "graphics/ImageFont.h"
 //#include "graphics/SysFont.h"
 #include "imagelib/ImageLib.h"
+#include "imagelib/ImagePrefetch.h"
 //#define SEXY_PERF_ENABLED
 #include "misc/Debug.h"
 #include "PerfTimer.h"
@@ -72,6 +73,7 @@ ResourceManager::ResourceManager(SexyAppBase *theApp)
 
 ResourceManager::~ResourceManager()
 {
+	ImageLib::StopPrefetch();
 	DeleteMap(mImageMap);
 	DeleteMap(mSoundMap);
 	DeleteMap(mFontMap);
@@ -697,6 +699,9 @@ bool ResourceManager::LoadAlphaImage(ImageRes *theRes, GLImage *theImage)
 	return true;
 }
 
+// switchfish: image loading steps for the boot lines: getting the image (decoding or waiting for it), CommitBits
+static double gImageStepSeconds[2];
+
 bool ResourceManager::DoLoadImage(ImageRes *theRes)
 {
 	//bool lookForAlpha = theRes->mAlphaImage.empty() && theRes->mAlphaGridImage.empty() && theRes->mAutoFindAlpha; // unused
@@ -708,7 +713,9 @@ bool ResourceManager::DoLoadImage(ImageRes *theRes)
 
 	bool isNew;
 	ImageLib::gAlphaComposeColor = theRes->mAlphaColor;
+	Uint64 aStart = SDL_GetPerformanceCounter();
 	SharedImageRef aSharedImageRef = gSexyAppBase->GetSharedImage(theRes->mPath, theRes->mVariant, &isNew);
+	gImageStepSeconds[0] += (double)(SDL_GetPerformanceCounter() - aStart) / SDL_GetPerformanceFrequency();
 	ImageLib::gAlphaComposeColor = 0xFFFFFF;
 
 	GLImage* aGLImage = (GLImage*) aSharedImageRef;
@@ -731,7 +738,9 @@ bool ResourceManager::DoLoadImage(ImageRes *theRes)
 		}
 	}
 	
+	aStart = SDL_GetPerformanceCounter();
 	aGLImage->CommitBits();
+	gImageStepSeconds[1] += (double)(SDL_GetPerformanceCounter() - aStart) / SDL_GetPerformanceFrequency();
 	theRes->mImage = aSharedImageRef;
 	aGLImage->mPurgeBits = theRes->mPurgeBits;
 
@@ -923,14 +932,20 @@ static bool Timed(int theType, Uint64 theStart, bool theResult)
 
 std::string ResourceManager::LoadTimes()
 {
-	return StrFormat("images %d in %.2f s, sounds %d in %.2f s, fonts %d in %.2f s", gLoadCounts[0], gLoadSeconds[0],
-		gLoadCounts[1], gLoadSeconds[1], gLoadCounts[2], gLoadSeconds[2]);
+	const double* d = ImageLib::gLoadSeconds;
+	// the decoding times add up every thread's work, "get" is what the loading thread spent on it
+	return StrFormat("images %d in %.2f s (decoding png %.2f, jpg %.2f, gif %.2f, alpha %.2f; get %.2f, commit %.2f), "
+		"sounds %d in %.2f s, fonts %d in %.2f s", gLoadCounts[0], gLoadSeconds[0], d[0], d[1], d[2], d[4],
+		gImageStepSeconds[0], gImageStepSeconds[1], gLoadCounts[1], gLoadSeconds[1], gLoadCounts[2], gLoadSeconds[2]);
 }
 
 bool ResourceManager::LoadNextResource()
 {
 	if (HadError())
+	{
+		ImageLib::StopPrefetch();
 		return false;
+	}
 
 	if (mCurResGroupList==nullptr)
 		return false;
@@ -974,6 +989,7 @@ bool ResourceManager::LoadNextResource()
 		}
 	}
 
+	ImageLib::StopPrefetch();
 	return false;
 }
 
@@ -988,6 +1004,22 @@ void ResourceManager::StartLoadResources(const std::string &theGroup)
 	mCurResGroup = theGroup;
 	mCurResGroupList = &mResGroupMap[theGroup];
 	mCurResGroupListItr = mCurResGroupList->begin();
+
+	// switchfish: decode this group's images ahead on the idle cores (ImagePrefetch.h)
+	std::vector<ImageLib::PrefetchJob> aJobs;
+	for (BaseRes* aRes : *mCurResGroupList)
+	{
+		if (aRes->mType != ResType_Image || aRes->mFromProgram)
+		{
+			continue;
+		}
+		ImageRes* anImageRes = (ImageRes*)aRes;
+		if ((GLImage*)anImageRes->mImage == nullptr && !anImageRes->mPath.empty() && anImageRes->mPath[0] != '!')
+		{
+			aJobs.push_back({anImageRes->mPath, (int)anImageRes->mAlphaColor});
+		}
+	}
+	ImageLib::StartPrefetch(std::move(aJobs));
 }
 
 void ResourceManager::DumpCurResGroup(std::string& theDestStr)

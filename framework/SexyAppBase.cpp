@@ -61,6 +61,7 @@
 //#include "misc/HTTPTransfer.h"
 #include "widget/Dialog.h"
 #include "imagelib/ImageLib.h"
+#include "imagelib/ImagePrefetch.h"
 #include "sound/SDLSoundManager.h"
 #include "sound/SDLSoundInstance.h"
 #include "misc/Rect.h"
@@ -3641,7 +3642,10 @@ void SexyAppBase::EnableCustomCursors(bool enabled)
 
 Sexy::GLImage* SexyAppBase::GetImage(const std::string& theFileName, bool commitBits)
 {	
-	ImageLib::Image* aLoadedImage = ImageLib::GetImage(theFileName, true);
+	// switchfish: decoded ahead on another core when the resource manager is loading a group
+	ImageLib::Image* aLoadedImage = ImageLib::TakePrefetched(theFileName);
+	if (aLoadedImage == nullptr)
+		aLoadedImage = ImageLib::GetImage(theFileName, true);
 	
 	if (aLoadedImage == nullptr)
 		return nullptr;	

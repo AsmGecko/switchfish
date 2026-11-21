@@ -51,10 +51,14 @@ bool WriteJPEGImage(const std::string& theFileName, Image* theImage);
 bool WritePNGImage(const std::string& theFileName, Image* theImage);
 bool WriteTGAImage(const std::string& theFileName, Image* theImage);
 extern int gAlphaComposeColor;
+// switchfish: seconds spent decoding per format (png, jpg, gif, tga) and composing alpha, for the boot lines
+extern double gLoadSeconds[5];
 extern bool gAutoLoadAlpha;
 extern bool gIgnoreJPEG2000Alpha;  // I've noticed alpha in jpeg2000's that shouldn't have alpha so this defaults to true
 
 Image* GetImage(const std::string& theFileName, bool lookForAlphaImage = true);
+// switchfish: with the colour for alpha-only images given, instead of gAlphaComposeColor (for other threads)
+Image* GetImage(const std::string& theFileName, bool lookForAlphaImage, int theAlphaComposeColor);
 
 //void InitJPEG2000();
 //void CloseJPEG2000();

@@ -29,6 +29,7 @@
 #include "png.h"
 #include <math.h>
 #include <algorithm>
+#include <mutex>
 #include <array>
 #include <cctype>
 #include <string_view>
@@ -1380,13 +1381,28 @@ static bool FastFileExists(std::string_view thePath)
 	return false;
 }
 
+double ImageLib::gLoadSeconds[5];
+static std::mutex gLoadSecondsLock;	// images decode on several threads (ImagePrefetch)
+
+static double SecondsSince(Uint64 theStart)
+{
+	return (double)(SDL_GetPerformanceCounter() - theStart) / SDL_GetPerformanceFrequency();
+}
+
 static Image* TryLoadByExt(const std::string& theBaseName, std::string_view theExt)
 {
-	for (const auto& [aKnownExt, aLoader] : kImageExts)
+	for (size_t i = 0; i < kImageExts.size(); i++)
 	{
+		const auto& [aKnownExt, aLoader] = kImageExts[i];
 		if (theExt.empty() || EqualsIgnoreCase(theExt, aKnownExt))
 		{
-			if (Image* aImage = aLoader(theBaseName + std::string(aKnownExt)))
+			Uint64 aStart = SDL_GetPerformanceCounter();
+			Image* aImage = aLoader(theBaseName + std::string(aKnownExt));
+			{
+				std::lock_guard<std::mutex> aLock(gLoadSecondsLock);
+				ImageLib::gLoadSeconds[i] += SecondsSince(aStart);
+			}
+			if (aImage)
 				return aImage;
 		}
 	}
@@ -1417,6 +1433,11 @@ static void ApplyAlphaAsImage(Image* theImage, uint32_t theBaseColor)
 }
 
 Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage)
+{
+	return GetImage(theFilename, lookForAlphaImage, gAlphaComposeColor);
+}
+
+Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage, int theAlphaComposeColor)
 {
 	if (!gAutoLoadAlpha)
 		lookForAlphaImage = false;
@@ -1464,15 +1485,16 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		const std::string alphaPath1 = theFilename.substr(0, slashEnd) + "_" +
 			theFilename.substr(slashEnd);
 
-        anAlphaImage = GetImage(alphaPath1, false);
+        anAlphaImage = GetImage(alphaPath1, false, theAlphaComposeColor);
 		if (!anAlphaImage)
 		{
 			const std::string alphaPath2 = theFilename + "_";
-            anAlphaImage = GetImage(alphaPath2, false);
+            anAlphaImage = GetImage(alphaPath2, false, theAlphaComposeColor);
 		}
 	}
 
 	// Compose alpha channel with image
+	Uint64 aComposeStart = SDL_GetPerformanceCounter();
 	if (anAlphaImage)
 	{
 		if (anImage)
@@ -1483,8 +1505,12 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		else
 		{
 			anImage = anAlphaImage;
-			ApplyAlphaAsImage(anImage, static_cast<uint32_t>(gAlphaComposeColor));
+			ApplyAlphaAsImage(anImage, static_cast<uint32_t>(theAlphaComposeColor));
 		}
+	}
+	{
+		std::lock_guard<std::mutex> aLock(gLoadSecondsLock);
+		gLoadSeconds[4] += SecondsSince(aComposeStart);
 	}
 
 	return anImage;

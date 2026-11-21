@@ -82,13 +82,18 @@ if(NINTENDO_SWITCH)
 		AUTHOR "switchfish contributors"
 		VERSION "${PROJECT_VERSION}"
 	)
+	# sf.sh makes build/switch/icon.jpg from the player's own title screen when it can
+	set(NRO_ICON ${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg)
+	if(EXISTS ${CMAKE_BINARY_DIR}/icon.jpg)
+		set(NRO_ICON ${CMAKE_BINARY_DIR}/icon.jpg)
+	endif()
 	dkp_add_asset_target(switchfish_romfs ${ROMFS_DIR})
 	# tracked, so a changed font or backdrop rebuilds the NRO
 	file(GLOB_RECURSE ROMFS_FILES RELATIVE ${ROMFS_DIR} ${ROMFS_DIR}/*)
 	dkp_track_assets(switchfish_romfs FILES ${ROMFS_FILES})
 	nx_create_nro(switchfish
 		NACP switchfish.nacp
-		ICON ${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg
+		ICON ${NRO_ICON}
 		ROMFS switchfish_romfs
 	)
 endif()

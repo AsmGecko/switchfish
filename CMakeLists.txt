@@ -53,9 +53,12 @@ target_include_directories(switchfish PRIVATE
 	third_party/SDL-Mixer-X/include
 )
 target_compile_definitions(switchfish PRIVATE IMG_DOWNSCALE=1)
-if(NOT NINTENDO_SWITCH)
-	# the NRO carries port/romfs inside, host builds read it from the source tree
-	target_compile_definitions(switchfish PRIVATE SWITCHFISH_ROMFS="${CMAKE_CURRENT_SOURCE_DIR}/port/romfs")
+# the NRO carries port/romfs inside, host builds read it from the source tree
+set(ROMFS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/port/romfs)
+if(NINTENDO_SWITCH)
+	target_compile_definitions(switchfish PRIVATE SWITCHFISH_ROMFS="romfs:")
+else()
+	target_compile_definitions(switchfish PRIVATE SWITCHFISH_ROMFS="${ROMFS_DIR}")
 endif()
 # the decomp relies on x86 behaviour here
 target_compile_options(switchfish PRIVATE -fsigned-char -fno-strict-aliasing)
@@ -79,9 +82,13 @@ if(NINTENDO_SWITCH)
 		AUTHOR "switchfish contributors"
 		VERSION "${PROJECT_VERSION}"
 	)
+	dkp_add_asset_target(switchfish_romfs ${ROMFS_DIR})
+	# tracked, so a changed font or backdrop rebuilds the NRO
+	file(GLOB_RECURSE ROMFS_FILES RELATIVE ${ROMFS_DIR} ${ROMFS_DIR}/*)
+	dkp_track_assets(switchfish_romfs FILES ${ROMFS_FILES})
 	nx_create_nro(switchfish
 		NACP switchfish.nacp
 		ICON ${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg
-		ROMFS ${CMAKE_CURRENT_SOURCE_DIR}/port/romfs
+		ROMFS switchfish_romfs
 	)
 endif()

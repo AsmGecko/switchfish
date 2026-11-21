@@ -23,11 +23,15 @@ Built:
 - Backdrops: instead of quilting, an image model (Codex) fills the sides of each backdrop
   (`./sf.sh widen`, `scripts/widescreen/`), with the whole original attached as a reference so it draws the
   glass side walls and floor corners at the new edges in the original's perspective, with at most a few
-  small, quiet details in the outer parts (no new structures, no copies). A plain version without details was
-  kept as `gameData/widescreen-alt/plain/`. The
-  game keeps the original middle (inside the old glass walls) pixel exact, feathered over 12 px, with the
-  colour difference across each seam faded into the new part. The pack lives in `gameData/widescreen/` and is never committed (it is
-  derived from PopCap's art). Without a pack the sides are a blurred mirror of the edge.
+  small, quiet details in the outer parts (no new structures, no copies). A plain version without details
+  was kept as `gameData/widescreen-alt/plain/`. The game keeps the original middle (inside the old glass
+  walls) pixel exact, feathered over 12 px, with the colour difference across each seam faded into the new
+  part.
+- The pack (`port/romfs/widescreen/`, in the repo and the NRO) only stores what the model drew: `fit.py`
+  makes the middle transparent except a 24 px strip at each seam, which the game blends and colour matches
+  against. The game rebuilds the middle from the player's own files, and the result is pixel identical to a
+  full pack (checked for all six backdrops and tank masks). A `widescreen/` folder next to the game files
+  wins over the built-in one, for experiments. Without any pack the sides are a blurred mirror of the edge.
 
 Not yet: HUD wings (the bar stays 640 and floats over the water), native wide backgrounds for menu screens,
 PetDialog/FoodDialog and the starfield cheat at canvas width, an options toggle, a 4:3 determinism check.

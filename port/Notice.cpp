@@ -8,10 +8,8 @@
 
 #if defined(__SWITCH__)
 #include <switch.h>
-#define FONT_DIR "romfs:/fonts/"
-#else
-#define FONT_DIR SWITCHFISH_ROMFS "/fonts/"
 #endif
+#define FONT_DIR SWITCHFISH_ROMFS "/fonts/"
 
 // Drawn in code in the spirit of the game's own dialogs (tan panel, brass frame, pill buttons), so it
 // also works when the game files are missing.

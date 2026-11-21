@@ -20,8 +20,9 @@ Usage: ./sf.sh <command>
   run [args]      build and run on the Mac with the files in gameData/ (or --data <dir>)
   emu [--gui]     build the NRO and play it in Ryubing; click = touch.
                   --gui opens Ryubing's own window, which needs prod.keys from your Switch
-  widen           make the widescreen tank pack in gameData/widescreen/ from your backdrops with
-                  Codex (an image model; costs API credit). The pack stays out of the repo.
+  widen           regenerate the widescreen tank sides in port/romfs/widescreen/ from your
+                  backdrops with Codex (an image model; costs API credit). Only the new parts are
+                  stored; check the result with git diff, undo with git checkout.
   send <ip>       build the NRO and send it to hbmenu's netloader (press Y on the Switch)
   upstream        clone or update the reference repos in upstream/
   clean           remove build/
@@ -134,13 +135,13 @@ with_timeout() {
 }
 
 # Each backdrop's middle goes to Codex with its sides transparent, plus the whole original as a reference
-# for the glass walls; the game keeps the original middle pixel exact and only uses the new parts. Generated from the player's own files, so never committed or shipped.
+# for the glass walls; the game keeps the original middle pixel exact and only uses the new parts, so the pack
+# stores only those (fit.py) and they can live in the repo.
 widen() {
 	[ -f gameData/properties/resources.xml ] || { echo "Put your game files in gameData/ first."; exit 1; }
 	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
 	local work py=tools/pyenv/bin/python
 	work=$(mktemp -d)
-	mkdir -p gameData/widescreen
 	for i in 1 2 3 4 5 6; do
 		src=$(find gameData/images -maxdepth 1 -iname "aquarium$i.jpg" | head -1)
 		"$py" -I scripts/widescreen/canvas.py "$src" "$work/canvas$i.png"
@@ -160,7 +161,7 @@ widen() {
 			echo "aquarium$i: no image from Codex, see $work/codex$i.txt"
 			continue
 		fi
-		"$py" -I scripts/widescreen/fit.py "$draft" "$src" "gameData/widescreen/aquarium$i.png"
+		"$py" -I scripts/widescreen/fit.py "$draft" "$src" "port/romfs/widescreen/aquarium$i.png"
 	done
 }
 

@@ -157,6 +157,8 @@ int main(int argc, char* argv[])
     if (const char* plan = Arg(argc, argv, "--plan"))
     {
         planPath = std::filesystem::absolute(plan).string();
+        // a test run on the Mac stays in the background: no Dock icon, doesn't take the focus
+        SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");
     }
     if (const char* out = Arg(argc, argv, "--out"))
     {

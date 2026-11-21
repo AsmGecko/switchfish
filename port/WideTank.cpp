@@ -237,8 +237,14 @@ void PastePiece(const uint32_t* src, int w, uint32_t* dst, int wide, int h, cons
 // supplies the gaps; everything else is the original, pixel exact.
 MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
 {
+    // a pack next to the game files wins over the one built into the NRO
     std::string path = "widescreen/aquarium" + std::to_string(theBackgroundId);
     MemoryImage* pack = app->GetImage(path);
+    if (!pack)
+    {
+        path = SWITCHFISH_ROMFS "/" + path;
+        pack = app->GetImage(path);
+    }
     if (!pack)
     {
         return nullptr;

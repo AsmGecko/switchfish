@@ -146,6 +146,8 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
     }
 
     app->mScriptedInput = true;
+    // test runs are silent
+    app->Mute(false);
     app->mTickHook = [app]()
     {
         int tick = app->mUpdateCount;

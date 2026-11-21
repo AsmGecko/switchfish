@@ -18,7 +18,7 @@ See `docs/STATUS.md` for how solid things are and `docs/ROADMAP.md` for what's n
 ./sf.sh build          # host build in build/host/
 ./sf.sh run            # host build with the game files in gameData/ (or --data <dir>)
 ./sf.sh emu            # NRO in the Ryubing emulator (installed in tools/ on first use)
-./sf.sh widen          # widescreen tank pack from your backdrops via Codex (stays out of the repo)
+./sf.sh widen          # regenerate the widescreen tank sides via Codex (port/romfs/widescreen/)
 ./sf.sh send <ip>      # send the NRO to hbmenu's netloader (press Y on the Switch)
 ./sf.sh upstream       # clone/update the reference repos in upstream/
 ```

@@ -78,10 +78,12 @@ target_link_libraries(switchfish PRIVATE
 
 if(NINTENDO_SWITCH)
 	target_link_libraries(switchfish PRIVATE GLESv2 EGL glapi drm_nouveau)
+	# a release build passes its tag (CI), everything else shows the project version
+	set(SWITCHFISH_VERSION "${PROJECT_VERSION}" CACHE STRING "version shown in hbmenu")
 	nx_generate_nacp(switchfish.nacp
 		NAME "switchfish"
 		AUTHOR "switchfish contributors"
-		VERSION "${PROJECT_VERSION}"
+		VERSION "${SWITCHFISH_VERSION}"
 	)
 	# sf.sh makes build/switch/icon.jpg from the player's own title screen when it can
 	set(NRO_ICON ${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg)

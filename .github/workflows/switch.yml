@@ -1,0 +1,72 @@
+# Builds the Switch NRO in the same Docker image as `./sf.sh build switch`. Runs on every push as the
+# compile check, and attaches switchfish.nro to a GitHub release when one is published. The NRO carries
+# the fallback icon (switch/icon.jpg): CI has no game files, so no PopCap art ends up in a release.
+name: Switch
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      # the toolchain image (devkitA64, portlibs, libopenmpt built from source), cached between runs
+      - uses: docker/build-push-action@v6
+        with:
+          context: docker
+          tags: switchfish-dev
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build
+        env:
+          # v1.2.0 -> 1.2.0 for hbmenu; plain pushes keep the project version
+          VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+        run: |
+          docker run --rm -v "$PWD":/src -w /src -e VERSION="${VERSION#v}" switchfish-dev bash -c '
+            cmake -S . -B build/switch -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake \
+              -DCMAKE_BUILD_TYPE=Release ${VERSION:+-DSWITCHFISH_VERSION=$VERSION} &&
+            cmake --build build/switch'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: switchfish-nro
+          path: build/switch/switchfish.nro
+
+  release:
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: switchfish-nro
+          path: dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/switchfish.nro
+          # the acknowledgment the PopCap Games Framework License asks for, in every release
+          append_body: true
+          body: |
+
+            ---
+            You need your own copy of Insaniquarium Deluxe; this release contains no game assets.
+
+            This product includes portions of the PopCap Games Framework, © 2005-2009 PopCap Games, Inc. All rights reserved. (http://popcapframework.sourceforge.net/)

@@ -81,6 +81,12 @@ NRO changes, and `./sf.sh send <switch-ip>` puts a new build on the Switch over 
 press Y, run the command. Arguments after the IP go to the game (`./sf.sh send 192.168.1.20 --level 3-2`),
 and its log shows in the terminal until Ctrl-C.
 
+## Releases
+
+Every published GitHub release gets a `switchfish.nro` attached by CI (`.github/workflows/switch.yml`),
+built in the same Docker image as below, with the release tag as its version. CI has no game files, so that
+NRO carries the plain fallback icon instead of the fish from your title screen; build it yourself for that.
+
 ## Building
 
 Switch builds only need Docker; the toolchain (devkitA64, libnx, SDL2, mesa, libopenmpt) lives in an image.

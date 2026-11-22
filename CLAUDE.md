@@ -35,3 +35,5 @@ Insaniquarium Deluxe as a Switch homebrew NRO. Read `README.md` and `docs/DEVELO
 - `OpenInsaniquarium/docs/re/`: timing (28 ms ticks), RNG, demo file format, asset formats, MO3 music remap.
 - `Insaniquarium-Decompilation/`: most accurate decomp, Windows only, known regressions listed in
   `docs/research/decomp-comparison.md`.
+- `SaMeiers-port/`: the PortMaster build (PopLib, SDL3), game fixes and Auto Collect in `port/fixups/`.
+  AGPL-3.0: read it for what the bugs are, write our own fixes, never copy its code.

@@ -6,3 +6,4 @@ kyle-WinFish https://github.com/kyle-sylvestre/WinFish develop
 kyle-PvZ-Portable https://github.com/kyle-sylvestre/PvZ-Portable insaniquarium
 PvZ-Portable https://github.com/wszqkzqk/PvZ-Portable main
 headshot-re-pvz https://github.com/headshot2017/re-plants-vs-zombies main
+SaMeiers-port https://github.com/SaMeiers/insaniquarium-port main

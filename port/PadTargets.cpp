@@ -100,6 +100,15 @@ int FindPadTarget(SexyAppBase* theApp, int theKind, int theIndex, bool theRepeat
     GameObject* target = targets[theIndex % targets.size()].mObject;
     theX = target->mX + target->mWidth / 2;
     theY = target->mY + target->mHeight / 2;
+    if (theKind == 0)
+    {
+        // food falls, so drop it a little above the fish rather than on it, where it would fall past and be
+        // chased: about 10 above near the top of the tank, 40 near the floor, and never up into the
+        // buttons at the top
+        const int top = 90, floor = 400;
+        int lead = 10 + 30 * std::clamp(theY - top, 0, floor - top) / (floor - top);
+        theY = std::max(top, theY - lead);
+    }
     // the click has to reach the target (or the tank behind it, when fish ignore the mouse): a pet on top,
     // like a charged Amp, would take it
     int aWidgetX, aWidgetY;

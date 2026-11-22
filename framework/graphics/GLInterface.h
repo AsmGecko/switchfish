@@ -174,10 +174,6 @@ public:
 	void BltTriangles(const TriVertex theVertices[][3], int theNumTriangles, unsigned int theColor, float tx = 0, float ty = 0);
 };
 
-// switchfish: how the canvas is scaled to the screen
-enum PictureScaling { PICTURE_SHARP, PICTURE_SMOOTH, PICTURE_FSR };
-extern int gPictureScaling;
-
 class GLInterface : public NativeDisplay
 {
 public:
@@ -199,12 +195,6 @@ public:
 	// scaled to the screen. mWidth/mHeight are its size; wider than the app's 640 in widescreen.
 	GLuint					mCanvasFbo = 0;
 	GLuint					mCanvasTex = 0;
-	// switchfish: FSR's first pass
-	GLuint					mUpscaleFbo = 0;
-	GLuint					mUpscaleTex = 0;
-	int						mUpscaleWidth = 0;
-	int						mUpscaleHeight = 0;
-	bool					MakeUpscaleTarget(int w, int h);
 	// switchfish: true while a screen that paints the whole canvas holds it (HoldFullCanvas); otherwise the
 	// game fills the sides (SexyAppBase::DrawSides)
 	bool					mFullCanvas = false;

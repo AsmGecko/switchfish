@@ -4,7 +4,6 @@
 #include "TestPlan.h"
 #include "PadTargets.h"
 #include "platform/PadCursor.h"
-#include "graphics/GLInterface.h"
 #include <SDL2/SDL.h>
 #include <cstdlib>
 #include <cstring>
@@ -34,10 +33,6 @@ static const char* Arg(int argc, char** argv, const char* name)
 static void ReadTestFlags(int argc, char** argv)
 {
     std::string level;
-    if (const char* arg = Arg(argc, argv, "--scaling"))
-    {
-        Sexy::gPictureScaling = strcmp(arg, "fsr") == 0 ? Sexy::PICTURE_FSR : strcmp(arg, "smooth") == 0 ? Sexy::PICTURE_SMOOTH : Sexy::PICTURE_SHARP;
-    }
     if (const char* arg = Arg(argc, argv, "--screen"))
     {
         Sexy::gTestScreen = arg;

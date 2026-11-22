@@ -84,7 +84,7 @@ target_link_libraries(switchfish PRIVATE
 if(NINTENDO_SWITCH)
 	target_link_libraries(switchfish PRIVATE GLESv2 EGL glapi drm_nouveau)
 	nx_generate_nacp(switchfish.nacp
-		NAME "switchfish"
+		NAME "Insaniquarium Deluxe"
 		AUTHOR "switchfish contributors"
 		VERSION "${SWITCHFISH_VERSION}"
 	)

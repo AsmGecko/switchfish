@@ -22,7 +22,8 @@ assets; it runs on the files from your copy.
 
    With hundreds of small files, hekate's USB mass storage (the SD card shows up as a normal disk) is much
    faster and more reliable than MTP.
-3. Start it from hbmenu or Sphaira through title takeover (hold R while starting any game). Started from the
+3. Start it from hbmenu or Sphaira, where it's listed as Insaniquarium Deluxe, through title takeover (hold R
+   while starting any game). Started from the
    album the Switch gives homebrew too little memory; switchfish tells you so.
 
 The first boot takes a little longer: it builds an image cache from your files. After that it loads in a

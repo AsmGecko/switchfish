@@ -602,11 +602,21 @@ void Sexy::Board::AddedToManager(WidgetManager* theWidgetManager)
 	{
 		mClip = false;
 		mMouseInsets = Insets(TankLeft(), 0, 640 - TankRight(), 0);
-		mCanvasHold.Set(true);
-		mApp->mGLInterface->mWidePointer = true;
+		mCovered = false;
+		SetCovered(false);
 	}
 	theWidgetManager->AddWidget(mBoardOverlay1);
 	theWidgetManager->AddWidget(mBoardOverlay2);
+}
+
+// switchfish: a 4:3 screen laid over the paused board (store, pets, fish, tank settings) shows water beside
+// it, not the wide tank underneath; the board gives the full canvas back while it is covered
+void Board::SetCovered(bool theCovered)
+{
+	bool aWide = TankWidth() > 640 && mWidgetManager != nullptr && !theCovered;
+	mCovered = theCovered;
+	mCanvasHold.Set(aWide);
+	mApp->mGLInterface->mWidePointer = aWide;
 }
 
 void Board::RemovedFromManager(WidgetManager* theWidgetManager)
@@ -614,6 +624,7 @@ void Board::RemovedFromManager(WidgetManager* theWidgetManager)
 	Widget::RemovedFromManager(theWidgetManager);
 	mCanvasHold.Set(false);
 	mApp->mGLInterface->mWidePointer = false;
+	mCovered = false;
 	theWidgetManager->RemoveWidget(mBoardOverlay1);
 	theWidgetManager->RemoveWidget(mBoardOverlay2);
 	RemoveWidgetHelper(mMenuButton);

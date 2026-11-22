@@ -2474,6 +2474,14 @@ void Sexy::WinFishApp::UpdateFrames()
 		mDialogList.empty() && mGameMode != GAMEMODE_VIRTUAL_TANK;
 	mUpdateMultiplier = aFast ? 2.0 : 1.0;
 
+	// switchfish: the store, pets, fish and tank screens lie over the paused board (Board::SetCovered)
+	if (mBoard)
+	{
+		bool aCovered = mPetsScreen || mStoreScreen || mSimSetupScreen || mSimFishScreen || mTankScreen;
+		if (aCovered != mBoard->mCovered)
+			mBoard->SetCovered(aCovered);
+	}
+
 	// switchfish: --screen opens a screen that takes long to reach, once the main menu is up
 	if (!gTestScreen.empty() && mGameSelector && !mTitleScreen)
 	{

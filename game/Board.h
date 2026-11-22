@@ -108,6 +108,8 @@ namespace Sexy
 	{
 	public:
 		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
+		bool					mCovered = false;	// switchfish: a 4:3 screen lies over the board
+		void					SetCovered(bool theCovered);	// switchfish
 		WinFishApp*							mApp;
 		FishSongMgr*						mFishSongMgr;
 		bool								mPause;

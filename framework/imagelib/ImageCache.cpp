@@ -203,7 +203,9 @@ void ImageLib::StoreCachedImage(const std::string& thePath, int theAlphaColor, c
 {
 	{
 		std::lock_guard<std::mutex> aLock(gLock);
-		if (gState != State::Open)
+		// an image that missed only because it was asked for while the cache was opening is already in it;
+		// storing it again would rewrite the whole file for nothing
+		if (gState != State::Open || gEntries.count(Key(thePath, theAlphaColor)))
 		{
 			return;
 		}
@@ -236,42 +238,62 @@ void ImageLib::StoreCachedImage(const std::string& thePath, int theAlphaColor, c
 
 void ImageLib::CloseImageCache(bool theWrite)
 {
-	std::lock_guard<std::mutex> aLock(gLock);
-	if (gState != State::Open)
+	decltype(gEntries) anEntries;
 	{
-		return;
+		std::lock_guard<std::mutex> aLock(gLock);
+		if (gState != State::Open)
+		{
+			return;
+		}
+		gState = State::Closed;
+		if (gHits > 0)
+		{
+			SDL_Log("image cache: %d images unpacked in %.2f s", gHits, (double)gUnpackTicks / SDL_GetPerformanceFrequency());
+		}
+		if (!theWrite || !gChanged)
+		{
+			gEntries.clear();
+			return;
+		}
+		// written without the lock, so images loaded meanwhile don't wait for the SD card
+		anEntries.swap(gEntries);
 	}
-	gState = State::Closed;
-	if (gHits > 0)
 	{
-		SDL_Log("image cache: %d images unpacked in %.2f s", gHits, (double)gUnpackTicks / SDL_GetPerformanceFrequency());
-	}
-	if (theWrite && gChanged)
-	{
+		// in one piece: hundreds of small appends to a growing file cost the Switch's SD card 20 s
+		Uint64 aStart = SDL_GetPerformanceCounter();
 		std::string aPath = CachePath();
-		std::ofstream aFile(Sexy::PathFromU8(aPath + ".tmp"), std::ios::binary | std::ios::trunc);
-		uint32_t aCount = (uint32_t)gEntries.size();
-		aFile.write(kMagic, 4);
-		aFile.write((const char*)&gSignature, sizeof(gSignature));
-		aFile.write((const char*)&aCount, sizeof(aCount));
+		std::vector<char> aData;
+		auto put = [&aData](const void* p, size_t n) { aData.insert(aData.end(), (const char*)p, (const char*)p + n); };
+		uint32_t aCount = (uint32_t)anEntries.size();
 		size_t aTotal = 0;
-		for (const auto& [aKey, e] : gEntries)
+		for (const auto& [aKey, e] : anEntries)
+		{
+			aTotal += aKey.size() + e.mSize + 14;
+		}
+		aData.reserve(aTotal + 4 + sizeof(gSignature) + sizeof(aCount));
+		put(kMagic, 4);
+		put(&gSignature, sizeof(gSignature));
+		put(&aCount, sizeof(aCount));
+		for (const auto& [aKey, e] : anEntries)
 		{
 			uint16_t aKeyLen = (uint16_t)aKey.size();
 			int32_t aWidth = e.mWidth, aHeight = e.mHeight;
 			uint32_t aSize = (uint32_t)e.mSize;
-			aFile.write((const char*)&aKeyLen, sizeof(aKeyLen));
-			aFile.write(aKey.data(), aKeyLen);
-			aFile.write((const char*)&aWidth, sizeof(aWidth));
-			aFile.write((const char*)&aHeight, sizeof(aHeight));
-			aFile.write((const char*)&aSize, sizeof(aSize));
-			aFile.write(e.mBuffer->data() + e.mOffset, (std::streamsize)e.mSize);
-			aTotal += e.mSize;
+			put(&aKeyLen, sizeof(aKeyLen));
+			put(aKey.data(), aKeyLen);
+			put(&aWidth, sizeof(aWidth));
+			put(&aHeight, sizeof(aHeight));
+			put(&aSize, sizeof(aSize));
+			put(e.mBuffer->data() + e.mOffset, e.mSize);
 		}
+		anEntries.clear();
+		std::ofstream aFile(Sexy::PathFromU8(aPath + ".tmp"), std::ios::binary | std::ios::trunc);
+		aFile.write(aData.data(), (std::streamsize)aData.size());
 		aFile.close();
 		if (aFile && Sexy::CommitTempFile(aPath))
 		{
-			SDL_Log("image cache: wrote %u images, %.1f MB", aCount, aTotal / 1e6);
+			SDL_Log("image cache: wrote %u images, %.1f MB in %.2f s", aCount, aData.size() / 1e6,
+				(double)(SDL_GetPerformanceCounter() - aStart) / SDL_GetPerformanceFrequency());
 		}
 		else
 		{
@@ -280,5 +302,4 @@ void ImageLib::CloseImageCache(bool theWrite)
 			SDL_Log("image cache: couldn't write %s", aPath.c_str());
 		}
 	}
-	gEntries.clear();
 }

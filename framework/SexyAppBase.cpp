@@ -2364,14 +2364,16 @@ void SexyAppBase::LoadingThreadProcStub(SexyAppBase *theArg)
 	Result rc = svcSetThreadCoreMask(CUR_THREAD_HANDLE, 1, BIT(1));
 	SDL_Log("loading thread on core 1: %s", R_SUCCEEDED(rc) ? "ok" : "failed");
 #endif
-	// switchfish: decoded images from an earlier boot; written at the end when this boot added any
+	// switchfish: decoded images from an earlier boot; when this boot added any, the cache is written after
+	// loading counts as done, so a first boot doesn't wait for the SD card
 	ImageLib::OpenImageCache();
 	aSexyApp->LoadingThreadProc();		
-	ImageLib::CloseImageCache(!aSexyApp->mShutdown && !aSexyApp->mLoadingFailed);
 
 	SDL_Log("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
 
+	bool aWrite = !aSexyApp->mShutdown && !aSexyApp->mLoadingFailed;
 	aSexyApp->mLoadingThreadCompleted = true;
+	ImageLib::CloseImageCache(aWrite);
 }
 
 void SexyAppBase::StartLoadingThread()

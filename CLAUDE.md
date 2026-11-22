@@ -1,7 +1,7 @@
 # switchfish
 
-Insaniquarium Deluxe as a Switch homebrew NRO. Read `README.md`, then `docs/ANALYSIS.md` for why things are
-the way they are and `docs/ROADMAP.md` for what's next.
+Insaniquarium Deluxe as a Switch homebrew NRO. Read `README.md` and `docs/DEVELOPMENT.md`, then
+`docs/ANALYSIS.md` for why things are the way they are and `docs/ROADMAP.md` for what's next.
 
 ## Rules
 - Build through `./sf.sh` (`build switch` runs in Docker, `build` is the host build). Both must keep building.

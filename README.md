@@ -1,133 +1,121 @@
 # switchfish
 
-Insaniquarium Deluxe as native Nintendo Switch homebrew, built from the source code the community
-decompiled, with a widescreen tank that fills the whole Switch screen and controls made for a console.
+Insaniquarium Deluxe on the Nintendo Switch as native homebrew: the whole 16:9 screen is aquarium, and it
+plays with a controller, touch or a USB mouse. Built from the source code the community decompiled, so it
+runs the real game, not an emulator.
 
-**You need your own copy of Insaniquarium Deluxe** (for example from Steam). This repo and its builds contain
-no game assets.
+**You need your own copy of Insaniquarium Deluxe** (for example from Steam). switchfish contains no game
+assets; it runs on the files from your copy.
 
-Status: plays on the Mac, boots in the Ryubing emulator, not yet run on a real Switch. `docs/STATUS.md` says
-honestly how solid things are, `docs/ROADMAP.md` what comes next.
+## Getting started
 
-## What switchfish adds
+1. Download `switchfish.nro` from the [latest release](https://github.com/AsmGecko/switchfish/releases).
+2. Copy the folders from your Insaniquarium Deluxe install (`properties`, `images`, `sounds`, `music`, `data`,
+   `fishsongs`, ...) and the NRO to the SD card:
 
-### A widescreen tank you can play in
+   ```
+   sdmc:/switch/switchfish/
+   ├── switchfish.nro
+   ├── properties/resources.xml
+   └── images/ sounds/ music/ data/ fishsongs/ ...
+   ```
 
-The game was made for 640x480. switchfish turns on the widescreen mode PopCap left in its own framework and
-widens the tank itself to 854x480, so on a 16:9 screen the whole picture is aquarium: fish swim, food falls,
-coins drop and aliens chase you into the new sides. Menus, dialogs and the HUD stay as they were.
+   With hundreds of small files, hekate's USB mass storage (the SD card shows up as a normal disk) is much
+   faster and more reliable than MTP.
+3. Start it from hbmenu or Sphaira through title takeover (hold R while starting any game). Started from the
+   album the Switch gives homebrew too little memory; switchfish tells you so.
 
-- The extra sides of the six tank backdrops were drawn by an image model, with the glass walls and floor
-  corners in the original's perspective. They hold no PopCap pixels: the game pastes the original middle
-  back from your own files when it loads, pixel exact, and blends the seams.
-- The main menu gets wider art the same way. Other screens that stay 4:3 sit on the water from the game's
-  own help screen, with slow bubbles and a soft shadow, instead of black bars.
-- **Widescreen** is a checkbox in Options (where Fullscreen used to be, which did nothing on a Switch).
-  Turned off you get the original 4:3 game, every number as it was.
-- The picture is scaled with a sharp-bilinear filter, so the pixel art stays crisp at 720p and 1080p.
+The first boot takes a little longer: it builds an image cache from your files. After that it loads in a
+few seconds. To update, replace `switchfish.nro`; your saves stay in `userdata/`.
 
-Details: `docs/WIDESCREEN.md`.
+## Features
 
-### Controls made for the Switch
+### The whole screen is aquarium
 
-Designed from what the game actually does (`docs/CONTROLS.md`):
+The game was made for 640x480. In switchfish the tank is 854x480, so on a 16:9 screen fish swim, food falls,
+coins drop and aliens chase you all the way to the edges.
 
-| | |
+- The extra sides of the six tank backdrops were drawn to match, glass walls and floor corners included, and
+  the original art from your files sits in the middle, pixel exact.
+- The title screen and the main menu are widened the same way. Hall of Fame, Help, the pet stories and the
+  credits draw their water, bubbles and fish across the whole screen.
+- Screens that stay 4:3 (the pet selection, the Virtual Tank store) sit on the water of the game's help
+  screen, with slow bubbles and a soft shadow, instead of black bars.
+- Sharp scaling keeps the pixel art crisp at 720p and 1080p.
+- **Widescreen** in Options turns it off for the original 4:3 game, every number as it was.
+
+### Made for a controller
+
+| Button | What it does |
 |---|---|
-| Left stick | cursor, with a deadzone and a speed curve; it slows down over coins and buttons so you can stop on them |
-| ZL / right stick | slow and precise / nudge |
-| A or ZR | click, hold to keep feeding |
-| B | right click (tap the glass) |
-| D-pad | jump to the next button that way |
-| X / Y | feed the hungriest fish / grab the money (Quick Aim in Options); hold to keep going, ZL + X/Y only aims |
-| R (hold) | fast-forward a level at double speed (Fast-Forward in Options, off by default) |
+| Left stick | move the cursor; it speeds up the further you push and slows down over coins and buttons |
+| ZL (hold) / right stick | precise aiming / small nudges |
+| A or ZR | click; hold to keep dropping food |
+| B | tap the glass; closes menus and dialogs |
+| D-pad | jump from button to button |
+| X | feed the hungriest fish (Quick Aim); hold to keep feeding, one after another |
+| Y | grab the money: bombs first, then the coins about to vanish (Quick Aim) |
+| ZL + X / Y | jump there without clicking |
+| R (hold) | fast-forward at double speed (turn it on in Options) |
 | + / − | menu / pause |
-| Touch | point and tap directly in handheld; ZL + tap is a right click |
-| USB mouse | through the dock |
-| Rumble | when an alien arrives or goes down, for every hit, a tap on the glass, a fish dying |
+| Touch | tap directly in handheld mode; ZL + tap taps the glass |
+| USB mouse | works in the dock |
 
-The cursor is the game's own, and Options > Controls explains the buttons on a Help page in the game's style. Home or sleep pauses and mutes the game like alt-tab does on a PC. The Switch
-keyboard opens for player names.
+- The controller **rumbles** when an alien arrives or goes down, for every hit, a tap on the glass, a fish
+  dying and a pet hatching.
+- **Options > Controls** opens a page in the game's own Help that explains all of this.
+- Home or sleep pauses and mutes the game. The Switch keyboard opens for player names.
 
-### Small things
+### Quick Aim and fast-forward
 
-- Screens in the game's own dialog style when the game files are missing or when you start from the album.
-- The title music waits until there is a picture.
-- Loading on the Switch went from 38 s to a few: files are read whole, images decode on the idle cores, and
-  after the first boot the decoded images come from `imagecache.bin` in the game folder (about 19 MB, made
-  from your own files; delete it to rebuild it).
-- Fixes: a highlighted button could stay lit after a click, holding the mouse to feed didn't work in the
-  wide tank's sides.
+- **Quick Aim** (on by default): X and Y move the cursor to what needs you and click there, so the game plays
+  with buttons alone if you like. It only aims at fish the game already shows as hungry and never clicks a
+  pet that happens to be in the way. Turn it off in Options for the classic game.
+- **Fast-forward** (off by default): hold R to run a level at double speed. The game logic stays exactly the
+  same, it just runs twice as many steps. Not in the Virtual Tank.
 
-## On the Switch
+### New in Options
 
-Copy the game's folders (`properties`, `images`, `sounds`, `music`, `data`, `fishsongs`, ...) and the NRO to:
+| Setting | Default | |
+|---|---|---|
+| Widescreen | on | the 16:9 tank and screens; off is the original 4:3 game |
+| Quick Aim (X/Y) | on | X feeds the hungriest fish, Y grabs the money |
+| Rumble | on | controller rumble |
+| Fast-Forward (hold R) | off | double speed while R is held |
+| Controls | | the button guide |
 
-```
-sdmc:/switch/switchfish/
-├── switchfish.nro
-├── properties/resources.xml
-└── images/ sounds/ music/ data/ fishsongs/ ...
-```
+### Loads fast, saves safely
 
-Start it from hbmenu through title takeover (hold R while starting any game), not from the album: the album
-runs homebrew with too little memory. If the game crashes it writes its last log lines and the crash
-address to `sdmc:/switch/switchfish/crash.txt`; with a `debug.txt` in that folder it logs everything to
-`log.txt` (slower, every line is a write to the SD card).
+- About a second to the first picture and a few to "Click here to play" (early builds took over 30).
+- Saves and settings are written so that a crash or a flat battery can never leave half a save behind.
+- Closing the game from the Home menu saves the level you are playing, like quitting does.
 
-Copying the game files over USB works best through hekate's USB mass storage (the SD card shows up as a
-normal disk); MTP tools on a Mac are slow and unreliable with hundreds of small files. After that only the
-NRO changes, and `./sf.sh send <switch-ip>` puts a new build on the Switch over wifi in seconds: open hbmenu,
-press Y, run the command. Arguments after the IP go to the game (`./sf.sh send 192.168.1.20 --level 3-2`),
-and its log shows in the terminal until Ctrl-C.
+## Known issues
 
-## Releases
+- **Quitting shows an error** on real hardware ("The software was closed because an error occurred",
+  2001-0106). It happens after the game has finished and saved; your progress is safe. Being worked on.
+- Not everything has had a long run on a real Switch yet: rumble strengths and touch may need tuning.
 
-Every published GitHub release gets a `switchfish.nro` attached by CI (`.github/workflows/switch.yml`),
-built in the same Docker image as below, with the release tag as its version. CI has no game files, so that
-NRO carries the plain fallback icon instead of the fish from your title screen; build it yourself for that.
+## Help
 
-## Building
+- **The game says it can't find its files:** the folders must be directly in `sdmc:/switch/switchfish/`,
+  next to the NRO (so `sdmc:/switch/switchfish/properties/resources.xml` exists).
+- **Something looks wrong after changing game files:** delete `imagecache.bin` in that folder; it is rebuilt
+  on the next start.
+- **It crashed:** switchfish writes `crash.txt` with its last log lines in its folder. Please attach it to an
+  issue.
 
-Switch builds only need Docker; the toolchain (devkitA64, libnx, SDL2, mesa, libopenmpt) lives in an image.
+## Building it yourself
+
+A build of your own carries the fish from your own title screen as its icon. You need Docker; the Switch
+toolchain lives in an image:
 
 ```bash
-./sf.sh setup          # once: Docker image, Homebrew packages, Ryubing
-./sf.sh build switch   # build/switch/switchfish.nro (icon: the guppy from your own title screen)
-./sf.sh build          # Mac build in build/host/
-./sf.sh run            # Mac build with the game files in gameData/ (or --data <dir>)
-./sf.sh emu            # the NRO in the Ryubing emulator
-./sf.sh send <ip>      # over wifi to hbmenu's netloader (press Y): installs, starts, shows the log here
-./sf.sh widen          # redraw the widescreen sides with Codex (needs Codex)
-./sf.sh upstream       # clone or update the reference projects in upstream/
+./sf.sh setup          # once
+./sf.sh build switch   # build/switch/switchfish.nro
 ```
 
-On the Mac a game controller drives the same cursor as on the Switch.
-
-### Testing
-
-- **Test plans** (`tests/plans/`, format in `port/TestPlan.h`) drive the game hands-free: clicks, keys,
-  controller input and screenshots at fixed logic ticks. A run is silent, stays in the background and
-  always ends by itself:
-  `./build/host/switchfish --plan tests/plans/menus.txt --out /tmp/shots --timeout 45`
-- **Quickplay**: `./sf.sh run --quickplay` lets N finish the current level the normal way, and
-  `--level 3-2` starts a new adventure at that level. On the Switch, a `quickplay.txt` in the game folder
-  (optionally with `3-2` in it) does the same. It changes your profile, so use a test profile.
-- **Screens deep in the game**: `--screen story` opens the pet stories and `--screen credits` the end
-  credits once the main menu is up (also through `./sf.sh send <ip> --screen credits`).
-
-### Layout
-
-| Folder | What |
-|---|---|
-| `game/` | the game (WinFish decompilation, kyle-sylvestre's portable fork) |
-| `framework/` | SexyAppFramework on SDL2 + GLES2, with `platform/switch` and `platform/default` |
-| `port/` | our own code: entry point, notice screens, test plans, wide tank art, `romfs/` for the NRO |
-| `scripts/widescreen/` | how the widescreen sides are made |
-| `third_party/` | SDL-Mixer-X |
-| `docker/` | the Switch build image |
-| `docs/` | analysis, status, roadmap, controls, widescreen, where everything came from |
-| `upstream/`, `tools/`, `gameData/` | reference projects, the emulator, your own game files (all gitignored) |
+Building, testing, sending builds to a Switch over wifi and how the repo is laid out: `docs/DEVELOPMENT.md`.
 
 ## Thanks
 
@@ -149,7 +137,7 @@ switchfish stands on a lot of other people's work:
 - **[ChanseyIsTheBest/insaniquarium_nx](https://github.com/ChanseyIsTheBest/insaniquarium_nx)**, the first
   Switch port, which proved it could be done and showed how to handle a USB mouse and the input conflicts.
 - **devkitPro, libnx and switchbrew** for the Switch toolchain, **Ryubing** for the emulator, **SDL**,
-  **SDL-Mixer-X**, **libopenmpt** and the **Fredoka** font.
+  **SDL-Mixer-X**, **libopenmpt**, **LZ4** and the **Fredoka** font.
 
 Where every vendored folder came from and at which commit: `docs/UPSTREAM.md`.
 

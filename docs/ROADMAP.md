@@ -2,8 +2,8 @@
 
 Each milestone has an exit criterion; don't start the next one until it holds.
 
-**Next up** (from `docs/STATUS.md`): real hardware test (M1), Switch controls (M3), determinism check and
-robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
+**Next up** (from `docs/STATUS.md`): the crash on quit, tuning the controls on hardware (M3), determinism
+check and robust test plans (M2), decomp fixes (M4). Released: 0.1.0 (2026-11-22).
 
 ## M0: Repo and toolchain (done 2026-11-20)
 - [x] Reference repos in `upstream/`, research in `docs/research/`
@@ -15,7 +15,7 @@ robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
 
 ## M1: First light
 - [x] Host build reaches the main menu with real game files in `gameData/` (2026-11-20)
-- [ ] NRO boots on a Switch (title takeover) with the files in `sdmc:/switch/switchfish/`
+- [x] NRO boots on a Switch (title takeover) with the files in `sdmc:/switch/switchfish/` (2026-11-21)
 - [x] NRO boots in Ryubing with the game files and reaches tank 1-1 (`./sf.sh emu`, 2026-11-20)
 - [x] Notice screens in the style of the game's dialogs: game files missing, started from the album
       (`port/Notice.cpp`, preview with `--notice album|nodata`)
@@ -42,7 +42,9 @@ robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
 - [x] Rumble on aliens, hits, glass taps, deaths
 - [ ] Tune on hardware; gyro, single Joy-Con
 - [ ] Docked/handheld switching, audio restart after resume
-- [ ] 4:3 presentation with sharp-bilinear scaling and blurred backdrop side bars
+- [x] 4:3 presentation with sharp-bilinear scaling; the help screen's water beside 4:3 screens
+- [x] Quick Aim (X/Y), fast-forward (R), a Controls page in Help, rumble and Quick Aim settings
+- [ ] Crash on quit on hardware (hbloader 2001-0106)
 - [ ] Remove the framework's dependency on game resources
 
 **Exit:** a full adventure tank plays comfortably docked (Pro Controller) and handheld (touch).
@@ -56,16 +58,16 @@ robust test plans (M2), Gitea remote plus CI, decomp fixes (M4).
 
 **Exit:** harness plans for all modes pass on host and Switch.
 
-## M5: Widescreen (in progress, see docs/WIDESCREEN.md "Status")
-- [ ] Framework: configurable logical canvas (640x480 or 854x480), viewport and input remapping
-- [ ] Widescreen presentation: extended backdrops generated from the user's own files, HUD centered,
-      menus 4:3 centered
-- [ ] True widescreen tank: tank width constant replaces the hard-coded bounds (about 185 sites in 27 files)
-- [ ] Setting in the options dialog; 4:3 stays bit-identical to the original (harness check)
+## M5: Widescreen (see docs/WIDESCREEN.md "Status")
+- [x] Framework: configurable logical canvas (640x480 or 854x480), viewport and input remapping
+- [x] Widescreen presentation: extended backdrops around the user's own art, HUD centered; title screen
+      and main menu widened, Hall of Fame, Help, stories and credits across the screen
+- [x] True widescreen tank: tank width constant replaces the hard-coded bounds
+- [ ] Setting in the options dialog (done); 4:3 bit-identical to the original (harness check still open)
 
 **Exit:** all modes play in 16:9 on the full Switch screen, 4:3 mode passes the same plans as before.
 
 ## Later
 - SDL3 once devkitPro packages it
 - Gyro pointing
-- CI on the Gitea remote (Docker build of the NRO per push)
+- Test plans in CI (CI builds the NRO per push and attaches it to releases since 2026-11-22)

@@ -125,9 +125,23 @@ void LoadFishSongs(bool flag)
 	bool hasOpenedErrorFile = false;
 	FILE* anErrorFile = nullptr;
 
-	for (const auto& entry : std::filesystem::directory_iterator("fishsongs"))
+	// switchfish: only the .txt songs, in the alphabetical order Windows listed them in, and no exception when
+	// the folder is missing
+	std::vector<std::string> aSongFiles;
+	std::error_code anError;
+	for (const auto& entry : std::filesystem::directory_iterator("fishsongs", anError))
 	{
-		std::string filename = entry.path().filename().string();
+		std::string aName = entry.path().filename().string();
+		if (aName.size() > 4 && stricmp(aName.c_str() + aName.size() - 4, ".txt") == 0)
+		{
+			aSongFiles.push_back(aName);
+		}
+	}
+	std::sort(aSongFiles.begin(), aSongFiles.end(),
+		[](const std::string& a, const std::string& b) { return stricmp(a.c_str(), b.c_str()) < 0; });
+
+	for (const std::string& filename : aSongFiles)
+	{
 		FishSongData* aNewSong = new FishSongData();
 		gSongsVector1.push_back(aNewSong);
 
@@ -635,6 +649,9 @@ void Sexy::WinFishApp::LoadingThreadProc()
 		{
 			WFAShowResourceError(false);
 			mLoadingFailed = true;
+			// switchfish: stop here like the original (Insaniquarium-Decompilation WinFishApp.cpp:678) instead of
+			// going on to use images that never loaded
+			return;
 		}
 
 		m0x878 = true;

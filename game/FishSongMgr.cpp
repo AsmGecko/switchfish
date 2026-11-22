@@ -20,6 +20,7 @@ FishSongMgr::FishSongMgr()
 
 FishSongMgr::~FishSongMgr()
 {
+    ClearSongs();
 }
 
 void FishSongMgr::Update()
@@ -43,6 +44,8 @@ void FishSongMgr::Update()
         {
             aFinishedSongSoundID = aCurrentSong->mApplause;
 
+            // switchfish: the list owns its songs (the portable fork made them pointers)
+            delete aCurrentSong;
             anIterator = mSongList.erase(anIterator);
         }
         else
@@ -93,7 +96,10 @@ void Sexy::FishSongMgr::StopFishSong(int theSongId)
         FishSong* aCurSong = *it;
 
         if (aCurSong->mSongId == theSongId)
+        {
+            delete aCurSong;
             it = mSongList.erase(it);
+        }
         else
             ++it;
     }
@@ -176,6 +182,10 @@ int Sexy::FishSongMgr::Unk01(int theSongId)
 
 void Sexy::FishSongMgr::ClearSongs()
 {
+    for (FishSong* aSong : mSongList)
+    {
+        delete aSong;
+    }
     mSongList.clear();
 }
 

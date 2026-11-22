@@ -2756,12 +2756,29 @@ bool Sexy::Board::LoadGame(SexyString theSavePath)
 		aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
 		DataSync aSync(aDR);
 
-		int aVer = aDR.ReadLong();
-		aSync.mVersion = aVer;
-		if (aVer > 52 && SyncGameData(aSync))
+		// switchfish: the original's try/catch (Insaniquarium-Decompilation Board.cpp:2690): a damaged save
+		// resets the level instead of crashing, and is kept as .bad rather than saved over
+		bool aLoaded = false;
+		int aVal = 0;
+		try
 		{
-			int aVal = aDR.ReadLong();
-			aSync.SyncPointers();
+			int aVer = aDR.ReadLong();
+			aSync.mVersion = aVer;
+			aLoaded = aVer > 52 && SyncGameData(aSync);
+			if (aLoaded)
+			{
+				aVal = aDR.ReadLong();
+				aSync.SyncPointers();
+			}
+		}
+		catch (DataReaderException&)
+		{
+			KeepDamagedFile(theSavePath);
+			ResetLevel(mWidgetManager);
+			return false;
+		}
+		if (aLoaded)
+		{
 
 			if(mApp->mGameMode == GAMEMODE_VIRTUAL_TANK)
 			{

@@ -22,10 +22,20 @@ bool Sexy::HighScoreMgr::ReadHighScoresData()
     SexyString aPath = GetAppDataFolder() + "userdata/highscores.dat";
     if (gSexyApp->ReadBufferFromFile(aPath, &aBuf, false))
     {
-        DataReader aDR;
-        aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
-        DataSync aDS(aDR);
-        SyncData(&aDS);
+        // switchfish: the original's try/catch (Insaniquarium-Decompilation HighScoreMgr.cpp:28)
+        try
+        {
+            DataReader aDR;
+            aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
+            DataSync aDS(aDR);
+            SyncData(&aDS);
+        }
+        catch (DataReaderException&)
+        {
+            KeepDamagedFile(aPath);
+            ClearAllScoreLists();
+            MakeDefaultHighScores();
+        }
     }
     else
         MakeDefaultHighScores();

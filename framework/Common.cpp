@@ -657,6 +657,17 @@ void Sexy::RecoverTempFile(const std::string& theFileName)
 	}
 }
 
+void Sexy::KeepDamagedFile(const std::string& theFileName)
+{
+	std::filesystem::path aFile = PathFromU8(theFileName);
+	std::filesystem::path aBad = PathFromU8(theFileName + ".bad");
+	std::error_code ec;
+	std::filesystem::remove(aBad, ec);
+	std::filesystem::rename(aFile, aBad, ec);
+	ForgetDirectoryListings();
+	SDL_Log(ec ? "%s couldn't be read" : "%s couldn't be read; kept as .bad", theFileName.c_str());
+}
+
 void Sexy::ForgetDirectoryListings()
 {
 #if !defined(_WIN32)

@@ -102,6 +102,9 @@ coins drop and aliens chase you all the way to the edges.
   next to the NRO (so `sdmc:/switch/switchfish/properties/resources.xml` exists).
 - **Something looks wrong after changing game files:** delete `imagecache.bin` in that folder; it is rebuilt
   on the next start.
+- **A save that can't be read** (a flat battery in the original game could leave one behind) no longer
+  crashes the game or turns the adventure into "Tank 0-0": the game starts that part fresh and keeps the old
+  file next to it as `.bad` in `userdata/`, so it can still be rescued.
 - **It crashed:** switchfish writes `crash.txt` with its last log lines in its folder. Please attach it to an
   issue.
 

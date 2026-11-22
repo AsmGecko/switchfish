@@ -33,10 +33,26 @@ void Sexy::ProfileMgr::ReadUsersDat()
     SexyString aPath = GetAppDataFolder() + "userdata/users.dat";
     if (gSexyApp->ReadBufferFromFile(aPath, &aBuf, false))
     {
-        DataReader aDR;
-        aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
-        DataSync aDS(aDR);
-        SyncUsersDat(aDS);
+        // switchfish: the original's try/catch, as in Insaniquarium-Decompilation (ProfileMgr.cpp:31); the
+        // portable fork had dropped it, so a damaged users.dat crashed every start
+        try
+        {
+            DataReader aDR;
+            aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
+            DataSync aDS(aDR);
+            SyncUsersDat(aDS);
+        }
+        catch (DataReaderException&)
+        {
+            mProfilesMap->clear();
+            KeepDamagedFile(aPath);
+            // the profiles' own files are fine: new profiles get ids after them instead of overwriting them
+            for (int anId = 1; anId < 1000; anId++)
+            {
+                if (FileExists(GetAppDataFolder() + StrFormat("userdata/user%d.dat", anId)))
+                    m0x10 = anId + 1;
+            }
+        }
     }
 }
 
@@ -82,7 +98,13 @@ void Sexy::ProfileMgr::SyncUsersDat(DataSync& theDataSync)
     theDataSync.SyncLong(aDatVersion);
     theDataSync.mVersion = aDatVersion;
     if (aDatVersion != gUsersDatVersion)
+    {
+        // switchfish: on reading, an unknown version is a damaged file (a zeroed one reads as version 0),
+        // handled like one in ReadUsersDat instead of leaving the profiles' files to be overwritten
+        if (aDR)
+            throw DataReaderException();
         return;
+    }
 
     if (aDW)
     {
@@ -313,19 +335,27 @@ int Sexy::UserProfile::ReadScreenSaverData(bool doErase)
     aReader.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
     DataSync aSync(aReader);
 
-    int aVal = aReader.ReadLong();
-    if (aVal != m0x88)
-        return 0;
+    // switchfish: the original's try/catch (Insaniquarium-Decompilation ProfileMgr.cpp:301)
+    try
+    {
+        int aVal = aReader.ReadLong();
+        if (aVal != m0x88)
+            return 0;
 
-    for (int i = 0; i < 50; i++)
-        aReader.ReadLong();
+        for (int i = 0; i < 50; i++)
+            aReader.ReadLong();
 
-    int resultValue = aReader.ReadLong();
+        int resultValue = aReader.ReadLong();
 
-    for (int i = 0; i < 50; i++)
-        aReader.ReadLong();
+        for (int i = 0; i < 50; i++)
+            aReader.ReadLong();
 
-    return resultValue;
+        return resultValue;
+    }
+    catch (DataReaderException&)
+    {
+    }
+    return 0;
 }
 
 void Sexy::UserProfile::UpdateStoreData(long long theNewTime)
@@ -372,11 +402,21 @@ void Sexy::UserProfile::LoadFromMemory()
     SexyString aPath = GetAppDataFolder() + StrFormat("userdata/user%d.dat", mId);
     if (gSexyApp->ReadBufferFromFile(aPath, &aBuf, false))
     {
-        DataReader aDR;
-        aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
-        DataSync aDS(aDR);
-        SyncData(aDS);
-        SetCheatFlag(6, false);
+        // switchfish: the original's try/catch (Insaniquarium-Decompilation ProfileMgr.cpp:369); SyncData
+        // also throws for a tank that can't be. The file is kept as .bad.
+        try
+        {
+            DataReader aDR;
+            aDR.OpenMemory(aBuf.GetDataPtr(), aBuf.GetDataLen(), false);
+            DataSync aDS(aDR);
+            SyncData(aDS);
+            SetCheatFlag(6, false);
+        }
+        catch (DataReaderException&)
+        {
+            KeepDamagedFile(aPath);
+            Init();
+        }
     }
 }
 
@@ -489,6 +529,10 @@ void Sexy::UserProfile::SyncData(DataSync& theDataSync)
     theDataSync.SyncLong(mShells);
     theDataSync.SyncLong(mTank);
     theDataSync.SyncLong(mLevel);
+    // switchfish: no such tank or level means a damaged file (a zeroed one showed "Tank 0-0"); caught in
+    // LoadFromMemory, before the pets below are unlocked from these numbers
+    if (theDataSync.mReader && (mTank < 1 || mTank > 5 || mLevel < 1 || mLevel > 6))
+        throw DataReaderException();
     theDataSync.SyncBool(mFinishedGame);
     theDataSync.SyncBool(m0x58);
     theDataSync.SyncLong(mBubbulatorBought);

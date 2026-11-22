@@ -412,6 +412,9 @@ bool CommitTempFile(const std::string& theFileName);
 void RecoverTempFile(const std::string& theFileName);
 // fcaseopen caches directory listings; call after creating, renaming or deleting files outside it
 void ForgetDirectoryListings();
+// switchfish: a save that can't be read moves aside as <name>.bad before the game makes a fresh one over it,
+// so it can still be looked at or rescued
+void KeepDamagedFile(const std::string& theFileName);
 
 }
 

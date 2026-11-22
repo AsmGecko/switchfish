@@ -20,8 +20,10 @@ coins drop and aliens chase you into the new sides. Menus, dialogs and the HUD s
 - The extra sides of the six tank backdrops were drawn by an image model, with the glass walls and floor
   corners in the original's perspective. They hold no PopCap pixels: the game pastes the original middle
   back from your own files when it loads, pixel exact, and blends the seams.
+- The main menu gets wider art the same way. Other screens that stay 4:3 sit on the water from the game's
+  own help screen, with slow bubbles and a soft shadow, instead of black bars.
 - **Widescreen** is a checkbox in Options (where Fullscreen used to be, which did nothing on a Switch).
-  Turned off you get the original 4:3 game, every number as it was, with blurred side bars instead of black.
+  Turned off you get the original 4:3 game, every number as it was.
 - The picture is scaled with a sharp-bilinear filter, so the pixel art stays crisp at 720p and 1080p.
 
 Details: `docs/WIDESCREEN.md`.

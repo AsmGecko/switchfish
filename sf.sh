@@ -180,7 +180,7 @@ widen() {
 		draft=$(grep -oE '/[^]`( )]+/generated_images/[^]`( )]+\.png' "$work/codex$i.txt" | head -1 || true)
 		if [ -z "$draft" ]; then
 			# Codex sometimes answers without an image; one more try
-			with_timeout 300 ~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" "$src" > "$work/codex$i.txt"
+			with_timeout 300 ~/.claude/skills/codex-consult/codex-run.sh exec "$(cat scripts/widescreen/prompt.txt)" -i "$work/canvas$i.png" "$src" > "$work/codex$i.txt" || true
 			draft=$(grep -oE '/[^]`( )]+/generated_images/[^]`( )]+\.png' "$work/codex$i.txt" | head -1 || true)
 		fi
 		if [ -z "$draft" ]; then
@@ -188,6 +188,24 @@ widen() {
 			continue
 		fi
 		"$py" -I scripts/widescreen/fit.py "$draft" "$src" "port/romfs/widescreen/aquarium$i.png"
+	done
+	# the main menu and the title screen: no glass walls, the whole original is the middle
+	for screen in selectorback:menu titlescreen:title; do
+		name=${screen%%:*} prompt=scripts/widescreen/prompt-${screen##*:}.txt
+		src=$(find gameData/images -maxdepth 1 -iname "$name.jpg" | head -1)
+		[ -n "$src" ] || { echo "$name: not in gameData/images"; continue; }
+		"$py" -I scripts/widescreen/canvas.py "$src" "$work/$name.png" --full
+		draft=
+		for try in 1 2; do
+			with_timeout 300 ~/.claude/skills/codex-consult/codex-run.sh exec "$(cat "$prompt")" -i "$work/$name.png" "$src" > "$work/codex-$name.txt" || true
+			draft=$(grep -oE '/[^]`( )]+/generated_images/[^]`( )]+\.png' "$work/codex-$name.txt" | head -1 || true)
+			[ -n "$draft" ] && break
+		done
+		if [ -n "$draft" ]; then
+			"$py" -I scripts/widescreen/fit.py "$draft" "$src" "port/romfs/widescreen/$name.png" --full
+		else
+			echo "$name: no image from Codex, see $work/codex-$name.txt"
+		fi
 	done
 }
 

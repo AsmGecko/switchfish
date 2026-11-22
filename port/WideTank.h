@@ -16,3 +16,8 @@ void BuildWideBackdrops(Sexy::SexyAppBase* app);
 Sexy::Image* WideBackdrop(int theBackgroundId);
 // The front floor strip (tank mask) to go with it, drawn at (TankLeft(), 365).
 Sexy::Image* WideTankMask(int theBackgroundId);
+// A 4:3 screen's backdrop across the whole canvas (theImageId's original in the middle, the pack
+// widescreen/<thePack> around it), or null when the canvas is 4:3. Draw it centred on the screen.
+Sexy::Image* WideScreenBackdrop(Sexy::SexyAppBase* app, int theImageId, const char* thePack);
+// Frees one (the title screen's, once it is gone for good).
+void ForgetWideScreenBackdrop(const char* thePack);

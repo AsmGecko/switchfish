@@ -16,6 +16,8 @@
 #include "widget/ListWidget.h"
 
 #include "WinFishApp.h"
+#include "BubbleMgr.h"
+#include "graphics/GLInterface.h"
 #include "WinFishCommon.h"
 #include "InternetManager.h"
 #include "Res.h"
@@ -2396,8 +2398,76 @@ void Sexy::WinFishApp::LogScreenSaverError(const std::string& theError)
 	SexyApp::LogScreenSaverError(theError);
 }
 
+// switchfish: beside a 4:3 screen, the water the help screen is drawn on: its gradient, slow bubbles, and a
+// soft shadow along the screen so it seems to float above the water
+bool Sexy::WinFishApp::DrawSides(Graphics* g, const Rect& theLeft, const Rect& theRight)
+{
+	// once per game tick, when the bubbles have moved
+	if (mSidesDrawnAt == mUpdateCount)
+	{
+		return false;
+	}
+	mSidesDrawnAt = mUpdateCount;
+	static uint32_t sBands[120];
+	if (sBands[0] == 0)
+	{
+		int aLumin = 107;
+		for (int i = 0; i < 120; i++)
+		{
+			sBands[i] = HSLToRGB(151, 138, aLumin);
+			if (--aLumin < 50)
+			{
+				aLumin = 50;
+			}
+		}
+	}
+	const Rect* aSides[2] = {&theLeft, &theRight};
+	for (int s = 0; s < 2; s++)
+	{
+		const Rect& aRect = *aSides[s];
+		for (int i = 0; i < 120 && i * 4 < aRect.mHeight; i++)
+		{
+			g->SetColor(Color(sBands[i]));
+			g->FillRect(aRect.mX, i * 4, aRect.mWidth, 4);
+		}
+		if (mSideBubbles[s])
+		{
+			// BubbleMgr draws its bubbles unclipped; keep them out of the screen in the middle
+			Graphics aClipG(*g);
+			aClipG.ClipRect(aRect);
+			mSideBubbles[s]->Draw(&aClipG);
+		}
+		const int aShadow = 16;
+		for (int k = 0; k < aShadow && k < aRect.mWidth; k++)
+		{
+			int anAlpha = 140 * (aShadow - k) * (aShadow - k) / (aShadow * aShadow);
+			int x = s == 0 ? aRect.mX + aRect.mWidth - 1 - k : aRect.mX + k;
+			g->SetColor(Color(0, 0, 0, anAlpha));
+			g->FillRect(x, aRect.mY, 1, aRect.mHeight);
+		}
+	}
+	return true;
+}
+
 void Sexy::WinFishApp::UpdateFrames()
 {
+	// switchfish: the bubbles beside a 4:3 screen (DrawSides), once the images are loaded
+	if (mLoadingThreadCompleted && mGLInterface && !mGLInterface->mFullCanvas && mGLInterface->mWidth > mWidth)
+	{
+		int aMargin = (mGLInterface->mWidth - mWidth) / 2;
+		for (int s = 0; s < 2; s++)
+		{
+			if (!mSideBubbles[s])
+			{
+				mSideBubbles[s] = new BubbleMgr();
+				mSideBubbles[s]->mBubbleBounds = Rect(s == 0 ? 0 : aMargin + mWidth, 0, aMargin, 480);
+				mSideBubbles[s]->SetBubbleConfig(4, 3);
+				mSideBubbles[s]->UpdateALot();
+			}
+			mSideBubbles[s]->Update();
+		}
+	}
+
 	// switchfish: fast-forward, R held (an Options setting): two ticks per frame time while a level is being
 	// played, never in menus, dialogs, pause or the Virtual Tank (it would speed up earning shells there)
 	bool aFast = mFastForward && mFastForwardHeld && mBoard && mBoard->mVisible && !mBoard->mPause &&
@@ -2451,6 +2521,7 @@ void Sexy::WinFishApp::TitleScreenIsFinished()
 	mTitleScreen = NULL;
 
 	mResourceManager->ReplaceImage("IMAGE_TITLEPAGE", 0);
+	ForgetWideScreenBackdrop("titlescreen");
 	mResourceManager->ReplaceImage("IMAGE_LOADERBAR", 0);
 	mResourceManager->ReplaceImage("IMAGE_LOADERBAROVER", 0);
 	mResourceManager->ReplaceImage("IMAGE_LOADERBAROVER2", 0);

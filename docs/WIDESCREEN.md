@@ -16,7 +16,10 @@ section 3 says how it is built and whether we are sure, or have to prototype and
 Built:
 - Canvas 854x480 with the 640x480 design space centred (`mScreenBounds`), drawn into a persistent FBO and
   put on screen with a sharp-bilinear shader (`GLInterface::Present`). Screens that don't paint the whole
-  canvas get blurred, darkened sides. Settings `Widescreen` and `WideTank` (registry), both on by default.
+  canvas sit on the help screen's water with slow bubbles and a soft shadow (`WinFishApp::DrawSides`; it
+  was an ambient blur of the frame, which looked out of place). The main menu has widened art like the
+  tanks (`port/romfs/widescreen/selectorback.png`, `WideMenuBackdrop`). Settings `Widescreen` and
+  `WideTank` (registry), both on by default.
 - Wide tank: `TankLeft()/TankRight()` through every bound, spawn range and food zone (0..640 in the classic
   tank, -107..747 wide), save fix-up on load (`FixLoadedXBounds`), Board draws and takes clicks across the
   canvas, waves and light bands continue, tank mask widened.

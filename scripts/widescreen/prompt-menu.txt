@@ -1,0 +1,12 @@
+Use your image editing tool. Two images are attached:
+1. CANVAS (854x480): a painted underwater scene from a 2004 game's main menu, with transparent areas on the left and right.
+2. REFERENCE (640x480): the complete original picture.
+
+Fill ONLY the transparent areas of the CANVAS, so it becomes the same scene, simply wider:
+- Keep every opaque pixel exactly as it is. Do not redraw, move, rescale or restyle the existing painting.
+- Extend only what is already there: the water with its gradient and light, the seaweed, rocks, coral and the sea floor, at the same heights and in the same painting style, as if the same artist had painted a wider picture.
+- Objects cut off at the edge of the opaque area end naturally a little further out (for example the treasure chest and the tentacle on the left).
+- On the right, the scene continues behind and beside the menu panel: only water, seaweed and sea floor there, no second panel and no buttons.
+- So the wider picture does not look empty, you may add a FEW small, quiet details in the outer half of each new area, e.g. a small rock, a small plant, a shell in the sand, in the same style and colours. Nothing large, nothing that draws attention away from the middle, no new characters, and no copies or near-copies of objects already in the painting.
+- No text, no fish, no UI, no frame.
+Output a single 16:9 image. Tell me the absolute file path of the generated image in your final message.

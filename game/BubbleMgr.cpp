@@ -114,7 +114,10 @@ void BubbleMgr::Update()
 
 void BubbleMgr::Draw(Graphics* g)
 {
-    Graphics* g1 = new Graphics(*g);
+    // switchfish: both Graphics were new'd and never deleted (decomp); on the stack now. The bubbles still
+    // draw with g, unclipped, as in the original.
+    Graphics g1Obj(*g);
+    Graphics* g1 = &g1Obj;
     g1->ClipRect(mBubbleBounds);
     std::list<Bubble*>::iterator anIterator = mBubbleList.begin();
     while (anIterator != mBubbleList.end())
@@ -127,7 +130,8 @@ void BubbleMgr::Draw(Graphics* g)
         ++anIterator;
     }
 
-    Graphics* g2 = new Graphics(*g);
+    Graphics g2Obj(*g);
+    Graphics* g2 = &g2Obj;
     if (mClipBubbleFish)
         g2->ClipRect(mBubbleFishBounds);
     BubbleFishList::iterator itFish = mFishList.begin();

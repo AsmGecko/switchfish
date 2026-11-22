@@ -4,6 +4,8 @@
 #include "widget/DialogButton.h"
 
 #include "GameSelector.h"
+#include "graphics/GLInterface.h"
+#include "WideTank.h"
 #include "WinFishApp.h"
 #include "WinFishCommon.h"
 #include "ProfileMgr.h"
@@ -227,7 +229,11 @@ void Sexy::GameSelector::Update()
 
 void Sexy::GameSelector::Draw(Graphics* g)
 {
-	g->DrawImage(IMAGE_SELECTORSCREEN, 0, 0);
+	// switchfish: across the whole screen in widescreen, like the tanks
+	if (Image* aWide = WideScreenBackdrop(mApp, IMAGE_SELECTORSCREEN_ID, "selectorback"))
+		g->DrawImage(aWide, (mWidth - aWide->mWidth) / 2, 0);
+	else
+		g->DrawImage(IMAGE_SELECTORSCREEN, 0, 0);
 	UserProfile* aProf = mApp->mCurrentProfile;
 	if (aProf && aProf->mBonusItemId > 5)
 	{
@@ -291,6 +297,9 @@ void Sexy::GameSelector::DrawOverlay(Graphics* g)
 void Sexy::GameSelector::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the backdrop fills the canvas beside the menu too (Draw)
+	mClip = false;
+	mApp->mGLInterface->mFullCanvas = true;
 	theWidgetManager->AddWidget(mAdventureButton);
 	theWidgetManager->AddWidget(mVirtualTankButton);
 	theWidgetManager->AddWidget(mOptionsButton);
@@ -322,6 +331,9 @@ void Sexy::GameSelector::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::GameSelector::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	// a screen that came in first (the board's wide tank) keeps the full canvas
+	if (!mApp->mBoard && !mApp->mTitleScreen)
+		mApp->mGLInterface->mFullCanvas = false;
 	theWidgetManager->RemoveWidget(mAdventureButton);
 	theWidgetManager->RemoveWidget(mVirtualTankButton);
 	theWidgetManager->RemoveWidget(mOptionsButton);

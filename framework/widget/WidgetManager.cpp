@@ -28,6 +28,7 @@
 #include "graphics/Image.h"
 #include "misc/KeyCodes.h"
 #include "graphics/GLImage.h"
+#include "graphics/GLInterface.h"
 #include "SexyAppBase.h"
 #include "misc/PerfTimer.h"
 #include "misc/Debug.h"
@@ -502,6 +503,18 @@ bool WidgetManager::DrawScreen()
         aClipG.SetFastStretch(!is3D);
         aClipG.SetLinearBlend(is3D);
         mApp->DrawAboveWidgets(&aClipG);
+	}
+
+	// switchfish: beside a 4:3 screen the canvas is the app's to fill (the wide tank uses all of it)
+	int aMargin = (mImage->mWidth - mApp->mWidth) / 2;
+	if (aMargin > 0 && mApp->mGLInterface && !mApp->mGLInterface->mFullCanvas)
+	{
+		Rect aLeft(0, 0, aMargin, mImage->mHeight);
+		Rect aRight(aMargin + mApp->mWidth, 0, mImage->mWidth - aMargin - mApp->mWidth, mImage->mHeight);
+		if (mApp->DrawSides(&aScrG, aLeft, aRight))
+		{
+			drewStuff = true;
+		}
 	}
 	
 	FlushDeferredOverlayWidgets(0x7FFFFFFF);

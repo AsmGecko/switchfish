@@ -607,6 +607,8 @@ public:
 	virtual bool			AppCanRestore();
 	virtual void 			HandleEvent(SDL_Event *ev);
     virtual void 			DrawAboveWidgets(Graphics *g);
+	// switchfish: fills the canvas beside a 4:3 screen (canvas coordinates); true if it drew this time
+	virtual bool			DrawSides(Graphics* g, const Rect& theLeft, const Rect& theRight);
 };
 
 extern SexyAppBase* gSexyAppBase;

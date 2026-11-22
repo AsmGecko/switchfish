@@ -195,9 +195,7 @@ public:
 	// scaled to the screen. mWidth/mHeight are its size; wider than the app's 640 in widescreen.
 	GLuint					mCanvasFbo = 0;
 	GLuint					mCanvasTex = 0;
-	GLuint					mBlurFbo[4] = {};
-	GLuint					mBlurTex[4] = {};
-	// set by screens that paint the whole canvas; otherwise the sides get a blurred copy of the middle
+	// set by screens that paint the whole canvas; otherwise the game fills the sides (SexyAppBase::DrawSides)
 	bool					mFullCanvas = false;
 	void					DrawPadCursor();
 

@@ -5,6 +5,8 @@
 #include "widget/HyperlinkWidget.h"
 
 #include "TitleScreen.h"
+#include "graphics/GLInterface.h"
+#include "WideTank.h"
 #include "WinFishApp.h"
 #include "Res.h"
 
@@ -70,6 +72,9 @@ TitleScreen::~TitleScreen()
 void TitleScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the backdrop fills the canvas beside the screen too (Draw)
+	mClip = false;
+	mApp->mGLInterface->mFullCanvas = true;
 	theWidgetManager->AddWidget(mHyperlink2);
 	theWidgetManager->AddWidget(mHyperlink1);
 }
@@ -77,6 +82,9 @@ void TitleScreen::AddedToManager(WidgetManager* theWidgetManager)
 void TitleScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	// a screen that came in first (the main menu) keeps the full canvas
+	if (!mApp->mBoard && !mApp->mGameSelector)
+		mApp->mGLInterface->mFullCanvas = false;
 	theWidgetManager->RemoveWidget(mHyperlink2);
 	theWidgetManager->RemoveWidget(mHyperlink1);
 }
@@ -92,7 +100,11 @@ void TitleScreen::Draw(Graphics* g)
 		anYBtnDraw = 416;
 	}
 	Image* aLoaderImg = GetImageById(anImgId);
-	g->DrawImage(IMAGE_TITLEPAGE, 0, 0);
+	// switchfish: across the whole screen in widescreen, like the main menu
+	if (Image* aWide = WideScreenBackdrop(mApp, IMAGE_TITLEPAGE_ID, "titlescreen"))
+		g->DrawImage(aWide, (mWidth - aWide->mWidth) / 2, 0);
+	else
+		g->DrawImage(IMAGE_TITLEPAGE, 0, 0);
 
 	Graphics g2(*g);
 

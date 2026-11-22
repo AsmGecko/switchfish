@@ -4,10 +4,12 @@
 #include "graphics/MemoryImage.h"
 #include "SexyAppBase.h"
 #include "graphics/GLImage.h"
+#include "graphics/GLInterface.h"
 #include <SDL2/SDL.h>
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <map>
 
 using namespace Sexy;
 
@@ -270,6 +272,58 @@ MemoryImage* FromPack(SexyAppBase* app, MemoryImage* src, int theBackgroundId)
 }
 
 } // namespace
+
+// A 4:3 screen's backdrop at canvas width (main menu, title): the original in the middle, the sides from the
+// pack in port/romfs/widescreen/ (drawn by an image model, middle cut out). Built once per screen.
+static std::map<std::string, MemoryImage*> gWideScreens;
+
+Image* WideScreenBackdrop(SexyAppBase* app, int theImageId, const char* thePack)
+{
+    int canvas = app->mGLInterface ? app->mGLInterface->mWidth : app->mWidth;
+    if (canvas <= app->mWidth)
+    {
+        return nullptr;
+    }
+    auto found = gWideScreens.find(thePack);
+    if (found != gWideScreens.end())
+    {
+        return found->second;
+    }
+    MemoryImage*& wide = gWideScreens[thePack];
+    MemoryImage* src = dynamic_cast<MemoryImage*>(GetImageById(theImageId));
+    std::string path = std::string("widescreen/") + thePack;
+    MemoryImage* pack = app->GetImage(path);
+    if (!pack)
+    {
+        pack = app->GetImage(SWITCHFISH_ROMFS "/" + path);
+    }
+    if (!src || !pack || !src->GetBits())
+    {
+        delete pack;
+        return nullptr;
+    }
+    const int w = src->mWidth, h = src->mHeight, margin = (canvas - w) / 2;
+    if (pack->mWidth != canvas || pack->mHeight != h)
+    {
+        SDL_Log("wide screen: %s is %dx%d, expected %dx%d", path.c_str(), pack->mWidth, pack->mHeight, canvas, h);
+        delete pack;
+        return nullptr;
+    }
+    PastePiece(src->GetBits(), w, pack->GetBits(), canvas, h, {0, w, margin}, 12);
+    pack->BitsChanged();
+    wide = pack;
+    return wide;
+}
+
+void ForgetWideScreenBackdrop(const char* thePack)
+{
+    auto found = gWideScreens.find(thePack);
+    if (found != gWideScreens.end())
+    {
+        delete found->second;
+        gWideScreens.erase(found);
+    }
+}
 
 // Each tank's art is built the first time it is drawn (about 60 ms on the Switch), not all six at load time
 static SexyAppBase* gWideApp = nullptr;

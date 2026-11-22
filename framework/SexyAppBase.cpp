@@ -452,6 +452,14 @@ void SexyAppBase::DrawAboveWidgets(Graphics *g)
 {
 }
 
+bool SexyAppBase::DrawSides(Graphics* g, const Rect& theLeft, const Rect& theRight)
+{
+	g->SetColor(Color::Black);
+	g->FillRect(theLeft);
+	g->FillRect(theRight);
+	return false;
+}
+
 bool SexyAppBase::ReadDemoBuffer(std::string &theError)
 {
 	std::ifstream aFile(PathFromU8(mDemoFileName), std::ios::in | std::ios::binary);

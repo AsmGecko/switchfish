@@ -1326,16 +1326,7 @@ static bool MakeTarget(GLuint& fbo, GLuint& tex, int w, int h)
 
 bool GLInterface::CreateCanvas()
 {
-	if (!MakeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight))
-	{
-		return false;
-	}
-	// halving steps of the design area, for the blurred sides
-	for (int i = 0; i < 4; i++)
-	{
-		MakeTarget(mBlurFbo[i], mBlurTex[i], mApp->mWidth >> (i + 1), mHeight >> (i + 1));
-	}
-	return true;
+	return MakeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight);
 }
 
 void GLInterface::SetCanvasWidth(int theWidth)
@@ -1346,8 +1337,6 @@ void GLInterface::SetCanvasWidth(int theWidth)
 	}
 	glDeleteFramebuffers(1, &mCanvasFbo);
 	glDeleteTextures(1, &mCanvasTex);
-	glDeleteFramebuffers(4, mBlurFbo);
-	glDeleteTextures(4, mBlurTex);
 	mWidth = theWidth;
 	CreateCanvas();
 	BindCanvas();
@@ -1423,47 +1412,17 @@ void GLInterface::Present()
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_BLEND);
 
-	const int designW = mApp->mWidth;
-	const float marginX = (mWidth - designW) / 2.0f;
-	const bool blurredSides = marginX > 0 && !mFullCanvas;
 	const uint32_t white = 0xFFFFFFFFu;
-
-	if (blurredSides)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, mBlurFbo[0]);
-		glViewport(0, 0, designW >> 1, mHeight >> 1);
-		DrawTarget(mCanvasTex, mWidth, mHeight, marginX, 0, (float)designW, (float)mHeight,
-			0, 0, (float)(designW >> 1), (float)(mHeight >> 1), designW >> 1, mHeight >> 1, white);
-		for (int i = 1; i < 4; i++)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, mBlurFbo[i]);
-			glViewport(0, 0, designW >> (i + 1), mHeight >> (i + 1));
-			DrawTarget(mBlurTex[i - 1], designW >> i, mHeight >> i, 0, 0, (float)(designW >> i), (float)(mHeight >> i),
-				0, 0, (float)(designW >> (i + 1)), (float)(mHeight >> (i + 1)), designW >> (i + 1), mHeight >> (i + 1), white);
-		}
-	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, mDisplayWidth, mDisplayHeight);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// beside a 4:3 screen the game fills the canvas itself (SexyAppBase::DrawSides)
 	const Rect& r = mPresentationRect;
-	if (blurredSides)
-	{
-		// the blurred middle stretched across the whole canvas and darkened, the sharp middle on top
-		const int bw = designW >> 4, bh = mHeight >> 4;
-		DrawTarget(mBlurTex[3], bw, bh, 0, 0, (float)bw, (float)bh, (float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight,
-			mDisplayWidth, mDisplayHeight, 0xFF6F6F6Fu, false);
-		float scale = (float)r.mWidth / mWidth;
-		DrawTarget(mCanvasTex, mWidth, mHeight, marginX, 0, (float)designW, (float)mHeight,
-			r.mX + marginX * scale, (float)r.mY, designW * scale, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
-	}
-	else
-	{
-		DrawTarget(mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
-			(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
-	}
+	DrawTarget(mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
+		(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

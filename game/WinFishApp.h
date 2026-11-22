@@ -11,6 +11,7 @@
 namespace Sexy
 {
 	class Board;
+	class BubbleMgr;
 	class TitleScreen;
 	class GameSelector;
 	class PetsScreen;
@@ -369,6 +370,9 @@ namespace Sexy
 		virtual bool				ChangeDirHook(const char* theIntendedPath);
 		virtual void				LogScreenSaverError(const std::string& theError);
 		virtual void				UpdateFrames();
+		virtual bool				DrawSides(Graphics* g, const Rect& theLeft, const Rect& theRight);	// switchfish
+		BubbleMgr*					mSideBubbles[2] = {};	// switchfish: bubbles beside 4:3 screens
+		int							mSidesDrawnAt = -1;		// switchfish: mUpdateCount when they were last drawn
 		virtual void				LoadingThreadProc();
 		virtual void				LoadingThreadCompleted();
 		virtual MusicInterface*		CreateMusicInterface();

@@ -102,12 +102,20 @@ int FindPadTarget(SexyAppBase* theApp, int theKind, int theIndex, bool theRepeat
     theY = target->mY + target->mHeight / 2;
     if (theKind == 0)
     {
-        // food falls, so drop it a little above the fish rather than on it, where it would fall past and be
-        // chased: about 10 above near the top of the tank, 40 near the floor, and never up into the
-        // buttons at the top
-        const int top = 90, floor = 400;
-        int lead = 10 + 30 * std::clamp(theY - top, 0, floor - top) / (floor - top);
-        theY = std::max(top, theY - lead);
+        // Fish/Breeder::MouseDown drop the pellet 20 right of and 10 below the click, and a click inside the
+        // fish (x and y 10..70) makes it uneatable for up to 30 ticks, so it sinks past and is chased. A
+        // click in the fish's left strip (x < 10) has no such timer and puts the pellet in its mouth (the
+        // eating box is +-15 around its middle, which is 5 higher on a breeder).
+        int aMouthY = dynamic_cast<Breeder*>(target) ? 35 : 40;
+        theX = target->mX + 8;
+        theY = target->mY + aMouthY - 10;
+        // against the left wall that strip is outside where food may be dropped: the top strip (y < 10)
+        // has no timer either, the pellet lands just above the fish
+        if (theX <= TankLeft() + 30)
+        {
+            theX = target->mX + 20;
+            theY = target->mY + 5;
+        }
     }
     // the click has to reach the target (or the tank behind it, when fish ignore the mouse): a pet on top,
     // like a charged Amp, would take it

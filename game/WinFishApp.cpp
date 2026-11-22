@@ -237,7 +237,9 @@ WinFishApp::WinFishApp()
 
 	mProdName = "Insaniquarium";
 	
-	mTitle = SexyString("Insaniquarium Deluxe " + mProductVersion);
+	// switchfish: our version (CMake); the window title stays the game's name
+	mProductVersion = SWITCHFISH_VERSION;
+	mTitle = SexyString("Insaniquarium Deluxe");
 	
 	mRegKey = "PopCap/Insaniquarium";
 	mScreenSaverRegKey = "ScreenSaver/";

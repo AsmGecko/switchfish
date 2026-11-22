@@ -165,6 +165,12 @@ void TitleScreen::Draw(Graphics* g)
 	//SexyString aVersionStr = "Version " + mApp->mProductVersion;
 	//int aStrWdth = g->GetFont()->StringWidth(aVersionStr);
 	//g->WriteString(aVersionStr, mWidth - aStrWdth / 2 - 16, 211);
+
+	// switchfish: our version, small, under the loader bar
+	g->SetFont(FONT_JUNGLEFEVER10OUTLINE);
+	g->SetColor(Color(255, 255, 255, 200));
+	SexyString aVersionStr = "switchfish " + mApp->mProductVersion;
+	g->DrawString(aVersionStr, (mWidth - g->GetFont()->StringWidth(aVersionStr)) / 2, 470);
 }
 
 void TitleScreen::Update()

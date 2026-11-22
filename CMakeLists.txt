@@ -44,6 +44,11 @@ endforeach()
 add_subdirectory(third_party/SDL-Mixer-X EXCLUDE_FROM_ALL)
 
 add_executable(switchfish ${GAME_SOURCES} ${FRAMEWORK_SOURCES} third_party/lz4/lz4.c)
+
+# a release build passes its tag (CI), everything else shows the project version; on the title screen and
+# in hbmenu
+set(SWITCHFISH_VERSION "${PROJECT_VERSION}" CACHE STRING "version shown in the game and in hbmenu")
+target_compile_definitions(switchfish PRIVATE SWITCHFISH_VERSION="${SWITCHFISH_VERSION}")
 target_compile_features(switchfish PRIVATE cxx_std_20)
 target_include_directories(switchfish PRIVATE
 	${PLATFORM_DIR}
@@ -78,8 +83,6 @@ target_link_libraries(switchfish PRIVATE
 
 if(NINTENDO_SWITCH)
 	target_link_libraries(switchfish PRIVATE GLESv2 EGL glapi drm_nouveau)
-	# a release build passes its tag (CI), everything else shows the project version
-	set(SWITCHFISH_VERSION "${PROJECT_VERSION}" CACHE STRING "version shown in hbmenu")
 	nx_generate_nacp(switchfish.nacp
 		NAME "switchfish"
 		AUTHOR "switchfish contributors"

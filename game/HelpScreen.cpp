@@ -41,8 +41,10 @@ Sexy::HelpScreen::HelpScreen(WinFishApp* theApp, bool instructions)
 			mMenuButton->Resize(480, 4, 125, mMenuButton->mHeight);
 			mMenuButton->mLabel = "Back to Game";
 		}
-		mBubbleMgr->mBubbleBounds = Rect(0, 80, 640, 400);
-		mBubbleMgr->mBubbleFishBounds = Rect(0, 80, 640, 350);
+		// switchfish: the water reaches across the whole wide screen
+		int aMargin = WideMargin();
+		mBubbleMgr->mBubbleBounds = Rect(-aMargin, 80, 640 + 2 * aMargin, 400);
+		mBubbleMgr->mBubbleFishBounds = Rect(-aMargin, 80, 640 + 2 * aMargin, 350);
 	}
 	else
 	{
@@ -75,6 +77,15 @@ Sexy::HelpScreen::~HelpScreen()
 void Sexy::HelpScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the help pages' water fills the wide screen (Draw); the instructions page (0) is a framed
+	// picture and keeps the water beside it
+	if (mPageIdx != 0 && WideMargin() > 0)
+	{
+		mClip = false;
+		mCanvasHold.Set(true);
+		// and takes the clicks there, so none reach a board underneath (in-game Help)
+		mMouseInsets = Insets(-WideMargin(), 0, -WideMargin(), 0);
+	}
 	theWidgetManager->AddWidget(mMenuButton);
 	theWidgetManager->AddWidget(mContinueButton);
 	theWidgetManager->AddWidget(mNextButton);
@@ -84,6 +95,7 @@ void Sexy::HelpScreen::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::HelpScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mMenuButton);
 	theWidgetManager->RemoveWidget(mContinueButton);
 	theWidgetManager->RemoveWidget(mNextButton);
@@ -138,15 +150,16 @@ void Sexy::HelpScreen::Draw(Graphics* g)
 	else
 	{
 		int aLumin = 107;
+		int aMargin = WideMargin();
 		for (int i = 0; i < 480; i += 4)
 		{
 			g->SetColor(Color(mApp->HSLToRGB(151, 138, aLumin)));
-			g->FillRect(0, i, mWidth, 4);
+			g->FillRect(-aMargin, i, mWidth + 2 * aMargin, 4);
 			if (--aLumin < 50)
 				aLumin = 50;
 		}
 		mBubbleMgr->Draw(g);
-		DrawWaves(g, 80, mUpdateCnt);
+		DrawWaves(g, 80, mUpdateCnt, -aMargin, 640 + aMargin);
 		if (mPageIdx != 8)
 		{
 			Rect aTabRect1 = GetVertTabRect(0);
@@ -301,7 +314,8 @@ void Sexy::HelpScreen::DrawVertTabText(Graphics* g, int theTabIdx,SexyString the
 	g->SetFont(FONT_CONTINUUMBOLD14);
 	
 	// This is hidden for some reason, probably was debug thing
-	DrawStringWithOutline(g, StrFormat("%d.", theTabIdx+1), -100, aTabRect.mY, FONT_CONTINUUMBOLD14OUTLINE, 0);
+	// switchfish: drawn at x -100, off screen in 4:3 but inside the wide screen, so not drawn at all
+	//DrawStringWithOutline(g, StrFormat("%d.", theTabIdx+1), -100, aTabRect.mY, FONT_CONTINUUMBOLD14OUTLINE, 0);
 
 	g->SetFont(FONT_JUNGLEFEVER10OUTLINE);
 	SetVaryingBlueColorGraphics(g, mUpdateCnt, aTabRect.mY + 20);

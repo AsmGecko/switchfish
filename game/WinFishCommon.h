@@ -43,7 +43,16 @@ namespace Sexy
 	HyperlinkWidget*	MakeHyperlinkWidget(int theId, ButtonListener* theButtonListener, SexyString theLabel);
 
 	void				DrawStringWithOutline(Graphics* g, SexyString theLine, int theX, int theY, Font* theFont, uint32_t theOutlineColor);
-	void				DrawWaves(Graphics* g, int theY, int theUpdateCnt);
+	void				DrawWaves(Graphics* g, int theY, int theUpdateCnt, int theLeft = 0, int theRight = 640);
+	// switchfish: how far the canvas reaches beyond the 640 design space on each side (0 in 4:3)
+	int					WideMargin();
+	// switchfish: a screen that paints the whole canvas holds it while it is in the widget manager
+	struct FullCanvasHold
+	{
+		bool mHeld = false;
+		void Set(bool theHold);
+		~FullCanvasHold() { Set(false); }
+	};
 	void				DrawHorzCrease(Graphics* g, Image* theImage,int theX, int theY, int theWidth);
 	void				DrawVertCrease(Graphics* g, Image* theImage,int theX, int theY, int theHeight);
 	void				DrawCheckboxString(Graphics* g, const SexyString& theLine, Checkbox* theCB, const char* theExtensionString);

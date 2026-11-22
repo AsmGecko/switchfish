@@ -299,7 +299,7 @@ void Sexy::GameSelector::AddedToManager(WidgetManager* theWidgetManager)
 	Widget::AddedToManager(theWidgetManager);
 	// switchfish: the backdrop fills the canvas beside the menu too (Draw)
 	mClip = false;
-	mApp->mGLInterface->mFullCanvas = true;
+	mCanvasHold.Set(true);
 	theWidgetManager->AddWidget(mAdventureButton);
 	theWidgetManager->AddWidget(mVirtualTankButton);
 	theWidgetManager->AddWidget(mOptionsButton);
@@ -331,9 +331,7 @@ void Sexy::GameSelector::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::GameSelector::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
-	// a screen that came in first (the board's wide tank) keeps the full canvas
-	if (!mApp->mBoard && !mApp->mTitleScreen)
-		mApp->mGLInterface->mFullCanvas = false;
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mAdventureButton);
 	theWidgetManager->RemoveWidget(mVirtualTankButton);
 	theWidgetManager->RemoveWidget(mOptionsButton);

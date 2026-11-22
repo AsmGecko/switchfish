@@ -2,6 +2,7 @@
 #define __GAMESELECTOR_H__
 
 #include "widget/Widget.h"
+#include "WinFishCommon.h"
 #include "widget/ButtonListener.h"
 #include "WinFishApp.h"
 
@@ -25,6 +26,7 @@ namespace Sexy
 	class GameSelector : public Widget, public ButtonListener
 	{
 	public:
+		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
 		WinFishApp*				mApp;
 		ButtonWidget*			mAdventureButton;
 		ButtonWidget*			mVirtualTankButton;

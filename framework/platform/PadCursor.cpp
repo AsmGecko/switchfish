@@ -46,7 +46,7 @@ static float StickSpeed(float r, float theTop)
 // What can be clicked: the whole canvas on the wide tank, the 640 design space elsewhere.
 static Rect Clickable(SexyAppBase* theApp)
 {
-	bool full = theApp->mGLInterface && theApp->mGLInterface->mFullCanvas;
+	bool full = theApp->mGLInterface && theApp->mGLInterface->mWidePointer;
 	return full ? Rect(theApp->mScreenBounds.mX, 0, theApp->mScreenBounds.mWidth, theApp->mHeight)
 		: Rect(0, 0, theApp->mWidth, theApp->mHeight);
 }

@@ -2,6 +2,7 @@
 #define __BOARD_H__
 
 #include "widget/Widget.h"
+#include "WinFishCommon.h"
 #include "widget/ButtonListener.h"
 #include "graphics/Color.h"
 #include "GameObject.h"
@@ -106,6 +107,7 @@ namespace Sexy
 	class Board : public Widget, public ButtonListener
 	{
 	public:
+		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
 		WinFishApp*							mApp;
 		FishSongMgr*						mFishSongMgr;
 		bool								mPause;

@@ -2,6 +2,7 @@
 #define __TITLESCREEN_H__
 
 #include "widget/Widget.h"
+#include "WinFishCommon.h"
 #include "widget/ButtonListener.h"
 
 namespace Sexy
@@ -12,6 +13,7 @@ namespace Sexy
 	class TitleScreen : public Widget, public ButtonListener
 	{
 	public:
+		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
 		HyperlinkWidget* mHyperlink1;
 		HyperlinkWidget* mHyperlink2;
 		int m0x94;

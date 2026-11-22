@@ -602,7 +602,8 @@ void Sexy::Board::AddedToManager(WidgetManager* theWidgetManager)
 	{
 		mClip = false;
 		mMouseInsets = Insets(TankLeft(), 0, 640 - TankRight(), 0);
-		mApp->mGLInterface->mFullCanvas = true;
+		mCanvasHold.Set(true);
+		mApp->mGLInterface->mWidePointer = true;
 	}
 	theWidgetManager->AddWidget(mBoardOverlay1);
 	theWidgetManager->AddWidget(mBoardOverlay2);
@@ -611,7 +612,8 @@ void Sexy::Board::AddedToManager(WidgetManager* theWidgetManager)
 void Board::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
-	mApp->mGLInterface->mFullCanvas = false;
+	mCanvasHold.Set(false);
+	mApp->mGLInterface->mWidePointer = false;
 	theWidgetManager->RemoveWidget(mBoardOverlay1);
 	theWidgetManager->RemoveWidget(mBoardOverlay2);
 	RemoveWidgetHelper(mMenuButton);

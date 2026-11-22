@@ -195,8 +195,13 @@ public:
 	// scaled to the screen. mWidth/mHeight are its size; wider than the app's 640 in widescreen.
 	GLuint					mCanvasFbo = 0;
 	GLuint					mCanvasTex = 0;
-	// set by screens that paint the whole canvas; otherwise the game fills the sides (SexyAppBase::DrawSides)
+	// switchfish: true while a screen that paints the whole canvas holds it (HoldFullCanvas); otherwise the
+	// game fills the sides (SexyAppBase::DrawSides)
 	bool					mFullCanvas = false;
+	int						mFullCanvasHolds = 0;
+	void					HoldFullCanvas(bool theHold) { mFullCanvasHolds += theHold ? 1 : -1; if (mFullCanvasHolds < 0) mFullCanvasHolds = 0; mFullCanvas = mFullCanvasHolds > 0; }
+	// switchfish: the whole canvas can be pointed at and clicked (the wide tank), not just the design space
+	bool					mWidePointer = false;
 	void					DrawPadCursor();
 
 	int						mNextCursorX;

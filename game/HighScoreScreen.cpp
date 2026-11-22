@@ -22,8 +22,10 @@ Sexy::HighScoreScreen::HighScoreScreen(WinFishApp* theApp)
 	mApp = theApp;
 
 	mBubbleMgr = new BubbleMgr();
-	mBubbleMgr->mBubbleBounds = Rect(0, 60, 640, 420);
-	mBubbleMgr->mBubbleFishBounds = Rect(0, 80, 640, 350);
+	// switchfish: the water reaches across the whole wide screen
+	int aMargin = WideMargin();
+	mBubbleMgr->mBubbleBounds = Rect(-aMargin, 60, 640 + 2 * aMargin, 420);
+	mBubbleMgr->mBubbleFishBounds = Rect(-aMargin, 80, 640 + 2 * aMargin, 350);
 	mBubbleMgr->SetBubbleConfig(20, 3);
 	mBubbleMgr->SetBubbleFishConfig(3, 3);
 	mBubbleMgr->UpdateALot();
@@ -60,6 +62,14 @@ Sexy::HighScoreScreen::~HighScoreScreen()
 void Sexy::HighScoreScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the water fills the wide screen (Draw)
+	if (WideMargin() > 0)
+	{
+		mClip = false;
+		mCanvasHold.Set(true);
+		// and takes the clicks there, so none reach a board underneath (in-game Help)
+		mMouseInsets = Insets(-WideMargin(), 0, -WideMargin(), 0);
+	}
 	theWidgetManager->AddWidget(mMenuButton);
 	theWidgetManager->AddWidget(mAdvButton);
 	theWidgetManager->AddWidget(mTimeTrialButton);
@@ -70,6 +80,7 @@ void Sexy::HighScoreScreen::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::HighScoreScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mMenuButton);
 	theWidgetManager->RemoveWidget(mAdvButton);
 	theWidgetManager->RemoveWidget(mTimeTrialButton);
@@ -87,15 +98,16 @@ void Sexy::HighScoreScreen::Update()
 void Sexy::HighScoreScreen::Draw(Graphics* g)
 {
 	int aLumin = 107;
+	int aMargin = WideMargin();
 	for (int i = 0; i < 480; i += 4)
 	{
 		g->SetColor(Color(mApp->HSLToRGB(151, 138, aLumin)));
-		g->FillRect(0, i, mWidth, 4);
+		g->FillRect(-aMargin, i, mWidth + 2 * aMargin, 4);
 		if (--aLumin < 50)
 			aLumin = 50;
 	}
 	mBubbleMgr->Draw(g);
-	DrawWaves(g, 60, mUpdateCnt);
+	DrawWaves(g, 60, mUpdateCnt, -aMargin, 640 + aMargin);
 
 	SexyString aGameModeStr = "";
 	switch (mPage)

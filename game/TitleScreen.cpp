@@ -74,7 +74,7 @@ void TitleScreen::AddedToManager(WidgetManager* theWidgetManager)
 	Widget::AddedToManager(theWidgetManager);
 	// switchfish: the backdrop fills the canvas beside the screen too (Draw)
 	mClip = false;
-	mApp->mGLInterface->mFullCanvas = true;
+	mCanvasHold.Set(true);
 	theWidgetManager->AddWidget(mHyperlink2);
 	theWidgetManager->AddWidget(mHyperlink1);
 }
@@ -82,9 +82,7 @@ void TitleScreen::AddedToManager(WidgetManager* theWidgetManager)
 void TitleScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
-	// a screen that came in first (the main menu) keeps the full canvas
-	if (!mApp->mBoard && !mApp->mGameSelector)
-		mApp->mGLInterface->mFullCanvas = false;
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mHyperlink2);
 	theWidgetManager->RemoveWidget(mHyperlink1);
 }

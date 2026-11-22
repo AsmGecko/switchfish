@@ -5,6 +5,7 @@
 
 #include "WinFishApp.h"
 #include "WinFishCommon.h"
+#include "graphics/GLInterface.h"
 #include "Res.h"
 
 #include <time.h>
@@ -145,15 +146,32 @@ void Sexy::DrawStringWithOutline(Graphics* g, SexyString theLine, int theX, int 
 	g->DrawString(theLine, theX, theY);
 }
 
-void Sexy::DrawWaves(Graphics* g, int theY, int theUpdateCnt)
+void Sexy::DrawWaves(Graphics* g, int theY, int theUpdateCnt, int theLeft, int theRight)
 {
     g->SetDrawMode(Graphics::DRAWMODE_ADDITIVE);
     int aCel = IMAGE_WAVE->GetAnimCel(theUpdateCnt);
-    g->DrawImageCel(IMAGE_WAVE, 0, theY, aCel);
-    g->DrawImageCel(IMAGE_WAVE, 160, theY, aCel);
-    g->DrawImageCel(IMAGE_WAVE, 320, theY, aCel);
-    g->DrawImageCel(IMAGE_WAVE, 480, theY, aCel);
+    // switchfish: tiles from x 0 outwards, so a wider screen gets more of the same waves
+    int aStart = 0;
+    while (aStart > theLeft)
+        aStart -= 160;
+    for (int x = aStart; x < theRight; x += 160)
+        g->DrawImageCel(IMAGE_WAVE, x, theY, aCel);
     g->SetDrawMode(Graphics::DRAWMODE_NORMAL);
+}
+
+int Sexy::WideMargin()
+{
+    GLInterface* aGL = gSexyAppBase->mGLInterface;
+    return aGL && aGL->mWidth > gSexyAppBase->mWidth ? (aGL->mWidth - gSexyAppBase->mWidth) / 2 : 0;
+}
+
+void Sexy::FullCanvasHold::Set(bool theHold)
+{
+    if (theHold != mHeld && gSexyAppBase && gSexyAppBase->mGLInterface)
+    {
+        gSexyAppBase->mGLInterface->HoldFullCanvas(theHold);
+        mHeld = theHold;
+    }
 }
 
 void Sexy::DrawHorzCrease(Graphics* g, Image* theImage, int theX, int theY, int theWidth)

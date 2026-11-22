@@ -9,3 +9,6 @@ namespace Sexy
 // that will be gone first. 1 found, 0 none, -1 not now. Installed as gPadTargetHook (framework/platform/PadCursor.h).
 int FindPadTarget(Sexy::SexyAppBase* theApp, int theKind, int theIndex, bool theRepeat, int& theX, int& theY,
     bool& theClickable);
+
+// Auto Collect (an Options setting, off by default): picks up the money in a level as it drops
+void AutoCollect(Sexy::SexyAppBase* theApp);

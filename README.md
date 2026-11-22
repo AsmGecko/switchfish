@@ -66,13 +66,16 @@ coins drop and aliens chase you all the way to the edges.
 - **Options > Controls** opens a page in the game's own Help that explains all of this.
 - Home or sleep pauses and mutes the game. The Switch keyboard opens for player names.
 
-### Quick Aim and fast-forward
+### Quick Aim, fast-forward and Auto Collect
 
 - **Quick Aim** (on by default): X and Y move the cursor to what needs you and click there, so the game plays
   with buttons alone if you like. It only aims at fish the game already shows as hungry and never clicks a
   pet that happens to be in the way. Turn it off in Options for the classic game.
 - **Fast-forward** (off by default): hold R to run a level at double speed. The game logic stays exactly the
   same, it just runs twice as many steps. Not in the Virtual Tank.
+- **Auto Collect** (off by default): coins, pearls and diamonds pick themselves up half a second after they
+  appear. It makes the game a lot easier and pets like Stinky less useful, so it's your call. Not in bonus
+  rounds.
 
 ### New in Options
 
@@ -82,6 +85,7 @@ coins drop and aliens chase you all the way to the edges.
 | Quick Aim (X/Y) | on | X feeds the hungriest fish, Y grabs the money |
 | Rumble | on | controller rumble |
 | Fast-Forward (hold R) | off | double speed while R is held |
+| Auto Collect | off | money picks itself up |
 | Controls | | the button guide |
 
 ### Loads fast, saves safely

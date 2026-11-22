@@ -23,6 +23,7 @@ namespace Sexy
 		Checkbox* mQuickAimCB;			// switchfish: X/Y jump the controller cursor to fish and money
 		Checkbox* mRumbleCB;			// switchfish
 		Checkbox* mFastForwardCB;		// switchfish: R held runs a level at double speed
+		Checkbox* mAutoCollectCB;		// switchfish: money picks itself up
 		DialogButton* mControlsButton;	// switchfish: opens Help at the Controls page
 		DialogButton* mRegisterButton;
 		DialogButton* mHelpButton;

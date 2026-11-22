@@ -20,6 +20,8 @@ Loading on the Switch comes first: `docs/LOADING.md`.
 - [x] 8. Fast-forward: hold R for double speed ("Fast-Forward (hold R)" in Options, off by default)
 - [-] 9. Marker over hungry fish: dropped, the pet Blip already points out hungry fish (earlier than the green sprite)
 - [ ] 10. Statistics page
+- [x] 12. Auto Collect: money picks itself up half a second after it appears ("Auto Collect" in Options, off
+      by default, never in bonus rounds). Asked for after all; PortMaster's build has the same, also opt-in
 - [ ] 11. Two-cursor co-op (last, opt-in)
 
 ## The ideas
@@ -90,7 +92,7 @@ could send single clicks only; fun but hacky, opt-in, last.
 - Cloud save.
 - A fish gallery: the pets screen, the Virtual Tank store and help pages already show them.
 - Aim magnetism toward aliens: changes knockback.
-- Auto-collect or turbo sweep: hands out the machine gun early.
+- Turbo sweep: hands out the machine gun early. (Auto-collect was here too; it went in as item 12, opt-in.)
 - The real screensaver mode: changes save paths; item 7 gets the same result.
 - Colourblind palette shaders: hunger is a sprite swap, a marker works better.
 - A button remapping screen: too few buttons.

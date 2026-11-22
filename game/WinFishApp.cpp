@@ -57,6 +57,7 @@
 #include "FishNamingDialog.h"
 #include "FoodDialog.h"
 #include "RegisterDialog.h"
+#include "PadTargets.h"
 
 #include <filesystem>
 #include <thread>
@@ -2159,6 +2160,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	mQuickAim = aDia->mQuickAimCB->IsChecked();
 	mRumble = aDia->mRumbleCB->IsChecked();
 	mFastForward = aDia->mFastForwardCB->IsChecked();
+	mAutoCollect = aDia->mAutoCollectCB->IsChecked();
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
 	ClearUpdateBacklog(true);
@@ -2492,6 +2494,8 @@ void Sexy::WinFishApp::UpdateFrames()
 	bool aFast = mFastForward && mFastForwardHeld && mBoard && mBoard->mVisible && !mBoard->mPause &&
 		mDialogList.empty() && mGameMode != GAMEMODE_VIRTUAL_TANK;
 	mUpdateMultiplier = aFast ? 2.0 : 1.0;
+
+	AutoCollect(this);
 
 	// switchfish: the store, pets, fish and tank screens lie over the paused board (Board::SetCovered)
 	if (mBoard)

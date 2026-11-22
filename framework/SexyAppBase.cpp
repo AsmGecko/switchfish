@@ -1018,6 +1018,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("QuickAim", mQuickAim ? 1 : 0);
 	RegistryWriteInteger("Rumble", mRumble ? 1 : 0);
 	RegistryWriteInteger("FastForward", mFastForward ? 1 : 0);
+	RegistryWriteInteger("AutoCollect", mAutoCollect ? 1 : 0);
 	RegistryWriteInteger("PreferredX", mPreferredX);
 	RegistryWriteInteger("PreferredY", mPreferredY);
 	RegistryWriteInteger("CustomCursors", mCustomCursorsEnabled ? 1 : 0);		
@@ -1276,6 +1277,9 @@ void SexyAppBase::ReadFromRegistry()
 
 	if (RegistryReadInteger("FastForward", &anInt))
 		mFastForward = anInt != 0;
+
+	if (RegistryReadInteger("AutoCollect", &anInt))
+		mAutoCollect = anInt != 0;
 
 	RegistryReadInteger("PreferredX", &mPreferredX);
 	RegistryReadInteger("PreferredY", &mPreferredY);	

@@ -349,6 +349,7 @@ public:
 	bool					mQuickAim = true;	// switchfish: X/Y jump the controller cursor to fish and money
 	bool					mRumble = true;		// switchfish: the controller rumbles
 	bool					mFastForward = false;	// switchfish: holding R runs a level at double speed (opt-in)
+	bool					mAutoCollect = false;	// switchfish: money in a level is picked up by itself (opt-in)
 	bool					mFastForwardHeld = false;	// switchfish: R is down (PadCursor)
 	Rect					mScreenBounds;
 	bool					mEnableWindowAspect;

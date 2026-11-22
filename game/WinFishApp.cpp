@@ -2474,6 +2474,23 @@ void Sexy::WinFishApp::UpdateFrames()
 		mDialogList.empty() && mGameMode != GAMEMODE_VIRTUAL_TANK;
 	mUpdateMultiplier = aFast ? 2.0 : 1.0;
 
+	// switchfish: --screen opens a screen that takes long to reach, once the main menu is up
+	if (!gTestScreen.empty() && mGameSelector && !mTitleScreen)
+	{
+		std::string aScreen = gTestScreen;
+		gTestScreen.clear();
+		if (aScreen == "credits")
+		{
+			RemoveGameSelector();
+			SwitchToInterludeScreen();
+		}
+		else if (aScreen == "story")
+		{
+			RemoveGameSelector();
+			SwitchToStoryScreen(-1);
+		}
+	}
+
 	// switchfish: --quickplay, N finishes the level whichever widget has the focus
 	if (gQuickPlay)
 	{

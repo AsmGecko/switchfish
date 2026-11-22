@@ -2,6 +2,7 @@
 #define __INTERLUDESCREEN_H__
 
 #include "widget/Widget.h"
+#include "WinFishCommon.h"
 #include "widget/ButtonListener.h"
 
 namespace Sexy
@@ -19,6 +20,7 @@ namespace Sexy
 	class InterludeScreen : public Widget, public ButtonListener
 	{
 	public:
+		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
 		WinFishApp*				mApp;
 		HyperlinkWidget*		mBackButton;
 		InterludeScreenOverlay* mOverlay;

@@ -86,7 +86,8 @@ Sexy::StoryScreen::StoryScreen(WinFishApp* theApp, int theStoryId)
 	theApp->PlayMusic(2, 5);
 	mStoryId = theStoryId;
 	mBubbleMgr = new BubbleMgr();
-	mBubbleMgr->mBubbleBounds = Rect(0, -20, 640, 520);
+	// switchfish: the water reaches across the whole wide screen
+	mBubbleMgr->mBubbleBounds = Rect(-WideMargin(), -20, 640 + 2 * WideMargin(), 520);
 	mBubbleMgr->SetBubbleConfig(10, 3);
 	mBubbleMgr->UpdateALot();
 	mX = 0;
@@ -149,6 +150,7 @@ Sexy::StoryScreen::~StoryScreen()
 void Sexy::StoryScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	UpdateWide();
 	theWidgetManager->AddWidget(mBackToMainMenuButton);
 	theWidgetManager->AddWidget(mNextButton);
 	theWidgetManager->AddWidget(mBackButton);
@@ -157,14 +159,30 @@ void Sexy::StoryScreen::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::StoryScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mBackToMainMenuButton);
 	theWidgetManager->RemoveWidget(mNextButton);
 	theWidgetManager->RemoveWidget(mBackButton);
 }
 
+// switchfish: the water fills the wide screen (Draw); the talk show picture keeps the water beside it. The
+// story can change while the screen is up (Next/Back), so this follows it.
+void Sexy::StoryScreen::UpdateWide()
+{
+	bool aWide = WideMargin() > 0 && mStoryId != 32;
+	if (aWide != mCanvasHold.mHeld)
+	{
+		mClip = !aWide;
+		mCanvasHold.Set(aWide);
+		mMouseInsets = aWide ? Insets(-WideMargin(), 0, -WideMargin(), 0) : Insets();
+		MarkDirty();
+	}
+}
+
 void Sexy::StoryScreen::Update()
 {
 	Widget::Update();
+	UpdateWide();
 	if(mApp->mHasFocus)
 	{
 		mBubbleMgr->Update();
@@ -187,7 +205,7 @@ void Sexy::StoryScreen::Draw(Graphics* g)
 	else
 	{
 		g->SetColor(Color(25, 105, 195, 255));
-		g->FillRect(0, 0, mWidth, mHeight);
+		g->FillRect(-WideMargin(), 0, mWidth + 2 * WideMargin(), mHeight);
 		mBubbleMgr->Draw(g);
 
 		g->SetFont(FONT_LIDDIE18);
@@ -246,8 +264,10 @@ void Sexy::StoryScreen::Draw(Graphics* g)
 	WriteWordWrapped(g, aStrWrapRect, STORY_TEXT[mStoryId], -1, -1);
 
 	g->SetColor(Color::Black);
-	g->FillRect(0, 0, mWidth, 40);
-	g->FillRect(0, mHeight - 40, mWidth, 40);
+	// switchfish: across the wide screen when the water is (the talk show keeps its 4:3 frame)
+	int aMargin = mCanvasHold.mHeld ? WideMargin() : 0;
+	g->FillRect(-aMargin, 0, mWidth + 2 * aMargin, 40);
+	g->FillRect(-aMargin, mHeight - 40, mWidth + 2 * aMargin, 40);
 	g->SetColor(Color::White);
 	g->SetFont(FONT_CONTINUUMBOLD12);
 	SexyString aStoryPageStr = StrFormat("%d of 33", mStoryId + 1);

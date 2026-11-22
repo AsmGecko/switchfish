@@ -32,6 +32,7 @@ namespace Sexy
 	// adventure board starts at gStartTank-gStartLevel once.
 	extern bool			gQuickPlay;
 	extern int			gStartTank;
+	extern std::string	gTestScreen;	// switchfish: --screen story|credits, opened once the menu is up
 	extern int			gStartLevel;
 
 	DialogButton*		MakeDialogButton(int theId, ButtonListener* theListener, SexyString theText, Font* theFont);

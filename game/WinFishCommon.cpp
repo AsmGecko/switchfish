@@ -14,6 +14,7 @@ using namespace Sexy;
 
 bool Sexy::gQuickPlay = false;
 int Sexy::gStartTank = 0;
+std::string Sexy::gTestScreen;
 int Sexy::gStartLevel = 0;
 int Sexy::gTankLeft = 0;
 int Sexy::gTankRight = 640;

@@ -2,6 +2,7 @@
 #define __STORYSCREEN_H__
 
 #include "widget/Widget.h"
+#include "WinFishCommon.h"
 #include "widget/ButtonListener.h"
 
 namespace Sexy
@@ -13,6 +14,7 @@ namespace Sexy
 	class StoryScreen : public Widget, public ButtonListener
 	{
 	public:
+		FullCanvasHold			mCanvasHold;	// switchfish: holds the whole canvas while in the widget manager
 		WinFishApp* mApp;
 		HyperlinkWidget* mBackToMainMenuButton;
 		HyperlinkWidget* mNextButton;
@@ -28,6 +30,7 @@ namespace Sexy
 		virtual void			AddedToManager(WidgetManager* theWidgetManager);
 		virtual void			RemovedFromManager(WidgetManager* theWidgetManager);
 		virtual void			Update();
+		void					UpdateWide();	// switchfish
 		virtual void			Draw(Graphics* g);
 
 		virtual void			ButtonPress(int theId);

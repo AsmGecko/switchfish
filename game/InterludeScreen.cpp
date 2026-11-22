@@ -21,12 +21,13 @@ Sexy::InterludeScreen::InterludeScreen(WinFishApp* theApp, int unk)
 	m0xa0 = unk;
 
 	mBubbleMgr1 = new BubbleMgr();
-	mBubbleMgr1->mBubbleBounds = Rect(0, -20, 640, 520);
+	// switchfish: the water reaches across the whole wide screen
+	mBubbleMgr1->mBubbleBounds = Rect(-WideMargin(), -20, 640 + 2 * WideMargin(), 520);
 	mBubbleMgr1->SetBubbleConfig(10, 3);
 	mBubbleMgr1->UpdateALot();
 
 	mBubbleMgr2 = new BubbleMgr();
-	mBubbleMgr2->mBubbleBounds = Rect(0, -20, 640, 520);
+	mBubbleMgr2->mBubbleBounds = Rect(-WideMargin(), -20, 640 + 2 * WideMargin(), 520);
 	mBubbleMgr2->SetBubbleConfig(10, 3);
 	mBubbleMgr2->SetDefaultBubbleFishVY(-1.0f);
 	mBubbleMgr2->mClipBubbleFish = false;
@@ -93,6 +94,14 @@ Sexy::InterludeScreen::~InterludeScreen()
 void Sexy::InterludeScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
 	Widget::AddedToManager(theWidgetManager);
+	// switchfish: the water and the black bars fill the wide screen (Draw, DrawOverlay)
+	if (WideMargin() > 0)
+	{
+		mClip = false;
+		mOverlay->mClip = false;
+		mCanvasHold.Set(true);
+		mMouseInsets = Insets(-WideMargin(), 0, -WideMargin(), 0);
+	}
 	theWidgetManager->AddWidget(mOverlay);
 	theWidgetManager->AddWidget(mBackButton);
 }
@@ -100,6 +109,7 @@ void Sexy::InterludeScreen::AddedToManager(WidgetManager* theWidgetManager)
 void Sexy::InterludeScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
 	Widget::RemovedFromManager(theWidgetManager);
+	mCanvasHold.Set(false);
 	theWidgetManager->RemoveWidget(mOverlay);
 	theWidgetManager->RemoveWidget(mBackButton);
 }
@@ -130,13 +140,13 @@ void Sexy::InterludeScreen::Update()
 
 	if (m0xa4 < gInterludeInt03)
 	{
-		mBubbleMgr2->mBubbleFishBounds = Rect(0, 200, 640, 240);
+		mBubbleMgr2->mBubbleFishBounds = Rect(-WideMargin(), 200, 640 + 2 * WideMargin(), 240);
 		mBubbleMgr2->SetDefaultBubbleFishVY(-1.0);
 		m0xa4++;
 	}
 	else
 	{
-		mBubbleMgr2->mBubbleFishBounds = Rect(0, 30, 640, 420);
+		mBubbleMgr2->mBubbleFishBounds = Rect(-WideMargin(), 30, 640 + 2 * WideMargin(), 420);
 		mBubbleMgr2->SetDefaultBubbleFishVY(0.0);
 	}
 
@@ -161,7 +171,7 @@ void Sexy::InterludeScreen::Update()
 void Sexy::InterludeScreen::Draw(Graphics* g)
 {
 	g->SetColor(Color(25, 105, 195, 255));
-	g->FillRect(0, 0, mWidth, mHeight);
+	g->FillRect(-WideMargin(), 0, mWidth + 2 * WideMargin(), mHeight);
 	mBubbleMgr2->Draw(g);
 	g->Translate(0, -m0xa4);
 	int local10 = m0xa4 % 20;
@@ -515,8 +525,8 @@ void Sexy::InterludeScreen::DrawOverlay(Graphics* g)
 {
 	mBubbleMgr1->Draw(g);
 	g->SetColor(Color::Black);
-	g->FillRect(0, 0, mWidth, 40);
-	g->FillRect(0, mHeight - 40, mWidth, 40);
+	g->FillRect(-WideMargin(), 0, mWidth + 2 * WideMargin(), 40);
+	g->FillRect(-WideMargin(), mHeight - 40, mWidth + 2 * WideMargin(), 40);
 }
 
 void Sexy::InterludeScreen::MouseDown(int x, int y, int theClickCount)

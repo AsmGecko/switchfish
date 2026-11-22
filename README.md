@@ -107,6 +107,8 @@ On the Mac a game controller drives the same cursor as on the Switch.
 - **Quickplay**: `./sf.sh run --quickplay` lets N finish the current level the normal way, and
   `--level 3-2` starts a new adventure at that level. On the Switch, a `quickplay.txt` in the game folder
   (optionally with `3-2` in it) does the same. It changes your profile, so use a test profile.
+- **Screens deep in the game**: `--screen story` opens the pet stories and `--screen credits` the end
+  credits once the main menu is up (also through `./sf.sh send <ip> --screen credits`).
 
 ### Layout
 

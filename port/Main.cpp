@@ -33,6 +33,10 @@ static const char* Arg(int argc, char** argv, const char* name)
 static void ReadTestFlags(int argc, char** argv)
 {
     std::string level;
+    if (const char* arg = Arg(argc, argv, "--screen"))
+    {
+        Sexy::gTestScreen = arg;
+    }
     if (const char* arg = Arg(argc, argv, "--level"))
     {
         level = arg;

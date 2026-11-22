@@ -43,7 +43,7 @@ foreach(codec MIDI MODPLUG XMP OPUS DRFLAC PXTONE)
 endforeach()
 add_subdirectory(third_party/SDL-Mixer-X EXCLUDE_FROM_ALL)
 
-add_executable(switchfish ${GAME_SOURCES} ${FRAMEWORK_SOURCES})
+add_executable(switchfish ${GAME_SOURCES} ${FRAMEWORK_SOURCES} third_party/lz4/lz4.c)
 target_compile_features(switchfish PRIVATE cxx_std_20)
 target_include_directories(switchfish PRIVATE
 	${PLATFORM_DIR}
@@ -51,6 +51,7 @@ target_include_directories(switchfish PRIVATE
 	port
 	framework
 	third_party/SDL-Mixer-X/include
+	third_party/lz4
 )
 target_compile_definitions(switchfish PRIVATE IMG_DOWNSCALE=1)
 # the NRO carries port/romfs inside, host builds read it from the source tree

@@ -8,6 +8,7 @@
 | `port/romfs/fonts/Fredoka-SemiBold.ttf` | Fredoka (google/fonts `ofl/fredoka`), cut to weight 600 width 100 with fonttools | 2026-11-20 | SIL OFL 1.1 (`Fredoka-OFL.txt`) |
 | `port/romfs/widescreen/aquarium1-6.png` | sides for the wide tank, drawn by an image model (Codex) with `./sf.sh widen`; the original middle is cut out | 2026-11-20 | ours (MIT, `LICENSE`) |
 | `third_party/SDL-Mixer-X/` | vendored by that framework | same | zlib for the parts we build (LGPL/GPL codecs are disabled) |
+| `third_party/lz4/` | https://github.com/lz4/lz4 `lib/lz4.c`, `lib/lz4.h` | v1.10.0 | BSD 2-clause (`third_party/lz4/LICENSE`) |
 
 The PopCap license requires the acknowledgment "This product includes portions of the PopCap Games
 Framework, © 2005-2009 PopCap Games, Inc. All rights reserved. (http://popcapframework.sourceforge.net/)"

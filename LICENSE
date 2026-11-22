@@ -4,7 +4,8 @@ switchfish is made of parts under different licenses; docs/UPSTREAM.md lists whe
                         included (framework/LICENSE, framework/LICENSE-LGPL-3.0.txt,
                         framework/COPYING-GPL-3.0.txt)
 - game/                 decompiled game code from WinFish, "as-is"; modifications MIT, like upstream
-- third_party/          their own licenses (SDL-Mixer-X: zlib for the parts we build)
+- third_party/          their own licenses (SDL-Mixer-X: zlib for the parts we build; lz4: BSD 2-clause,
+                        third_party/lz4/LICENSE)
 - port/romfs/fonts/     Fredoka, SIL Open Font License 1.1 (Fredoka-OFL.txt)
 - everything else, our own work (port/, scripts/, tests/, docker/, docs/, sf.sh, the widescreen
   sides in port/romfs/widescreen/): the MIT license below

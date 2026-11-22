@@ -4,7 +4,10 @@ Done so far: step 1 (directory indexes in fcaseopen, misses answered from memory
 front), step 0 (boot lines with opens, misses, directories read and time per resource type), the RegEmu log
 spam. Hardware went from 38.6 s to 11.8 s before misses were trusted; Ryubing from 7.1 s to 1.1 s. Then 7.7 s on
 hardware, of which images 4.5 s, nearly all GIF decoding. Step 4 (decode ahead on cores 0 and 2,
-framework/imagelib/ImagePrefetch.cpp) halved the image time on the Mac and in Ryubing. Not doing step 3
+framework/imagelib/ImagePrefetch.cpp) halved the image time on the Mac and in Ryubing. Reading files whole (PakInterface) took the hardware boot to 5.2 s. Then: music on its own thread,
+wide backdrops built per tank on first use, and an image cache (framework/imagelib/ImageCache.cpp: the
+decoded images LZ4 compressed in imagecache.bin, 18.6 MB, written on the first boot). In Ryubing the
+images went from 0.43 to 0.08 s on the second boot. Not doing step 3
 (CPU boost): the remaining time should come out of the data handling, not the clock.
 
 Research by an agent on 2026-11-21 from the hardware boot log (38.6 s to "click here to play"). Work through

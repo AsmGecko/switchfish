@@ -26,6 +26,7 @@
 
 #include "Common.h"
 #include "ImageLib.h"
+#include "ImageCache.h"
 #include "png.h"
 #include <math.h>
 #include <algorithm>
@@ -1439,6 +1440,14 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 
 Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage, int theAlphaComposeColor)
 {
+	// switchfish: the decoded image from the cache made on an earlier boot (ImageCache.h); the alpha
+	// probes below come through here with lookForAlphaImage false and aren't cached on their own
+	if (lookForAlphaImage && gAutoLoadAlpha)
+	{
+		if (Image* aCached = FindCachedImage(theFilename, theAlphaComposeColor))
+			return aCached;
+	}
+
 	if (!gAutoLoadAlpha)
 		lookForAlphaImage = false;
 
@@ -1512,6 +1521,9 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		std::lock_guard<std::mutex> aLock(gLoadSecondsLock);
 		gLoadSeconds[4] += SecondsSince(aComposeStart);
 	}
+
+	if (anImage && lookForAlphaImage)
+		StoreCachedImage(theFilename, theAlphaComposeColor, anImage);
 
 	return anImage;
 }

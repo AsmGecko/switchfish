@@ -50,6 +50,9 @@ keyboard opens for player names.
 
 - Screens in the game's own dialog style when the game files are missing or when you start from the album.
 - The title music waits until there is a picture.
+- Loading on the Switch went from 38 s to a few: files are read whole, images decode on the idle cores, and
+  after the first boot the decoded images come from `imagecache.bin` in the game folder (about 19 MB, made
+  from your own files; delete it to rebuild it).
 - Fixes: a highlighted button could stay lit after a click, holding the mouse to feed didn't work in the
   wide tank's sides.
 

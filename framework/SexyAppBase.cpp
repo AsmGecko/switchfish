@@ -62,6 +62,7 @@
 #include "widget/Dialog.h"
 #include "imagelib/ImageLib.h"
 #include "imagelib/ImagePrefetch.h"
+#include "imagelib/ImageCache.h"
 #include "sound/SDLSoundManager.h"
 #include "sound/SDLSoundInstance.h"
 #include "misc/Rect.h"
@@ -2347,7 +2348,10 @@ void SexyAppBase::LoadingThreadProcStub(SexyAppBase *theArg)
 	Result rc = svcSetThreadCoreMask(CUR_THREAD_HANDLE, 1, BIT(1));
 	SDL_Log("loading thread on core 1: %s", R_SUCCEEDED(rc) ? "ok" : "failed");
 #endif
+	// switchfish: decoded images from an earlier boot; written at the end when this boot added any
+	ImageLib::OpenImageCache();
 	aSexyApp->LoadingThreadProc();		
+	ImageLib::CloseImageCache(!aSexyApp->mShutdown && !aSexyApp->mLoadingFailed);
 
 	SDL_Log("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
 

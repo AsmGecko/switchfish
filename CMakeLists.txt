@@ -85,7 +85,7 @@ if(NINTENDO_SWITCH)
 	target_link_libraries(switchfish PRIVATE GLESv2 EGL glapi drm_nouveau)
 	nx_generate_nacp(switchfish.nacp
 		NAME "Insaniquarium Deluxe"
-		AUTHOR "switchfish contributors"
+		AUTHOR "AsmGecko"
 		VERSION "${SWITCHFISH_VERSION}"
 	)
 	dkp_add_asset_target(switchfish_romfs ${ROMFS_DIR})

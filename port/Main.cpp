@@ -160,6 +160,35 @@ static void Terminated()
     abort();
 }
 
+// The homebrew loader loads the next program (hbmenu, Sphaira) into the memory this one used. A block still
+// lent to a service or the GPU makes that fail (hbloader stops with 2001-0106), so list what isn't plain
+// memory any more before going back.
+extern "C" char* fake_heap_start;
+extern "C" char* fake_heap_end;
+
+static void LogLeftoverMemory()
+{
+    u64 addr = (u64)fake_heap_start, end = (u64)fake_heap_end;
+    int shown = 0;
+    while (addr < end && shown < 40)
+    {
+        MemoryInfo info = {};
+        u32 pageInfo = 0;
+        if (R_FAILED(svcQueryMemory(&info, &pageInfo, addr)) || info.size == 0)
+        {
+            break;
+        }
+        if (info.attr != 0 || info.type != MemType_Heap)
+        {
+            SDL_Log("exit: memory 0x%lx +0x%lx type 0x%x attr 0x%x perm 0x%x", info.addr, info.size, info.type,
+                info.attr, info.perm);
+            shown++;
+        }
+        addr = info.addr + info.size;
+    }
+    SDL_Log("exit: heap 0x%lx..0x%lx checked, %d blocks not plain", (u64)fake_heap_start, end, shown);
+}
+
 static void StartLog()
 {
     if (__nxlink_host.s_addr != 0 && R_SUCCEEDED(socketInitializeDefault()))
@@ -276,7 +305,8 @@ int main(int argc, char* argv[])
 #endif
     Sexy::SetResourceFolder(path);
 #if defined(__SWITCH__)
-    Sexy::SetAppDataFolder(path);
+    // the game appends names straight to this ("userdata/users.dat"), so it needs the slash
+    Sexy::SetAppDataFolder(path + "/");
 #endif
     Sexy::ChDir(path);
     ReadTestFlags(argc, argv);
@@ -308,8 +338,14 @@ int main(int argc, char* argv[])
         SDL_Log("exit: saved");
     }
 #if defined(__SWITCH__)
+    LogLeftoverMemory();
+    romfsExit();
     SDL_Log("exit: unlocking");
     appletUnlockExit();
+    if (gNxlink)
+    {
+        socketExit();
+    }
 #endif
     return 0;
 }

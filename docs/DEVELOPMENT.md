@@ -9,7 +9,7 @@ Switch builds only need Docker; the toolchain (devkitA64, libnx, SDL2, mesa, lib
 
 ```bash
 ./sf.sh setup          # once: Docker image, Homebrew packages, Ryubing
-./sf.sh build switch   # build/switch/switchfish.nro (icon: the guppy from your own title screen)
+./sf.sh build switch   # build/switch/switchfish.nro
 ./sf.sh build          # Mac build in build/host/
 ./sf.sh run            # Mac build with the game files in gameData/ (or --data <dir>)
 ./sf.sh emu            # the NRO in the Ryubing emulator
@@ -36,8 +36,7 @@ the game folder makes it log everything to `log.txt` (slower, every line is a wr
 
 Every push builds the NRO in CI (`.github/workflows/switch.yml`), in the same Docker image as `sf.sh`. A
 published GitHub release gets `switchfish.nro` attached, with the release tag as its version
-(`CMakeLists.txt` has the default) and the PopCap acknowledgment appended to the notes. CI has no game files,
-so that NRO carries the fallback icon (`switch/icon.jpg`) instead of the fish from your title screen.
+(`CMakeLists.txt` has the default) and the PopCap acknowledgment appended to the notes.
 
 ## Testing
 
@@ -62,7 +61,7 @@ so that NRO carries the fallback icon (`switch/icon.jpg`) instead of the fish fr
 | `game/` | the game (WinFish decompilation, kyle-sylvestre's portable fork) |
 | `framework/` | SexyAppFramework on SDL2 + GLES2, with `platform/switch` and `platform/default` |
 | `port/` | our own code: entry point, notice screens, test plans, Quick Aim targets, wide screen art, `romfs/` for the NRO |
-| `scripts/` | the build-time icon, how the widescreen sides are made |
+| `scripts/` | how the widescreen sides are made |
 | `third_party/` | SDL-Mixer-X, LZ4 |
 | `docker/` | the Switch build image |
 | `.github/workflows/` | CI |

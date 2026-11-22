@@ -1,6 +1,5 @@
 # Builds the Switch NRO in the same Docker image as `./sf.sh build switch`. Runs on every push as the
-# compile check, and attaches switchfish.nro to a GitHub release when one is published. The NRO carries
-# the fallback icon (switch/icon.jpg): CI has no game files, so no PopCap art ends up in a release.
+# compile check, and attaches switchfish.nro to a GitHub release when one is published.
 name: Switch
 
 on:

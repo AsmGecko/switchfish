@@ -64,19 +64,7 @@ need_pyenv() {
 	[ -x tools/pyenv/bin/python ] || { python3 -m venv tools/pyenv && tools/pyenv/bin/pip -q install numpy pillow; }
 }
 
-# The NRO icon: the guppy from your own title screen when the game files are in gameData/ (it stays in
-# build/, never in the repo), otherwise switch/icon.jpg.
-make_icon() {
-	local title
-	title=$(find gameData/images -maxdepth 1 -iname titlescreen.jpg 2>/dev/null | head -1)
-	[ -n "$title" ] || return 0
-	need_pyenv
-	mkdir -p build/switch
-	tools/pyenv/bin/python -I scripts/icon.py "$title" build/switch/icon.jpg
-}
-
 build_switch() {
-	make_icon
 	need_image
 	docker run --rm -v "$PWD":/src -w /src -e BUILD_TYPE="${BUILD_TYPE:-Release}" "$IMAGE" bash -c '
 		cmake -S . -B build/switch -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake \

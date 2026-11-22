@@ -7,7 +7,7 @@ switchfish is made of parts under different licenses; docs/UPSTREAM.md lists whe
 - third_party/          their own licenses (SDL-Mixer-X: zlib for the parts we build; lz4: BSD 2-clause,
                         third_party/lz4/LICENSE)
 - port/romfs/fonts/     Fredoka, SIL Open Font License 1.1 (Fredoka-OFL.txt)
-- switch/icon.jpg       the fallback NRO icon: the game's guppy redrawn by an image model, a likeness of a
+- switch/icon.jpg       the NRO icon: the game's guppy redrawn by an image model, a likeness of a
                         character that belongs to the game's owners; not covered by the MIT license below
 - everything else, our own work (port/, scripts/, tests/, docker/, docs/, sf.sh, the widescreen
   sides in port/romfs/widescreen/): the MIT license below

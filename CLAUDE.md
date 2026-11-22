@@ -24,10 +24,9 @@ Insaniquarium Deluxe as a Switch homebrew NRO. Read `README.md` and `docs/DEVELO
   runs muted, in the background, without vsync, and exits on its own 5 s past `--timeout` even if the
   main loop hangs; keep it that way. Run builds and test runs as separate commands, test runs with a
   short outer limit.
-- No PopCap art in the repo or in a build made without the player's files. The NRO icon is cut from the
-  player's own title screen at build time (`scripts/icon.py`, into `build/`); `switch/icon.jpg` is the fallback.
-  The one deliberate exception: that fallback is the game's guppy redrawn by an image model (the owner's
-  choice, 2026-11-22). Nothing else. "PopCap" may not appear in the product name.
+- No PopCap art in the repo or in a build made without the player's files. The one deliberate exception:
+  the NRO icon `switch/icon.jpg`, the game's guppy redrawn by an image model (the owner's choice,
+  2026-11-22), used by every build. Nothing else. "PopCap" may not appear in the product name.
 - Keep the PopCap acknowledgment in README and in any release notes.
 
 ## Useful references in upstream/

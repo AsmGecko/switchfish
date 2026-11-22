@@ -59,7 +59,7 @@ game/          WinFish game code       from kyle-sylvestre/WinFish develop @97cf
 framework/     SexyAppFramework SDL2   from kyle-sylvestre/PvZ-Portable insaniquarium @11fe5bc67a
 third_party/   SDL-Mixer-X             vendored by that framework
 docker/        Switch build image
-switch/        NRO icon (our own, no PopCap art)
+switch/        NRO icon (the guppy redrawn by an image model)
 docs/          this analysis, roadmap, research
 upstream/      reference clones (gitignored, ./sf.sh upstream)
 gameData/      your own Insaniquarium files for host runs (gitignored)

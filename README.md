@@ -110,8 +110,7 @@ coins drop and aliens chase you all the way to the edges.
 
 ## Building it yourself
 
-A build of your own carries the fish from your own title screen as its icon. You need Docker; the Switch
-toolchain lives in an image:
+You need Docker; the Switch toolchain lives in an image:
 
 ```bash
 ./sf.sh setup          # once

@@ -111,6 +111,7 @@ bool Sexy::ClampPointer(SexyAppBase* theApp, int& theX, int& theY)
 void Sexy::UpdatePadCursor(SexyAppBase* theApp, const PadInput& theInput)
 {
 	PadInput in = theInput;
+	theApp->mFastForwardHeld = in.mFast;
 	gBlockClick = in.mClick && (gBlockClick || in.mPointerElsewhere);
 	gBlockRightClick = in.mRightClick && (gBlockRightClick || in.mPointerElsewhere);
 	in.mClick &= !gBlockClick;

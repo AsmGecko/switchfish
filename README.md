@@ -38,6 +38,7 @@ Designed from what the game actually does (`docs/CONTROLS.md`):
 | B | right click (tap the glass) |
 | D-pad | jump to the next button that way |
 | X / Y | feed the hungriest fish / grab the money (Quick Aim in Options); hold to keep going, ZL + X/Y only aims |
+| R (hold) | fast-forward a level at double speed (Fast-Forward in Options, off by default) |
 | + / − | menu / pause |
 | Touch | point and tap directly in handheld; ZL + tap is a right click |
 | USB mouse | through the dock |

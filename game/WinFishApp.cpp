@@ -2137,6 +2137,7 @@ void Sexy::WinFishApp::ApplyOptionsSettings()
 	SetWidescreen(aDia->mWidescreenCB->IsChecked());
 	mQuickAim = aDia->mQuickAimCB->IsChecked();
 	mRumble = aDia->mRumbleCB->IsChecked();
+	mFastForward = aDia->mFastForwardCB->IsChecked();
 	EnableCustomCursors(aDia->mCustomCursorsCB->IsChecked());
 	KillDialog(DIALOG_OPTIONS);
 	ClearUpdateBacklog(true);
@@ -2397,6 +2398,12 @@ void Sexy::WinFishApp::LogScreenSaverError(const std::string& theError)
 
 void Sexy::WinFishApp::UpdateFrames()
 {
+	// switchfish: fast-forward, R held (an Options setting): two ticks per frame time while a level is being
+	// played, never in menus, dialogs, pause or the Virtual Tank (it would speed up earning shells there)
+	bool aFast = mFastForward && mFastForwardHeld && mBoard && mBoard->mVisible && !mBoard->mPause &&
+		mDialogList.empty() && mGameMode != GAMEMODE_VIRTUAL_TANK;
+	mUpdateMultiplier = aFast ? 2.0 : 1.0;
+
 	// switchfish: --quickplay, N finishes the level whichever widget has the focus
 	if (gQuickPlay)
 	{

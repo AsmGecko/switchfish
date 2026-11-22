@@ -866,8 +866,8 @@ void Sexy::HelpScreen::DrawControlsPage(Graphics* g)
 		"and closes menus.  + opens the menu, - pauses the game.");
 	DrawVertTabText(g, 2, "X feeds the hungriest fish, Y grabs the money.  Hold them to keep",
 		"going, hold ZL to only aim.  Quick Aim is in Options.");
-	DrawVertTabText(g, 3, "In handheld mode just tap the screen.  Hold ZL while tapping",
-		"to tap the glass.  A USB mouse works in the dock.");
+	DrawVertTabText(g, 3, "Tap the screen in handheld mode (ZL + tap taps the glass), or use",
+		"a USB mouse in the dock.  Hold R to fast-forward (see Options).");
 
 	// the cursor circling, as on the instructions page
 	Rect aRect = GetLeftRectVertTab(0, 4);

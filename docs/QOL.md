@@ -17,8 +17,8 @@ Loading on the Switch comes first: `docs/LOADING.md`.
 - [ ] 5. Controls & Extras dialog: rumble on/off, the jump buttons, fast-forward, cursor auto-hide
 - [ ] 6. Volume sliders on the D-pad
 - [ ] 7. Hide the cursor when idle; Virtual Tank aquarium view
-- [ ] 8. Fast-forward (R, opt-in)
-- [ ] 9. Marker over hungry fish
+- [x] 8. Fast-forward: hold R for double speed ("Fast-Forward (hold R)" in Options, off by default)
+- [-] 9. Marker over hungry fish: dropped, the pet Blip already points out hungry fish (earlier than the green sprite)
 - [ ] 10. Statistics page
 - [ ] 11. Two-cursor co-op (last, opt-in)
 

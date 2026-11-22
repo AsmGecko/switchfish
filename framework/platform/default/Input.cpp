@@ -386,6 +386,7 @@ static PadInput ReadController()
 	in.mRight = button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 	in.mJumpFish = button(SDL_CONTROLLER_BUTTON_X);
 	in.mJumpMoney = button(SDL_CONTROLLER_BUTTON_Y);
+	in.mFast = button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
 	return in;
 }
 

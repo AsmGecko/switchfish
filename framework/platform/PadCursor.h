@@ -19,6 +19,7 @@ struct PadInput
 	bool mUp = false, mDown = false, mLeft = false, mRight = false;
 	bool mJumpFish = false;		// X: the hungriest fish
 	bool mJumpMoney = false;	// Y: the money that will be gone first
+	bool mFast = false;			// R: fast-forward while held
 	// a USB mouse moves the same cursor, in design units this frame
 	float mMouseX = 0, mMouseY = 0;
 	// another pointer (a finger) owns the mouse: no motion or clicks, held buttons wait for a release

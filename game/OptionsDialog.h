@@ -22,6 +22,7 @@ namespace Sexy
 		Checkbox* mWidescreenCB;	// switchfish
 		Checkbox* mQuickAimCB;			// switchfish: X/Y jump the controller cursor to fish and money
 		Checkbox* mRumbleCB;			// switchfish
+		Checkbox* mFastForwardCB;		// switchfish: R held runs a level at double speed
 		DialogButton* mControlsButton;	// switchfish: opens Help at the Controls page
 		DialogButton* mRegisterButton;
 		DialogButton* mHelpButton;

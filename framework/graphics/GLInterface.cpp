@@ -88,8 +88,13 @@ static GLenum gVertexMode;
 static GLuint gProgram;
 static GLuint gVbo;
 static GLint gUfViewProjMtx, gUfTexture, gUfUseTexture, gUfUvBounds;
-static GLuint gPresentProgram;
-static GLint gPfViewProjMtx, gPfTexture, gPfTexSize, gPfScale;
+struct PresentShader
+{
+	GLuint program = 0;
+	GLint viewProj = -1, texture = -1, texSize = -1, scale = -1, sharpness = -1;
+};
+static PresentShader gSharpShader, gSmoothShader, gEasuShader, gRcasShader;
+int Sexy::gPictureScaling = PICTURE_SHARP;
 
 static void GfxBegin(GLenum vertexMode)
 {
@@ -238,7 +243,163 @@ V2F vec2 v_uv;
 #endif
 )DELIMITER";
 
-static GLuint shaderCompile(const char *src, uint32_t srcLen, GLenum type)
+// switchfish: the other picture scalings share the present vertex shader
+#define PRESENT_VERTEX_CODE R"DELIMITER(
+#if defined(GL_ES) && (!defined(FRAGMENT) || defined(GL_FRAGMENT_PRECISION_HIGH))
+precision highp float;
+#endif
+V2F vec4 v_color;
+V2F vec2 v_uv;
+
+#ifdef VERTEX
+	uniform mat4 u_viewProj;
+	VERT_IN vec3 a_position;
+	VERT_IN vec4 a_color;
+	VERT_IN vec2 a_uv;
+	void main() {
+		v_color = a_color;
+		v_uv = a_uv;
+		gl_Position = u_viewProj * vec4(a_position, 1.0);
+	}
+#endif
+)DELIMITER"
+
+// Smooth: Catmull-Rom (bicubic, sharper than bilinear) in 9 bilinear taps instead of 16
+static constexpr const char *SMOOTH_SHADER_CODE = PRESENT_VERTEX_CODE R"DELIMITER(
+#ifdef FRAGMENT
+	uniform sampler2D u_texture;
+	uniform vec2 u_texSize;
+	void main() {
+		vec2 pos = v_uv * u_texSize;
+		vec2 t1 = floor(pos - 0.5) + 0.5;
+		vec2 f = pos - t1;
+		vec2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f));
+		vec2 w1 = 1.0 + f * f * (-2.5 + 1.5 * f);
+		vec2 w2 = f * (0.5 + f * (2.0 - 1.5 * f));
+		vec2 w3 = f * f * (-0.5 + 0.5 * f);
+		vec2 w12 = w1 + w2;
+		vec2 t0 = (t1 - 1.0) / u_texSize;
+		vec2 t3 = (t1 + 2.0) / u_texSize;
+		vec2 t12 = (t1 + w2 / w12) / u_texSize;
+		vec4 c =
+			(TEX2D(u_texture, vec2(t0.x, t0.y)) * w0.x + TEX2D(u_texture, vec2(t12.x, t0.y)) * w12.x + TEX2D(u_texture, vec2(t3.x, t0.y)) * w3.x) * w0.y +
+			(TEX2D(u_texture, vec2(t0.x, t12.y)) * w0.x + TEX2D(u_texture, vec2(t12.x, t12.y)) * w12.x + TEX2D(u_texture, vec2(t3.x, t12.y)) * w3.x) * w12.y +
+			(TEX2D(u_texture, vec2(t0.x, t3.y)) * w0.x + TEX2D(u_texture, vec2(t12.x, t3.y)) * w12.x + TEX2D(u_texture, vec2(t3.x, t3.y)) * w3.x) * w3.y;
+		FRAG_OUT = clamp(c, 0.0, 1.0) * v_color;
+	}
+#endif
+)DELIMITER";
+
+// FSR 1 (AMD FidelityFX Super Resolution, MIT, ffx_fsr1.h): EASU scales edge-aware into a display-sized target,
+// RCAS sharpens that onto the screen. Ported to GLSL ES 1.00, so 12 plain taps instead of gathers.
+static constexpr const char *EASU_SHADER_CODE = PRESENT_VERTEX_CODE R"DELIMITER(
+#ifdef FRAGMENT
+	uniform sampler2D u_texture;
+	uniform vec2 u_texSize;
+	vec3 Tap(vec2 fp, vec2 off) { return TEX2D(u_texture, (fp + off + 0.5) / u_texSize).rgb; }
+	float Luma(vec3 c) { return c.b * 0.5 + (c.r * 0.5 + c.g); }
+	void EasuSet(inout vec2 dir, inout float len, float w, float lA, float lB, float lC, float lD, float lE) {
+		float lenX = 1.0 / max(max(abs(lD - lC), abs(lC - lB)), 1.0 / 16384.0);
+		float dirX = lD - lB;
+		dir.x += dirX * w;
+		lenX = clamp(abs(dirX) * lenX, 0.0, 1.0);
+		len += lenX * lenX * w;
+		float lenY = 1.0 / max(max(abs(lE - lC), abs(lC - lA)), 1.0 / 16384.0);
+		float dirY = lE - lA;
+		dir.y += dirY * w;
+		lenY = clamp(abs(dirY) * lenY, 0.0, 1.0);
+		len += lenY * lenY * w;
+	}
+	void EasuTap(inout vec3 aC, inout float aW, vec2 off, vec2 dir, vec2 len, float lob, float clp, vec3 c) {
+		vec2 v = vec2(off.x * dir.x + off.y * dir.y, off.y * dir.x - off.x * dir.y) * len;
+		float d2 = min(dot(v, v), clp);
+		float wB = 2.0 / 5.0 * d2 - 1.0;
+		float wA = lob * d2 - 1.0;
+		wB *= wB;
+		wA *= wA;
+		wB = 25.0 / 16.0 * wB - (25.0 / 16.0 - 1.0);
+		float w = wB * wA;
+		aC += c * w;
+		aW += w;
+	}
+	void main() {
+		vec2 pp = v_uv * u_texSize - 0.5;
+		vec2 fp = floor(pp);
+		pp -= fp;
+		//    b c
+		//  e f g h
+		//  i j k l
+		//    n o
+		vec3 b = Tap(fp, vec2(0.0, -1.0)), c = Tap(fp, vec2(1.0, -1.0));
+		vec3 e = Tap(fp, vec2(-1.0, 0.0)), f = Tap(fp, vec2(0.0, 0.0)), g = Tap(fp, vec2(1.0, 0.0)), h = Tap(fp, vec2(2.0, 0.0));
+		vec3 i = Tap(fp, vec2(-1.0, 1.0)), j = Tap(fp, vec2(0.0, 1.0)), k = Tap(fp, vec2(1.0, 1.0)), l = Tap(fp, vec2(2.0, 1.0));
+		vec3 n = Tap(fp, vec2(0.0, 2.0)), o = Tap(fp, vec2(1.0, 2.0));
+		float bL = Luma(b), cL = Luma(c), eL = Luma(e), fL = Luma(f), gL = Luma(g), hL = Luma(h);
+		float iL = Luma(i), jL = Luma(j), kL = Luma(k), lL = Luma(l), nL = Luma(n), oL = Luma(o);
+		vec2 dir = vec2(0.0);
+		float len = 0.0;
+		EasuSet(dir, len, (1.0 - pp.x) * (1.0 - pp.y), bL, eL, fL, gL, jL);
+		EasuSet(dir, len, pp.x * (1.0 - pp.y), cL, fL, gL, hL, kL);
+		EasuSet(dir, len, (1.0 - pp.x) * pp.y, fL, iL, jL, kL, nL);
+		EasuSet(dir, len, pp.x * pp.y, gL, jL, kL, lL, oL);
+		float dirR = dot(dir, dir);
+		bool zro = dirR < 1.0 / 32768.0;
+		dirR = zro ? 1.0 : inversesqrt(dirR);
+		dir.x = zro ? 1.0 : dir.x;
+		dir *= dirR;
+		len = len * 0.5;
+		len *= len;
+		float stretch = dot(dir, dir) / max(abs(dir.x), abs(dir.y));
+		vec2 len2 = vec2(1.0 + (stretch - 1.0) * len, 1.0 - 0.5 * len);
+		float lob = 0.5 + ((1.0 / 4.0 - 0.04) - 0.5) * len;
+		float clp = 1.0 / lob;
+		vec3 min4 = min(min(f, g), min(j, k));
+		vec3 max4 = max(max(f, g), max(j, k));
+		vec3 aC = vec3(0.0);
+		float aW = 0.0;
+		EasuTap(aC, aW, vec2(0.0, -1.0) - pp, dir, len2, lob, clp, b);
+		EasuTap(aC, aW, vec2(1.0, -1.0) - pp, dir, len2, lob, clp, c);
+		EasuTap(aC, aW, vec2(-1.0, 1.0) - pp, dir, len2, lob, clp, i);
+		EasuTap(aC, aW, vec2(0.0, 1.0) - pp, dir, len2, lob, clp, j);
+		EasuTap(aC, aW, vec2(0.0, 0.0) - pp, dir, len2, lob, clp, f);
+		EasuTap(aC, aW, vec2(-1.0, 0.0) - pp, dir, len2, lob, clp, e);
+		EasuTap(aC, aW, vec2(1.0, 1.0) - pp, dir, len2, lob, clp, k);
+		EasuTap(aC, aW, vec2(2.0, 1.0) - pp, dir, len2, lob, clp, l);
+		EasuTap(aC, aW, vec2(2.0, 0.0) - pp, dir, len2, lob, clp, h);
+		EasuTap(aC, aW, vec2(1.0, 0.0) - pp, dir, len2, lob, clp, g);
+		EasuTap(aC, aW, vec2(1.0, 2.0) - pp, dir, len2, lob, clp, o);
+		EasuTap(aC, aW, vec2(0.0, 2.0) - pp, dir, len2, lob, clp, n);
+		FRAG_OUT = vec4(min(max4, max(min4, aC / aW)), 1.0) * v_color;
+	}
+#endif
+)DELIMITER";
+
+static constexpr const char *RCAS_SHADER_CODE = PRESENT_VERTEX_CODE R"DELIMITER(
+#ifdef FRAGMENT
+	uniform sampler2D u_texture;
+	uniform vec2 u_texSize;
+	uniform float u_sharpness;
+	vec3 Load(vec2 p) { return TEX2D(u_texture, p / u_texSize).rgb; }
+	void main() {
+		//    b
+		//  d e f
+		//    h
+		vec2 sp = floor(v_uv * u_texSize) + 0.5;
+		vec3 b = Load(sp + vec2(0.0, -1.0)), d = Load(sp + vec2(-1.0, 0.0)), e = Load(sp);
+		vec3 f = Load(sp + vec2(1.0, 0.0)), h = Load(sp + vec2(0.0, 1.0));
+		vec3 mn4 = min(min(b, d), min(f, h));
+		vec3 mx4 = max(max(b, d), max(f, h));
+		// the original's precise rcps give inf on black or white; here they stay finite
+		vec3 hitMin = min(mn4, e) / max(4.0 * mx4, 1.0 / 16384.0);
+		vec3 hitMax = (1.0 - max(mx4, e)) / min(4.0 * mn4 - 4.0, -1.0 / 16384.0);
+		vec3 lobes = max(-hitMin, hitMax);
+		float lobe = max(-(0.25 - 1.0 / 16.0), min(max(lobes.r, max(lobes.g, lobes.b)), 0.0)) * u_sharpness;
+		FRAG_OUT = vec4((lobe * (b + d + f + h) + e) / (4.0 * lobe + 1.0), 1.0) * v_color;
+	}
+#endif
+)DELIMITER";
+
+static GLuint shaderCompile(const char *src, uint32_t srcLen, GLenum type, bool required = true)
 {
 	// GLSL ES 1.00 for native ES contexts; GLSL 1.20 for desktop GL fallback.
 	const char *versionLine = gDesktopGLFallback
@@ -267,6 +428,8 @@ static GLuint shaderCompile(const char *src, uint32_t srcLen, GLenum type)
 		fflush(stdout);
 		free(log);
 		glDeleteShader(shader);
+		if (!required)
+			return 0;
 		if (gSexyAppBase != nullptr)
 			gSexyAppBase->Shutdown();
 		else
@@ -276,10 +439,11 @@ static GLuint shaderCompile(const char *src, uint32_t srcLen, GLenum type)
 	return shader;
 }
 
-static GLuint shaderLoad(const char *src)
+// switchfish: an optional shader (a picture scaling) that fails returns 0 instead of quitting the game
+static GLuint shaderLoad(const char *src, bool required = true)
 {
-	GLuint vert = shaderCompile(src, strlen(src), GL_VERTEX_SHADER);
-	GLuint frag = shaderCompile(src, strlen(src), GL_FRAGMENT_SHADER);
+	GLuint vert = shaderCompile(src, strlen(src), GL_VERTEX_SHADER, required);
+	GLuint frag = shaderCompile(src, strlen(src), GL_FRAGMENT_SHADER, required);
 	if (vert == 0 || frag == 0)
 	{
 		if (vert != 0)
@@ -300,6 +464,14 @@ static GLuint shaderLoad(const char *src)
 	glLinkProgram(prog);
 	glDeleteShader(vert);
 	glDeleteShader(frag);
+	GLint linked;
+	glGetProgramiv(prog, GL_LINK_STATUS, &linked);
+	if (!linked)
+	{
+		printf("Shader link error\n");
+		glDeleteProgram(prog);
+		return 0;
+	}
 	return prog;
 }
 
@@ -1224,13 +1396,22 @@ int GLInterface::Init(bool IsWindowed)
 		gUfUseTexture  = glGetUniformLocation(gProgram, "u_useTexture");
 		gUfUvBounds    = glGetUniformLocation(gProgram, "u_uvBounds");
 
-		gPresentProgram = shaderLoad(PRESENT_SHADER_CODE);
-		if (gPresentProgram == 0)
+		auto loadPresent = [](PresentShader& shader, const char* code, bool required = false)
+		{
+			shader.program = shaderLoad(code, required);
+			shader.viewProj = glGetUniformLocation(shader.program, "u_viewProj");
+			shader.texture = glGetUniformLocation(shader.program, "u_texture");
+			shader.texSize = glGetUniformLocation(shader.program, "u_texSize");
+			shader.scale = glGetUniformLocation(shader.program, "u_scale");
+			shader.sharpness = glGetUniformLocation(shader.program, "u_sharpness");
+			return shader.program != 0;
+		};
+		if (!loadPresent(gSharpShader, PRESENT_SHADER_CODE, true))
 			return 0;
-		gPfViewProjMtx = glGetUniformLocation(gPresentProgram, "u_viewProj");
-		gPfTexture     = glGetUniformLocation(gPresentProgram, "u_texture");
-		gPfTexSize     = glGetUniformLocation(gPresentProgram, "u_texSize");
-		gPfScale       = glGetUniformLocation(gPresentProgram, "u_scale");
+		// a scaling that doesn't compile falls back to sharp
+		loadPresent(gSmoothShader, SMOOTH_SHADER_CODE);
+		loadPresent(gEasuShader, EASU_SHADER_CODE);
+		loadPresent(gRcasShader, RCAS_SHADER_CODE);
 
 		glGenBuffers(1, &gVbo);
 		glBindBuffer(GL_ARRAY_BUFFER, gVbo);
@@ -1324,6 +1505,31 @@ static bool MakeTarget(GLuint& fbo, GLuint& tex, int w, int h)
 	return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 }
 
+// FSR's first pass goes into a target the size of the picture on screen
+bool GLInterface::MakeUpscaleTarget(int w, int h)
+{
+	if (mUpscaleFbo && w == mUpscaleWidth && h == mUpscaleHeight)
+	{
+		return true;
+	}
+	if (mUpscaleFbo)
+	{
+		glDeleteFramebuffers(1, &mUpscaleFbo);
+		glDeleteTextures(1, &mUpscaleTex);
+		mUpscaleFbo = mUpscaleTex = 0;
+	}
+	mUpscaleWidth = w;
+	mUpscaleHeight = h;
+	if (!MakeTarget(mUpscaleFbo, mUpscaleTex, w, h))
+	{
+		glDeleteFramebuffers(1, &mUpscaleFbo);
+		glDeleteTextures(1, &mUpscaleTex);
+		mUpscaleFbo = mUpscaleTex = 0;
+		return false;
+	}
+	return true;
+}
+
 bool GLInterface::CreateCanvas()
 {
 	return MakeTarget(mCanvasFbo, mCanvasTex, mWidth, mHeight);
@@ -1375,15 +1581,16 @@ void GLInterface::ReadCanvas(MemoryImage* theImage)
 
 // Draws srcRect of a render target (top-left origin, in its pixels) into dstRect of the bound target.
 // Image textures are stored top-down, render targets bottom-up.
-static void DrawTarget(GLuint tex, int texW, int texH, float sx, float sy, float sw, float sh,
-	float dx, float dy, float dw, float dh, int targetW, int targetH, uint32_t color, bool sharp = true,
-	bool bottomUp = true)
+static void DrawTarget(const PresentShader& shader, GLuint tex, int texW, int texH, float sx, float sy, float sw,
+	float sh, float dx, float dy, float dw, float dh, int targetW, int targetH, uint32_t color, bool bottomUp = true)
 {
 	float ortho[16];
 	MakeOrthoMatrix(0, (float)targetW, (float)targetH, 0, -10, 10, ortho);
-	glUniformMatrix4fv(gPfViewProjMtx, 1, GL_FALSE, ortho);
-	glUniform2f(gPfTexSize, (float)texW, (float)texH);
-	glUniform2f(gPfScale, sharp ? dw / sw : 1.0f, sharp ? dh / sh : 1.0f);
+	glUseProgram(shader.program);
+	glUniform1i(shader.texture, 0);
+	glUniformMatrix4fv(shader.viewProj, 1, GL_FALSE, ortho);
+	glUniform2f(shader.texSize, (float)texW, (float)texH);
+	glUniform2f(shader.scale, dw / sw, dh / sh);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
 	float u1 = sx / texW, u2 = (sx + sw) / texW;
@@ -1407,22 +1614,40 @@ static void DrawTarget(GLuint tex, int texW, int texH, float sx, float sy, float
 void GLInterface::Present()
 {
 	GfxEnd();
-	glUseProgram(gPresentProgram);
-	glUniform1i(gPfTexture, 0);
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_BLEND);
 
 	const uint32_t white = 0xFFFFFFFFu;
+	// beside a 4:3 screen the game fills the canvas itself (SexyAppBase::DrawSides)
+	const Rect& r = mPresentationRect;
+
+	bool fsr = gPictureScaling == PICTURE_FSR && gEasuShader.program && gRcasShader.program && MakeUpscaleTarget(r.mWidth, r.mHeight);
+	if (fsr)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, mUpscaleFbo);
+		glViewport(0, 0, r.mWidth, r.mHeight);
+		DrawTarget(gEasuShader, mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
+			0, 0, (float)r.mWidth, (float)r.mHeight, r.mWidth, r.mHeight, white);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, mDisplayWidth, mDisplayHeight);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// beside a 4:3 screen the game fills the canvas itself (SexyAppBase::DrawSides)
-	const Rect& r = mPresentationRect;
-	DrawTarget(mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
-		(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
+	if (fsr)
+	{
+		glUseProgram(gRcasShader.program);
+		glUniform1f(gRcasShader.sharpness, 0.87f);	// 0.2 stops below FSR's strongest
+		DrawTarget(gRcasShader, mUpscaleTex, r.mWidth, r.mHeight, 0, 0, (float)r.mWidth, (float)r.mHeight,
+			(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
+	}
+	else
+	{
+		const PresentShader& shader = gPictureScaling == PICTURE_SMOOTH && gSmoothShader.program ? gSmoothShader : gSharpShader;
+		DrawTarget(shader, mCanvasTex, mWidth, mHeight, 0, 0, (float)mWidth, (float)mHeight,
+			(float)r.mX, (float)r.mY, (float)r.mWidth, (float)r.mHeight, mDisplayWidth, mDisplayHeight, white);
+	}
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1462,8 +1687,8 @@ void GLInterface::DrawPadCursor()
 	// the hotspot is the middle of the image, as on the desktop (SexyAppBase::EnforceCursor)
 	float dx = r.mX + (x - mApp->mScreenBounds.mX) * scale - w / 2;
 	float dy = r.mY + y * scale - h / 2;
-	DrawTarget(piece.mTexture, piece.mWidth, piece.mHeight, 0, 0, (float)cursor->mWidth, (float)cursor->mHeight,
-		dx, dy, w, h, mDisplayWidth, mDisplayHeight, 0xFFFFFFFFu, true, false);
+	DrawTarget(gSharpShader, piece.mTexture, piece.mWidth, piece.mHeight, 0, 0, (float)cursor->mWidth, (float)cursor->mHeight,
+		dx, dy, w, h, mDisplayWidth, mDisplayHeight, 0xFFFFFFFFu, false);
 }
 
 void GLInterface::Flush()

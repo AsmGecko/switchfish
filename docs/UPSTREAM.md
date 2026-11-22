@@ -10,6 +10,7 @@
 | `port/romfs/widescreen/selectorback.png`, `titlescreen.png` | sides for the main menu and the title screen, same way | 2026-11-22 | ours (MIT, `LICENSE`) |
 | `switch/icon.jpg` | the fallback NRO icon (release builds, no game files): the game's guppy redrawn by an image model (Codex) from a screenshot, the one deliberate exception to "no PopCap art" (see CLAUDE.md) | 2026-11-22 | redrawn fan art of a PopCap character, not covered by our MIT license |
 | `third_party/SDL-Mixer-X/` | vendored by that framework | same | zlib for the parts we build (LGPL/GPL codecs are disabled) |
+| FSR shaders in `framework/graphics/GLInterface.cpp` | https://github.com/GPUOpen-Effects/FidelityFX-FSR `ffx-fsr/ffx_fsr1.h` (EASU and RCAS, 32-bit paths), ported to GLSL ES 1.00 | a21ffb8 | MIT (`framework/graphics/FSR-LICENSE.txt`) |
 | `third_party/lz4/` | https://github.com/lz4/lz4 `lib/lz4.c`, `lib/lz4.h` | v1.10.0 | BSD 2-clause (`third_party/lz4/LICENSE`) |
 
 The PopCap license requires the acknowledgment "This product includes portions of the PopCap Games

@@ -2,7 +2,8 @@ switchfish is made of parts under different licenses; docs/UPSTREAM.md lists whe
 
 - framework/            LGPL-3.0-or-later and the PopCap Games Framework License 1.1, our changes
                         included (framework/LICENSE, framework/LICENSE-LGPL-3.0.txt,
-                        framework/COPYING-GPL-3.0.txt)
+                        framework/COPYING-GPL-3.0.txt); the FSR shaders in framework/graphics/GLInterface.cpp
+                        are ported from AMD FidelityFX FSR 1, MIT (framework/graphics/FSR-LICENSE.txt)
 - game/                 decompiled game code from WinFish, "as-is"; modifications MIT, like upstream
 - third_party/          their own licenses (SDL-Mixer-X: zlib for the parts we build; lz4: BSD 2-clause,
                         third_party/lz4/LICENSE)

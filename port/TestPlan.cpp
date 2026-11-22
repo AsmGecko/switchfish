@@ -180,8 +180,8 @@ bool LoadTestPlan(SexyAppBase* app, const char* planPath, const char* outDir, in
     }
 
     app->mScriptedInput = true;
-    // test runs are silent
-    app->Mute(false);
+    // test runs are silent; muted like losing focus does, so it isn't saved as the player's setting
+    app->Mute(true);
 #if !defined(__SWITCH__)
     // no waiting for the display either: a sleeping screen never sends the vsync a swap waits for
     SDL_GL_SetSwapInterval(0);

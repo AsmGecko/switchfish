@@ -1,7 +1,7 @@
 # switchfish
 
-Insaniquarium Deluxe on the Nintendo Switch as native homebrew: the whole 16:9 screen is aquarium, and it
-plays with a controller, touch or a USB mouse. Built from the source code the community decompiled, so it
+Insaniquarium Deluxe on the Nintendo Switch as native homebrew, in proper 16:9 and playable with a
+controller, touch or a USB mouse. Built from the source code the community decompiled, so it
 runs the real game, not an emulator.
 
 **You need your own copy of Insaniquarium Deluxe** (for example from Steam). switchfish contains no game
@@ -30,7 +30,7 @@ few seconds. To update, replace `switchfish.nro`; your saves stay in `userdata/`
 
 ## Features
 
-### The whole screen is aquarium
+### Proper 16:9 mode
 
 The game was made for 640x480. In switchfish the tank is 854x480, so on a 16:9 screen fish swim, food falls,
 coins drop and aliens chase you all the way to the edges.

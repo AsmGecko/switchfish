@@ -101,6 +101,8 @@ struct Text
 {
     SDL_Texture* texture = nullptr;
     int w = 0, h = 0;
+    // where the drawn pixels are, so a single glyph like "+" can be centred on itself rather than on its line
+    float inkX = 0, inkY = 0, inkW = 0, inkH = 0;
 
     Text() = default;
     Text(const Text&) = delete;
@@ -134,8 +136,47 @@ struct Text
         texture = SDL_CreateTextureFromSurface(renderer, back);
         w = back->w;
         h = back->h;
+        FindInk(back);
         SDL_FreeSurface(back);
         SDL_FreeSurface(front);
+    }
+
+    void FindInk(SDL_Surface* surface)
+    {
+        int x0 = surface->w, y0 = surface->h, x1 = -1, y1 = -1;
+        SDL_LockSurface(surface);
+        for (int y = 0; y < surface->h; y++)
+        {
+            const Uint32* row = (const Uint32*)((const Uint8*)surface->pixels + y * surface->pitch);
+            for (int x = 0; x < surface->w; x++)
+            {
+                Uint8 r, g, b, a;
+                SDL_GetRGBA(row[x], surface->format, &r, &g, &b, &a);
+                if (a > 64)
+                {
+                    x0 = std::min(x0, x);
+                    x1 = std::max(x1, x);
+                    y0 = std::min(y0, y);
+                    y1 = std::max(y1, y);
+                }
+            }
+        }
+        SDL_UnlockSurface(surface);
+        if (x1 < 0)
+        {
+            inkW = (float)surface->w;
+            inkH = (float)surface->h;
+            return;
+        }
+        inkX = (float)x0;
+        inkY = (float)y0;
+        inkW = (float)(x1 - x0 + 1);
+        inkH = (float)(y1 - y0 + 1);
+    }
+
+    void DrawCentred(SDL_Renderer* renderer, float cx, float cy, float alpha) const
+    {
+        Draw(renderer, cx - inkX - inkW / 2, cy - inkY - inkH / 2, alpha);
     }
 
     void Draw(SDL_Renderer* renderer, float x, float y, float alpha) const
@@ -385,7 +426,7 @@ bool ShowNotice(const Notice& notice)
             {
                 SDL_FRect pill = {b.rect.x + 7, b.rect.y + 7, b.rect.w - 14, b.rect.h - 14};
                 float glyphW = std::max(30.0f, b.glyph.w + 18.0f);
-                b.glyph.Draw(renderer, pill.x + 10 + (glyphW - b.glyph.w) / 2, pill.y + (pill.h - b.glyph.h) / 2, alpha);
+                b.glyph.DrawCentred(renderer, pill.x + 10 + glyphW / 2, pill.y + pill.h / 2, alpha);
                 float labelX = pill.x + 10 + glyphW + (pill.w - 10 - glyphW - b.label.w) / 2;
                 b.label.Draw(renderer, labelX, pill.y + (pill.h - b.label.h) / 2, alpha);
             }
